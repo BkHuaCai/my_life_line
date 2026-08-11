@@ -1,34 +1,38 @@
-# ===== 依赖 =====
-node_modules/
-
-# ===== uni-app 构建产物 =====
-unpackage/
-dist/
-
-# ===== 编辑器/IDE =====
-.hbuilderx/
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# ===== 系统文件 =====
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# ===== 日志与临时文件 =====
+# Logs
+logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+.DS_Store
+dist
 *.local
-.tmp/
 
-# ===== 个人环境配置 =====
-*.local.*
-.env.local
-.env.*.local
+# uni-app 原生构建产物
+unpackage
 
-# ===== 头脑风暴/设计过程产物（不入库） =====
+# 头脑风暴/设计过程产物（不入库）
 .superpowers/
+
+# Editor directories and files
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Python 后端
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.env.*
+*.db
+*.sqlite3

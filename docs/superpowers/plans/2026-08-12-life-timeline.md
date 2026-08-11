@@ -4,107 +4,119 @@
 
 **目标：** 实现前期"纯本地"的人生时间线安卓 App：以人物为中心记录多条分类时间线，每条时间线包含带时间（时间点或时间段）、多图、标题、描述的事件，支持三种视图切换、搜索、导入/导出。所有数据存手机本地，完全离线私有，但数据模型与数据层为将来"Python 后端社区分享"预留扩展点。
 
-**架构：** uni-app（Vue 3 + Vite）编译为安卓 App。数据层采用**适配器模式**：`db.js` 面向统一接口（init/insert/update/delete/all），提供两个实现——`memoryAdapter`（纯 JS，可单元测试，兼作 H5 兜底）和 `sqliteAdapter`（包装 `plus.sqlite`，真机使用）。页面只依赖 `db.js`，将来加同步层只改数据层。
+**架构：** **仓库为前后端一体 monorepo**——uni-app 前端（Vue 3 + Vite）放 `frontend/`，Python 后端（后期社区）预留 `backend/`，设计文档放 `docs/`，全部在当前文件夹内。前端数据层采用**适配器模式**：`db.js` 面向统一接口（init/insert/update/delete/all），提供两个实现——`memoryAdapter`（纯 JS，可单元测试，兼作 H5 兜底）和 `sqliteAdapter`（包装 `plus.sqlite`，真机使用）。页面只依赖 `db.js`，将来加同步层只改数据层。
 
-**技术栈：** uni-app（Vue 3 + Vite）、`plus.sqlite`（本地 SQLite）、`plus.io`（图片存储）、vitest（单元测试）、degit（从 Gitee 镜像拉官方模板）。
+**技术栈：** 前端 uni-app（Vue 3 + Vite）、`plus.sqlite`（本地 SQLite）、`plus.io`（图片存储）、vitest（单元测试）、degit（从 Gitee 镜像拉官方模板）。后端 Python（FastAPI + SQLite/Postgres，仅预留结构、本期不实现）。
 
 **环境约束（重要）：**
 - 本环境无法访问 github.com（npm registry 与 gitee.com 可达）。因此**必须**用 Gitee 镜像拉模板，绝不要用 degit 的 github 默认源。
 - 真机/模拟器不在本环境内，`plus.sqlite`、相机、压缩、`plus.io` 等设备能力无法自动化验证，靠 `npm run build:h5` + 单元测试 + 手动清单验证。
 - 最终打 APK 需用户本地 HBuilderX（或离线打包），属计划外的手动步骤，见"收尾"。
+- **工作目录**：所有前端 npm 命令都在 `frontend/` 目录下执行；git 命令在仓库根目录执行。
 
 ---
 
 ## 文件结构
 
 ```
-src/
-  main.js                     # 入口（模板自带，微调）
-  App.vue                     # onLaunch 调用 db.init()
-  manifest.json               # 模板自带，需补 app-plus 权限
-  pages.json                  # 5 个页面路由
-  uni.scss                    # 模板自带
-  utils/
-    id.js                     # UUID v4（纯函数）
-    date.js                   # 日期格式化/排序/事件日期展示（纯函数）
-    schema.js                 # 表结构定义 + CREATE 语句（纯数据）
-    storage.js                # createMemoryAdapter / createSqliteAdapter / resolveAdapter
-    db.js                     # createDb(adapter)：全部 CRUD + searchEvents
-    export.js                 # serialize / importData（导入导出核心）
-    image.js                  # 图片选择/压缩/落盘 + makeImagePaths（纯函数可测）
-  components/
-    timeline-axis.vue         # 视图一：经典时间轴
-    timeline-grid.vue         # 视图二：照片墙（按年分组）
-    timeline-cards.vue        # 视图三：大卡片流
-  pages/
-    person-list/index.vue     # 首页：人物列表 + 全局搜索
-    person-detail/index.vue   # 人物详情：该人物时间线列表
-    timeline/index.vue        # 时间线视图：三视图切换 + 添加事件
-    event-detail/index.vue    # 事件详情：大图轮播 + 编辑/删除
-    edit-form/index.vue       # 通用编辑表单（人物/时间线/事件）
-tests/
-  id.test.js
-  date.test.js
-  schema.test.js
-  db.test.js
-  export.test.js
+frontend/                      # uni-app 前端（安卓 App）
+  src/
+    main.js                    # 入口（模板自带，微调）
+    App.vue                    # onLaunch 调用 db.init()
+    manifest.json              # 模板自带，需补 app-plus 权限
+    pages.json                 # 5 个页面路由
+    uni.scss                   # 模板自带
+    utils/
+      id.js                    # UUID v4（纯函数）
+      date.js                  # 日期格式化/排序/事件日期展示（纯函数）
+      schema.js                # 表结构定义 + CREATE 语句（纯数据）
+      storage.js               # createMemoryAdapter / createSqliteAdapter / resolveAdapter
+      db.js                    # createDb(adapter)：全部 CRUD + searchEvents
+      export.js                # serialize / importData（导入导出核心）
+      image.js                 # 图片选择/压缩/落盘 + makeImagePaths（纯函数可测）
+    components/
+      timeline-axis.vue        # 视图一：经典时间轴
+      timeline-grid.vue        # 视图二：照片墙（按年分组）
+      timeline-cards.vue       # 视图三：大卡片流
+    pages/
+      person-list/index.vue    # 首页：人物列表 + 全局搜索
+      person-detail/index.vue  # 人物详情：该人物时间线列表
+      timeline/index.vue       # 时间线视图：三视图切换 + 添加事件
+      event-detail/index.vue   # 事件详情：大图轮播 + 编辑/删除
+      edit-form/index.vue      # 通用编辑表单（人物/时间线/事件）
+  tests/                       # vitest 单元测试（前端）
+    id.test.js
+    date.test.js
+    schema.test.js
+    storage.test.js
+    db.test.js
+    export.test.js
+    image.test.js
+backend/                       # Python 后端（后期社区，本期仅占位）
+  README.md                    # 说明未来职责
+docs/                          # 设计规格与实现计划
+  superpowers/
+    specs/
+    plans/
 ```
 
 **任务分解按依赖顺序：** 脚手架 → 纯逻辑（id/date/schema）→ 数据层（storage/db）→ 导入导出 → 图片 → 接线 → 页面（列表→详情→表单→时间线→事件详情→搜索）→ 收尾。
 
 ---
 
-## 任务 1：项目脚手架（gitee 模板 + vitest）
+## 任务 1：项目脚手架（frontend 子目录 + vitest + backend 占位）
 
 **文件：**
-- 创建：`package.json`（模板生成后追加 vitest 依赖）
-- 创建：`vitest.config.js`
-- 修改：`.gitignore`（补回 `.superpowers/`）
-- 修改：`src/pages.json`（5 个页面路由）
-- 创建：`tests/.gitkeep`（占位，确保目录入库）
+- 创建：`frontend/`（uni-app Vue3+Vite 模板工程目录）
+- 创建：`frontend/vitest.config.js`
+- 修改：`frontend/src/pages.json`（5 个页面路由）
+- 创建：`backend/README.md`（Python 后端占位说明）
+- 确认：`.gitignore` 已含 `.superpowers/` 与 Python 忽略规则
 
-- [ ] **步骤 1：从 Gitee 官方镜像拉取 uni-app Vue3+Vite 模板到当前目录**
+- [ ] **步骤 1：创建 frontend 目录并从 Gitee 镜像拉取 uni-app 模板**
 
 ```bash
 cd "D:/python/my_life_line"
+mkdir -p frontend
+cd frontend
 npx degit https://gitee.com/dcloud/uni-preset-vue#vite . --force
 ```
 
 运行：`npx degit ...`
-预期：当前目录出现 `src/`、`index.html`、`package.json`、`vite.config.js` 等文件（`--force` 覆盖同名文件；我们的 `docs/`、`README.md`、`.gitignore` 保留）。
+预期：`frontend/` 下出现 `src/`、`index.html`、`package.json`、`vite.config.js` 等文件。仓库根的 `docs/`、`README.md`、`.gitignore` 不受影响。
 
-注意：如果 `degit` 因网络再次失败，报错后停止，不要手工伪造模板（后续步骤依赖模板自带版本锁定的 `package.json`）。
+注意：如果 `degit` 因网络失败，报错后停止，不要手工伪造模板（后续步骤依赖模板自带版本锁定的 `package.json`）。
 
-- [ ] **步骤 2：安装依赖**
+- [ ] **步骤 2：安装依赖（在 frontend/ 内）**
 
 ```bash
-cd "D:/python/my_life_line"
+cd "D:/python/my_life_line/frontend"
 npm install
 ```
 
 运行：`npm install`
-预期：`node_modules/` 生成，`npm install` 退出码 0。若安装失败，先检查网络/镜像（`npm config get registry`），不要跳过。
+预期：`frontend/node_modules/` 生成，`npm install` 退出码 0。若安装失败，先检查网络/镜像（`npm config get registry`），不要跳过。
 
 - [ ] **步骤 3：验证模板可构建（H5）**
 
 ```bash
-cd "D:/python/my_life_line"
+cd "D:/python/my_life_line/frontend"
 npm run build:h5
 ```
 
 运行：`npm run build:h5`
-预期：退出码 0，生成 `dist/build/h5/`。若报错，说明模板版本不兼容，先修复再继续（不要带着坏脚手架往下写）。
+预期：退出码 0，生成 `frontend/dist/build/h5/`。若报错，说明模板版本不兼容，先修复再继续（不要带着坏脚手架往下写）。
 
-- [ ] **步骤 4：配置 vitest**
+- [ ] **步骤 4：配置 vitest（在 frontend/ 内）**
 
-在 `package.json` 的 `devDependencies` 增加 vitest（用 `npm install -D vitest` 而非手改版本号）：
+在 `frontend/package.json` 的 `devDependencies` 增加 vitest（用 `npm install -D vitest` 而非手改版本号）：
 
 ```bash
-cd "D:/python/my_life_line"
+cd "D:/python/my_life_line/frontend"
 npm install -D vitest
 ```
 
-创建 `vitest.config.js`：
+创建 `frontend/vitest.config.js`：
 
 ```js
 import { defineConfig } from 'vitest/config'
@@ -117,23 +129,19 @@ export default defineConfig({
 })
 ```
 
-在 `package.json` 的 `scripts` 增加：
+在 `frontend/package.json` 的 `scripts` 增加：
 
 ```json
 "test": "vitest run"
 ```
 
-- [ ] **步骤 5：确认 .gitignore 补回 .superpowers**
+- [ ] **步骤 5：确认 .gitignore 忽略规则**
 
-模板自带的 `.gitignore` 已覆盖 `node_modules/`、`unpackage/` 等。追加一行：
-
-```gitignore
-.superpowers/
-```
+确认仓库根 `.gitignore` 包含：`node_modules`、`dist`、`unpackage`、`.superpowers/`、以及 Python 忽略项（`__pycache__/`、`*.py[cod]`、`.venv/`、`venv/`、`.env`、`*.db`）。这些规则已存在于仓库根 `.gitignore`，无需改动模板自带的（模板的 `.gitignore` 在 `frontend/` 内，只管前端自身产物）。
 
 - [ ] **步骤 6：配置 pages.json 页面路由**
 
-将 `src/pages.json` 的 `pages` 数组替换为：
+将 `frontend/src/pages.json` 的 `pages` 数组替换为：
 
 ```json
 {
@@ -153,13 +161,30 @@ export default defineConfig({
 }
 ```
 
-（保留模板 `globalStyle` 中其余字段可不动；页面目录用占位 `index.vue` 防止构建报错，后续任务逐个填充真实页面。）
+（保留模板 `globalStyle` 中其余字段可不动；为 5 个页面各创建 `frontend/src/pages/<dir>/index.vue` 占位空页，防止构建报"页面不存在"，占位内容为最简单的 `<template><view /></template>`。）
 
-- [ ] **步骤 7：Commit**
+- [ ] **步骤 7：创建 backend/ 占位**
+
+创建 `backend/README.md`：
+
+```markdown
+# 人生时间线后端（Python）
+
+后期社区功能的后端：账号、时间线分享、社区浏览、数据同步。
+
+**当前状态：** 占位目录。前期（纯本地 App）不使用后端，本期不实现任何 Python 代码。
+
+**技术方向（后期）：** Python（FastAPI）+ 数据库（SQLite 起步，必要时迁移 Postgres）。
+
+**与前端的关系：** 前端 `frontend/` 的数据层（`src/utils/db.js`）预留了适配器接口，后期加同步层时在此接入。
+```
+
+- [ ] **步骤 8：Commit（从仓库根）**
 
 ```bash
+cd "D:/python/my_life_line"
 git add -A
-git commit -m "chore: 初始化 uni-app Vue3 工程脚手架与 vitest"
+git commit -m "chore: 初始化 frontend uni-app 工程与 backend 占位"
 ```
 
 ---
@@ -167,14 +192,14 @@ git commit -m "chore: 初始化 uni-app Vue3 工程脚手架与 vitest"
 ## 任务 2：纯逻辑工具模块（id / date）
 
 **文件：**
-- 创建：`src/utils/id.js`
-- 创建：`tests/id.test.js`
-- 创建：`src/utils/date.js`
-- 创建：`tests/date.test.js`
+- 创建：`frontend/src/utils/id.js`
+- 创建：`frontend/tests/id.test.js`
+- 创建：`frontend/src/utils/date.js`
+- 创建：`frontend/tests/date.test.js`
 
 - [ ] **步骤 1：编写失败的 id 测试**
 
-`tests/id.test.js`：
+`frontend/tests/id.test.js`：
 
 ```js
 import { describe, it, expect } from 'vitest'
@@ -193,12 +218,12 @@ describe('uuid', () => {
 
 - [ ] **步骤 2：运行测试确认失败**
 
-运行：`npm test`
+运行（在 frontend/ 下）：`npm test`
 预期：FAIL，报错 "Cannot find module '../src/utils/id'" 或 "uuid is not a function"。
 
 - [ ] **步骤 3：编写最少实现**
 
-`src/utils/id.js`：
+`frontend/src/utils/id.js`：
 
 ```js
 export function uuid() {
@@ -212,12 +237,12 @@ export function uuid() {
 
 - [ ] **步骤 4：运行测试确认通过**
 
-运行：`npm test`
+运行（在 frontend/ 下）：`npm test`
 预期：`id` 用例 PASS。
 
 - [ ] **步骤 5：编写失败的 date 测试**
 
-`tests/date.test.js`：
+`frontend/tests/date.test.js`：
 
 ```js
 import { describe, it, expect } from 'vitest'
@@ -257,12 +282,12 @@ describe('effectiveDate', () => {
 
 - [ ] **步骤 6：运行测试确认失败**
 
-运行：`npm test`
+运行（在 frontend/ 下）：`npm test`
 预期：FAIL，报错 "Cannot find module '../src/utils/date'"。
 
 - [ ] **步骤 7：编写最少实现**
 
-`src/utils/date.js`：
+`frontend/src/utils/date.js`：
 
 ```js
 // 日期统一存 ISO 字符串 "YYYY-MM-DD"；展示时截取年月。
@@ -289,13 +314,13 @@ export function effectiveDate(event) {
 
 - [ ] **步骤 8：运行测试确认通过**
 
-运行：`npm test`
+运行（在 frontend/ 下）：`npm test`
 预期：`date` 全部用例 PASS。
 
 - [ ] **步骤 9：Commit**
 
 ```bash
-git add src/utils/id.js src/utils/date.js tests/id.test.js tests/date.test.js
+git add frontend/src/utils/id.js frontend/src/utils/date.js frontend/tests/id.test.js frontend/tests/date.test.js
 git commit -m "feat: 添加 UUID 与日期处理纯函数（含测试）"
 ```
 
@@ -304,12 +329,12 @@ git commit -m "feat: 添加 UUID 与日期处理纯函数（含测试）"
 ## 任务 3：数据库表结构（schema）
 
 **文件：**
-- 创建：`src/utils/schema.js`
-- 创建：`tests/schema.test.js`
+- 创建：`frontend/src/utils/schema.js`
+- 创建：`frontend/tests/schema.test.js`
 
 - [ ] **步骤 1：编写失败的 schema 测试**
 
-`tests/schema.test.js`：
+`frontend/tests/schema.test.js`：
 
 ```js
 import { describe, it, expect } from 'vitest'
@@ -344,12 +369,12 @@ describe('schema', () => {
 
 - [ ] **步骤 2：运行测试确认失败**
 
-运行：`npm test`
+运行（在 frontend/ 下）：`npm test`
 预期：FAIL，报错 "Cannot find module '../src/utils/schema'"。
 
 - [ ] **步骤 3：编写最少实现**
 
-`src/utils/schema.js`：
+`frontend/src/utils/schema.js`：
 
 ```js
 // 所有实体使用 UUID 字符串主键（为将来对外分享铺路）。
@@ -417,13 +442,13 @@ export function createAllTablesSql() {
 
 - [ ] **步骤 4：运行测试确认通过**
 
-运行：`npm test`
+运行（在 frontend/ 下）：`npm test`
 预期：`schema` 全部用例 PASS。
 
 - [ ] **步骤 5：Commit**
 
 ```bash
-git add src/utils/schema.js tests/schema.test.js
+git add frontend/src/utils/schema.js frontend/tests/schema.test.js
 git commit -m "feat: 定义数据库表结构（person/timeline/event/event_image）"
 ```
 
@@ -432,14 +457,14 @@ git commit -m "feat: 定义数据库表结构（person/timeline/event/event_imag
 ## 任务 4：存储适配器（memory + sqlite）
 
 **文件：**
-- 创建：`src/utils/storage.js`
-- 创建：`tests/storage.test.js`
+- 创建：`frontend/src/utils/storage.js`
+- 创建：`frontend/tests/storage.test.js`
 
 **说明：** 适配器接口只有 6 个方法：`init(createStatements)`、`insert(table, row)`、`update(table, id, patch)`、`delete(table, id)`、`deleteWhere(table, field, value)`、`all(table)`。`db.js` 拿到全表数据后在 JS 层过滤/排序，不写 SQL 查询——这让 memory 实现零 SQL 依赖、可测。
 
 - [ ] **步骤 1：编写失败的 memory 适配器测试**
 
-`tests/storage.test.js`：
+`frontend/tests/storage.test.js`：
 
 ```js
 import { describe, it, expect, beforeEach } from 'vitest'
@@ -486,12 +511,12 @@ describe('memoryAdapter', () => {
 
 - [ ] **步骤 2：运行测试确认失败**
 
-运行：`npm test`
+运行（在 frontend/ 下）：`npm test`
 预期：FAIL，报错 "Cannot find module '../src/utils/storage'"。
 
 - [ ] **步骤 3：编写 memory 实现**
 
-`src/utils/storage.js`：
+`frontend/src/utils/storage.js`：
 
 ```js
 // 内存适配器：纯 JS、零平台依赖，用于单元测试与 H5 兜底。
@@ -532,12 +557,12 @@ export function createMemoryAdapter() {
 
 - [ ] **步骤 4：运行测试确认通过**
 
-运行：`npm test`
+运行（在 frontend/ 下）：`npm test`
 预期：`memoryAdapter` 全部用例 PASS。
 
 - [ ] **步骤 5：编写 sqlite 适配器（真机用，本环境不执行）**
 
-继续在 `src/utils/storage.js` 追加：
+继续在 `frontend/src/utils/storage.js` 追加：
 
 ```js
 // SQLite 适配器：包装 plus.sqlite，仅真机 App 环境可用。
@@ -598,13 +623,13 @@ export function resolveAdapter() {
 
 - [ ] **步骤 6：确认 sqlite 适配器通过静态检查**
 
-运行：`node -e "const s=require('fs').readFileSync('src/utils/storage.js','utf8'); console.log('storage.js ok')"`
+运行：`node -e "const s=require('fs').readFileSync('frontend/src/utils/storage.js','utf8'); console.log('storage.js ok')"`
 预期：打印 `storage.js ok`（不报语法错误；`plus` 只在函数内部引用，模块可被 Node 安全加载）。
 
 - [ ] **步骤 7：Commit**
 
 ```bash
-git add src/utils/storage.js tests/storage.test.js
+git add frontend/src/utils/storage.js frontend/tests/storage.test.js
 git commit -m "feat: 存储适配器（内存可测版 + plus.sqlite 真机版）"
 ```
 
@@ -613,14 +638,14 @@ git commit -m "feat: 存储适配器（内存可测版 + plus.sqlite 真机版�
 ## 任务 5：数据层 db.js（全部 CRUD + 搜索）
 
 **文件：**
-- 创建：`src/utils/db.js`
-- 创建：`tests/db.test.js`
+- 创建：`frontend/src/utils/db.js`
+- 创建：`frontend/tests/db.test.js`
 
 **说明：** `createDb(adapter)` 依赖注入，方便测试用 memoryAdapter。所有 `save*` 逻辑：带 id 且存在→更新；带 id 不存在→按该 id 插入（支持导入还原）；无 id→生成新 UUID。删除级联：删人物→删其时间线→删其事件→删其图片。
 
 - [ ] **步骤 1：编写失败的 db 测试**
 
-`tests/db.test.js`：
+`frontend/tests/db.test.js`：
 
 ```js
 import { describe, it, expect, beforeEach } from 'vitest'
@@ -718,12 +743,12 @@ describe('db.search', () => {
 
 - [ ] **步骤 2：运行测试确认失败**
 
-运行：`npm test`
+运行（在 frontend/ 下）：`npm test`
 预期：FAIL，报错 "Cannot find module '../src/utils/db'"。
 
 - [ ] **步骤 3：编写最少实现**
 
-`src/utils/db.js`：
+`frontend/src/utils/db.js`：
 
 ```js
 import { uuid } from './id'
@@ -831,13 +856,13 @@ export function createDb(adapter) {
 
 - [ ] **步骤 4：运行测试确认通过**
 
-运行：`npm test`
+运行（在 frontend/ 下）：`npm test`
 预期：`db` 全部用例 PASS。
 
 - [ ] **步骤 5：Commit**
 
 ```bash
-git add src/utils/db.js tests/db.test.js
+git add frontend/src/utils/db.js frontend/tests/db.test.js
 git commit -m "feat: 数据层 CRUD 与搜索（含级联删除、图片替换）"
 ```
 
@@ -846,14 +871,14 @@ git commit -m "feat: 数据层 CRUD 与搜索（含级联删除、图片替换�
 ## 任务 6：导入/导出
 
 **文件：**
-- 创建：`src/utils/export.js`
-- 创建：`tests/export.test.js`
+- 创建：`frontend/src/utils/export.js`
+- 创建：`frontend/tests/export.test.js`
 
 **说明：** `serialize(db)` 导出为嵌套 JSON（图片只记录路径引用，图片文件由后续任务的文件 I/O 处理）。`importData(db, data)` 按保存时的 id 还原（`save*` 支持指定 id 插入）。核心逻辑纯 JS 可测。
 
 - [ ] **步骤 1：编写失败的 export 测试**
 
-`tests/export.test.js`：
+`frontend/tests/export.test.js`：
 
 ```js
 import { describe, it, expect, beforeEach } from 'vitest'
@@ -917,12 +942,12 @@ describe('export/import', () => {
 
 - [ ] **步骤 2：运行测试确认失败**
 
-运行：`npm test`
+运行（在 frontend/ 下）：`npm test`
 预期：FAIL，报错 "Cannot find module '../src/utils/export'"。
 
 - [ ] **步骤 3：编写最少实现**
 
-`src/utils/export.js`：
+`frontend/src/utils/export.js`：
 
 ```js
 export const EXPORT_VERSION = 1
@@ -961,13 +986,13 @@ export async function importData(db, data) {
 
 - [ ] **步骤 4：运行测试确认通过**
 
-运行：`npm test`
+运行（在 frontend/ 下）：`npm test`
 预期：`export/import` 全部用例 PASS。
 
 - [ ] **步骤 5：Commit**
 
 ```bash
-git add src/utils/export.js tests/export.test.js
+git add frontend/src/utils/export.js frontend/tests/export.test.js
 git commit -m "feat: 导入导出（serialize/importData，按 id 幂等还原）"
 ```
 
@@ -976,14 +1001,14 @@ git commit -m "feat: 导入导出（serialize/importData，按 id 幂等还原�
 ## 任务 7：图片处理（image.js）
 
 **文件：**
-- 创建：`src/utils/image.js`
-- 创建：`tests/image.test.js`
+- 创建：`frontend/src/utils/image.js`
+- 创建：`frontend/tests/image.test.js`
 
 **说明：** 纯函数 `makeImagePaths` 可测；设备相关函数（`chooseAndStore`）真机手动验证。图片落盘策略：事件图压缩后存 `_doc/images/<eventId>_<ts>.jpg`，缩略图 `<eventId>_<ts>_thumb.jpg`，不保留原图（省空间）。
 
 - [ ] **步骤 1：编写失败的 image 测试**
 
-`tests/image.test.js`：
+`frontend/tests/image.test.js`：
 
 ```js
 import { describe, it, expect } from 'vitest'
@@ -1005,12 +1030,12 @@ describe('makeImagePaths', () => {
 
 - [ ] **步骤 2：运行测试确认失败**
 
-运行：`npm test`
+运行（在 frontend/ 下）：`npm test`
 预期：FAIL，报错 "Cannot find module '../src/utils/image'"。
 
 - [ ] **步骤 3：编写实现**
 
-`src/utils/image.js`：
+`frontend/src/utils/image.js`：
 
 ```js
 // 纯函数：生成事件图片的存储路径（原图 + 缩略图同前缀）。
@@ -1065,13 +1090,13 @@ function compressAndCopy(src, eventId) {
 
 - [ ] **步骤 4：运行测试确认通过**
 
-运行：`npm test`
+运行（在 frontend/ 下）：`npm test`
 预期：`image` 纯函数用例 PASS。
 
 - [ ] **步骤 5：Commit**
 
 ```bash
-git add src/utils/image.js tests/image.test.js
+git add frontend/src/utils/image.js frontend/tests/image.test.js
 git commit -m "feat: 图片处理（路径生成纯函数 + 选择/压缩设备接口）"
 ```
 
@@ -1080,12 +1105,12 @@ git commit -m "feat: 图片处理（路径生成纯函数 + 选择/压缩设备�
 ## 任务 8：App 启动接线
 
 **文件：**
-- 修改：`src/App.vue`（onLaunch 初始化 db）
-- 创建：`src/utils/db.js` 的默认导出单例（在任务 5 基础上追加）
+- 修改：`frontend/src/App.vue`（onLaunch 初始化 db）
+- 创建：`frontend/src/utils/db.js` 的默认导出单例（在任务 5 基础上追加）
 
 - [ ] **步骤 1：在 db.js 追加默认单例导出**
 
-在 `src/utils/db.js` 末尾追加：
+在 `frontend/src/utils/db.js` 末尾追加：
 
 ```js
 import { resolveAdapter } from './storage'
@@ -1097,7 +1122,7 @@ export const db = createDb(resolveAdapter())
 
 - [ ] **步骤 2：修改 App.vue 在启动时初始化数据库**
 
-将模板的 `src/App.vue` 改为：
+将模板的 `frontend/src/App.vue` 改为：
 
 ```vue
 <script>
@@ -1119,18 +1144,18 @@ page {
 
 - [ ] **步骤 3：验证 H5 构建**
 
-运行：`npm run build:h5`
+运行（在 frontend/ 下）：`npm run build:h5`
 预期：退出码 0。若报 `db`/`storage` 相关 import 错误，检查 `resolveAdapter` 的导入路径是否正确。
 
 - [ ] **步骤 4：确认单元测试仍全部通过**
 
-运行：`npm test`
+运行（在 frontend/ 下）：`npm test`
 预期：所有用例 PASS（`db.js` 顶层 import `resolveAdapter` 不影响 Node 测试——`plus` 未定义时走 memoryAdapter）。
 
 - [ ] **步骤 5：Commit**
 
 ```bash
-git add src/utils/db.js src/App.vue
+git add frontend/src/utils/db.js frontend/src/App.vue
 git commit -m "feat: App 启动时初始化数据层（自动选择存储适配器）"
 ```
 
@@ -1139,13 +1164,13 @@ git commit -m "feat: App 启动时初始化数据层（自动选择存储适配�
 ## 任务 9：页面——人物列表（首页 + 全局搜索）
 
 **文件：**
-- 创建：`src/pages/person-list/index.vue`
+- 创建：`frontend/src/pages/person-list/index.vue`
 
 **说明：** 首页展示人物卡片；顶部搜索框输入关键词时，切换为"跨人物事件搜索结果"，点击结果跳到事件详情。
 
 - [ ] **步骤 1：编写页面**
 
-`src/pages/person-list/index.vue`：
+`frontend/src/pages/person-list/index.vue`：
 
 ```vue
 <template>
@@ -1268,17 +1293,17 @@ export default {
 
 - [ ] **步骤 2：验证 H5 构建**
 
-运行：`npm run build:h5`
+运行（在 frontend/ 下）：`npm run build:h5`
 预期：退出码 0。
 
 - [ ] **步骤 3：手动验证（H5 预览）**
 
-运行：`npm run dev:h5` 后浏览器打开控制台 URL；预期能看到空态提示与右下角 + 按钮。此时点 + 会跳转（edit-form 页面还不存在会报路由缺失，属预期，下一步实现）。
+运行（在 frontend/ 下）：`npm run dev:h5` 后浏览器打开控制台 URL；预期能看到空态提示与右下角 + 按钮。此时点 + 会跳转（edit-form 页面还不存在会报路由缺失，属预期，下一步实现）。
 
 - [ ] **步骤 4：Commit**
 
 ```bash
-git add src/pages/person-list/index.vue
+git add frontend/src/pages/person-list/index.vue
 git commit -m "feat: 首页人物列表与全局事件搜索"
 ```
 
@@ -1287,11 +1312,11 @@ git commit -m "feat: 首页人物列表与全局事件搜索"
 ## 任务 10：页面——人物详情（时间线列表）
 
 **文件：**
-- 创建：`src/pages/person-detail/index.vue`
+- 创建：`frontend/src/pages/person-detail/index.vue`
 
 - [ ] **步骤 1：编写页面**
 
-`src/pages/person-detail/index.vue`：
+`frontend/src/pages/person-detail/index.vue`：
 
 ```vue
 <template>
@@ -1382,13 +1407,13 @@ export default {
 
 - [ ] **步骤 2：验证 H5 构建**
 
-运行：`npm run build:h5`
+运行（在 frontend/ 下）：`npm run build:h5`
 预期：退出码 0。
 
 - [ ] **步骤 3：Commit**
 
 ```bash
-git add src/pages/person-detail/index.vue
+git add frontend/src/pages/person-detail/index.vue
 git commit -m "feat: 人物详情页（时间线列表）"
 ```
 
@@ -1397,13 +1422,13 @@ git commit -m "feat: 人物详情页（时间线列表）"
 ## 任务 11：页面——通用编辑表单（人物/时间线/事件）
 
 **文件：**
-- 创建：`src/pages/edit-form/index.vue`
+- 创建：`frontend/src/pages/edit-form/index.vue`
 
 **说明：** 一个页面根据 `entityType`（person/timeline/event）渲染不同表单。事件表单：时间点/时间段切换（时间段结束日期可空=至今）、多图选择（相册+拍照）、标题、描述。
 
 - [ ] **步骤 1：编写页面**
 
-`src/pages/edit-form/index.vue`：
+`frontend/src/pages/edit-form/index.vue`：
 
 ```vue
 <template>
@@ -1619,13 +1644,13 @@ export default {
 
 - [ ] **步骤 2：验证 H5 构建**
 
-运行：`npm run build:h5`
+运行（在 frontend/ 下）：`npm run build:h5`
 预期：退出码 0。
 
 - [ ] **步骤 3：Commit**
 
 ```bash
-git add src/pages/edit-form/index.vue
+git add frontend/src/pages/edit-form/index.vue
 git commit -m "feat: 通用编辑表单（人物/时间线/事件，含时间点/时间段与多图）"
 ```
 
@@ -1634,14 +1659,14 @@ git commit -m "feat: 通用编辑表单（人物/时间线/事件，含时间点
 ## 任务 12：时间线视图 + 三个视图组件
 
 **文件：**
-- 创建：`src/components/timeline-axis.vue`
-- 创建：`src/components/timeline-grid.vue`
-- 创建：`src/components/timeline-cards.vue`
-- 创建：`src/pages/timeline/index.vue`
+- 创建：`frontend/src/components/timeline-axis.vue`
+- 创建：`frontend/src/components/timeline-grid.vue`
+- 创建：`frontend/src/components/timeline-cards.vue`
+- 创建：`frontend/src/pages/timeline/index.vue`
 
 - [ ] **步骤 1：编写视图组件一（经典时间轴）**
 
-`src/components/timeline-axis.vue`：
+`frontend/src/components/timeline-axis.vue`：
 
 ```vue
 <template>
@@ -1693,7 +1718,7 @@ export default {
 
 - [ ] **步骤 2：编写视图组件二（照片墙）**
 
-`src/components/timeline-grid.vue`：
+`frontend/src/components/timeline-grid.vue`：
 
 ```vue
 <template>
@@ -1756,7 +1781,7 @@ export default {
 
 - [ ] **步骤 3：编写视图组件三（大卡片流）**
 
-`src/components/timeline-cards.vue`：
+`frontend/src/components/timeline-cards.vue`：
 
 ```vue
 <template>
@@ -1810,7 +1835,7 @@ export default {
 
 - [ ] **步骤 4：编写时间线视图页面（三视图切换 + 添加事件）**
 
-`src/pages/timeline/index.vue`：
+`frontend/src/pages/timeline/index.vue`：
 
 ```vue
 <template>
@@ -1880,17 +1905,17 @@ export default {
 
 - [ ] **步骤 5：验证 H5 构建**
 
-运行：`npm run build:h5`
+运行（在 frontend/ 下）：`npm run build:h5`
 预期：退出码 0（若报组件路径错误，检查 `components/` 目录与 import 路径）。
 
 - [ ] **步骤 6：手动验证（H5 预览）**
 
-运行：`npm run dev:h5`；新增一个人物 → 一条时间线 → 一个事件后，回到时间线页确认三视图切换、添加事件、跳转事件详情（event-detail 未实现，点开会报路由缺失，属预期）。
+运行（在 frontend/ 下）：`npm run dev:h5`；新增一个人物 → 一条时间线 → 一个事件后，回到时间线页确认三视图切换、添加事件、跳转事件详情（event-detail 未实现，点开会报路由缺失，属预期）。
 
 - [ ] **步骤 7：Commit**
 
 ```bash
-git add src/components/timeline-axis.vue src/components/timeline-grid.vue src/components/timeline-cards.vue src/pages/timeline/index.vue
+git add frontend/src/components/timeline-axis.vue frontend/src/components/timeline-grid.vue frontend/src/components/timeline-cards.vue frontend/src/pages/timeline/index.vue
 git commit -m "feat: 时间线视图（三视图切换 + 添加事件）"
 ```
 
@@ -1899,11 +1924,11 @@ git commit -m "feat: 时间线视图（三视图切换 + 添加事件）"
 ## 任务 13：页面——事件详情
 
 **文件：**
-- 创建：`src/pages/event-detail/index.vue`
+- 创建：`frontend/src/pages/event-detail/index.vue`
 
 - [ ] **步骤 1：编写页面**
 
-`src/pages/event-detail/index.vue`：
+`frontend/src/pages/event-detail/index.vue`：
 
 ```vue
 <template>
@@ -1991,17 +2016,17 @@ export default {
 
 - [ ] **步骤 2：验证 H5 构建**
 
-运行：`npm run build:h5`
+运行（在 frontend/ 下）：`npm run build:h5`
 预期：退出码 0。
 
 - [ ] **步骤 3：手动验证完整链路（H5 预览）**
 
-运行：`npm run dev:h5`；验证：人物 → 时间线 → 事件 → 三视图 → 事件详情 → 编辑 → 删除，全链路可走通。
+运行（在 frontend/ 下）：`npm run dev:h5`；验证：人物 → 时间线 → 事件 → 三视图 → 事件详情 → 编辑 → 删除，全链路可走通。
 
 - [ ] **步骤 4：Commit**
 
 ```bash
-git add src/pages/event-detail/index.vue
+git add frontend/src/pages/event-detail/index.vue
 git commit -m "feat: 事件详情页（图片轮播 + 编辑/删除）"
 ```
 
@@ -2015,17 +2040,17 @@ git commit -m "feat: 事件详情页（图片轮播 + 编辑/删除）"
 
 - [ ] **步骤 1：全量单元测试**
 
-运行：`npm test`
+运行（在 frontend/ 下）：`npm test`
 预期：全部用例 PASS（id / date / schema / storage / db / export / image）。
 
 - [ ] **步骤 2：H5 构建验证**
 
-运行：`npm run build:h5`
+运行（在 frontend/ 下）：`npm run build:h5`
 预期：退出码 0，生成 `dist/build/h5/`。
 
 - [ ] **步骤 3：app 平台构建验证**
 
-运行：`npm run build:app`
+运行（在 frontend/ 下）：`npm run build:app`
 预期：退出码 0，生成 `unpackage/dist/build/app-plus/` 目录（内含编译后的 app 资源；打包成 APK 需在用户本机用 HBuilderX 打开工程 → 发行 → 原生 App 云打包）。
 
 - [ ] **步骤 4：更新 README 开发/真机说明**
