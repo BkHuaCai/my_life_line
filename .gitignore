@@ -1,0 +1,34 @@
+# ===== 依赖 =====
+node_modules/
+
+# ===== uni-app 构建产物 =====
+unpackage/
+dist/
+
+# ===== 编辑器/IDE =====
+.hbuilderx/
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ===== 系统文件 =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== 日志与临时文件 =====
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.local
+.tmp/
+
+# ===== 个人环境配置 =====
+*.local.*
+.env.local
+.env.*.local
+
+# ===== 头脑风暴/设计过程产物（不入库） =====
+.superpowers/
