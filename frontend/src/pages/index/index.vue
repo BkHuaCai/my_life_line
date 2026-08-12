@@ -1,46 +1,63 @@
 <template>
   <view class="page">
-    <!-- 当前用户：右上角切换 / 添加用户 -->
-    <view class="header" @click="openCurrentPerson">
-      <image v-if="currentPerson.avatar_path" class="avatar" :src="currentPerson.avatar_path" mode="aspectFill" />
-      <view v-else class="avatar placeholder">{{ currentPerson.name ? currentPerson.name[0] : '?' }}</view>
-      <view class="info">
-        <view class="name">{{ currentPerson.name }}</view>
-        <view class="sub" v-if="currentPerson.birth_date">出生：{{ currentPerson.birth_date }}</view>
-        <view class="sub" v-else>点击查看详情</view>
-      </view>
-      <view class="switch-btn" @click.stop="onHeaderAction">{{ canSwitch ? '切换' : '＋ 添加' }}</view>
+    <!-- 顶部：左侧标题，右侧用户切换下拉框 -->
+    <view class="page-header">
+      <view class="page-title">人生时间线</view>
+      <picker class="user-dropdown" mode="selector" :range="userOptions" :value="userIndex" @change="onSwitchUser">
+        <view class="dropdown-label">
+          <text class="dropdown-name">{{ currentPerson.name || '选择用户' }}</text>
+          <text class="dropdown-arrow">▾</text>
+        </view>
+      </picker>
     </view>
 
-    <!-- 主线 -->
-    <view class="section" v-if="currentPerson.id && mainTimeline.id">
-      <view class="section-title">主线</view>
-      <view class="main-card" @click="openMain">
-        <view class="main-info">
-          <view class="main-name">{{ mainTimeline.name }} <text class="main-badge">主线</text></view>
-          <view class="main-meta">
-            {{ eventCounts[mainTimeline.id] || 0 }} 个事件
-            <text v-if="needInitPoint" class="main-warn"> · 待填写初始点</text>
-          </view>
-        </view>
-        <view class="arrow">›</view>
-      </view>
+    <!-- 顶部搜索：按关键字搜索时间线内容 -->
+    <view class="search-bar">
+      <input class="search-input" v-model="keyword" placeholder="搜索时间线内容（标题/描述）" @confirm="doSearch" @input="doSearch" />
     </view>
 
-    <!-- 其他时间线 -->
-    <view class="section" v-if="currentPerson.id">
-      <view class="section-title">其他时间线</view>
-      <view class="timeline-list">
-        <view v-for="tl in otherTimelines" :key="tl.id" class="timeline-card" @click="openTimeline(tl.id)">
-          <view class="tl-name">{{ tl.name }}</view>
-          <view class="tl-meta">
-            <text class="tl-cat" v-if="tl.category">{{ tl.category }}</text>
-            <text class="tl-count">{{ eventCounts[tl.id] || 0 }} 个事件</text>
-          </view>
+    <!-- 搜索结果 -->
+    <template v-if="searching">
+      <view class="result-list">
+        <view v-for="r in results" :key="r.id" class="result-item" @click="openEvent(r.id)">
+          <view class="r-title">{{ r.title }}</view>
+          <view class="r-sub">{{ personName(r.person_id) }} · {{ timelineName(r.timeline_id) }}</view>
+          <view class="r-desc" v-if="r.description">{{ r.description }}</view>
         </view>
-        <view v-if="!otherTimelines.length" class="empty-tip" @click="addTimeline">还没有其他时间线，点此添加</view>
+        <view v-if="!results.length" class="empty">没有匹配的事件</view>
       </view>
-    </view>
+    </template>
+
+    <!-- 主线 + 其他时间线 -->
+    <template v-else>
+      <view class="section" v-if="mainTimeline.id">
+        <view class="section-title">主线</view>
+        <view class="main-card" @click="openMain">
+          <view class="main-info">
+            <view class="main-name">{{ mainTimeline.name }} <text class="main-badge">主线</text></view>
+            <view class="main-meta">
+              {{ eventCounts[mainTimeline.id] || 0 }} 个事件
+              <text v-if="needInitPoint" class="main-warn"> · 待填写初始点</text>
+            </view>
+          </view>
+          <view class="arrow">›</view>
+        </view>
+      </view>
+
+      <view class="section" v-if="currentPerson.id">
+        <view class="section-title">其他时间线</view>
+        <view class="timeline-list">
+          <view v-for="tl in otherTimelines" :key="tl.id" class="timeline-card" @click="openTimeline(tl.id)">
+            <view class="tl-name">{{ tl.name }}</view>
+            <view class="tl-meta">
+              <text class="tl-cat" v-if="tl.category">{{ tl.category }}</text>
+              <text class="tl-count">{{ eventCounts[tl.id] || 0 }} 个事件</text>
+            </view>
+          </view>
+          <view v-if="!otherTimelines.length" class="empty-tip" @click="addTimeline">还没有其他时间线，点此添加</view>
+        </view>
+      </view>
+    </template>
 
     <view class="fab" v-if="currentPerson.id" @click="addTimeline">＋ 时间线</view>
   </view>
@@ -51,15 +68,44 @@ import { db } from '../../utils/db'
 
 export default {
   data() {
-    return { currentPerson: {}, mainTimeline: {}, otherTimelines: [], eventCounts: {}, needInitPoint: false, canSwitch: false }
+    return {
+      currentPerson: {},
+      persons: [],
+      userOptions: [],
+      userIndex: 0,
+      mainTimeline: {},
+      otherTimelines: [],
+      eventCounts: {},
+      needInitPoint: false,
+      keyword: '',
+      searching: false,
+      results: [],
+      nameMap: {},
+      tlMap: {}
+    }
   },
   async onShow() {
     await this.load()
   },
   methods: {
     async load() {
-      this.currentPerson = (await db.getDefaultPerson()) || {}
-      this.canSwitch = (await db.getPersons()).length > 1
+      const persons = await db.getPersons()
+      this.persons = persons
+      // 下拉框选项：全部用户 + 末尾追加「＋ 添加用户」
+      this.userOptions = [...persons.map((p) => p.name), '＋ 添加用户']
+      this.currentPerson = (await db.getDefaultPerson()) || persons[0] || {}
+      this.userIndex = persons.findIndex((p) => p.id === this.currentPerson.id)
+      if (this.userIndex < 0) this.userIndex = 0
+      // 构建搜索结果所需的名称映射
+      const nameMap = {}
+      const tlMap = {}
+      for (const p of persons) {
+        nameMap[p.id] = p.name
+        const tls = await db.getTimelinesByPerson(p.id)
+        for (const tl of tls) tlMap[tl.id] = tl.name
+      }
+      this.nameMap = nameMap
+      this.tlMap = tlMap
       if (!this.currentPerson.id) {
         this.mainTimeline = {}
         this.otherTimelines = []
@@ -73,35 +119,36 @@ export default {
       for (const tl of tls) counts[tl.id] = (await db.getEventsByTimeline(tl.id)).length
       this.eventCounts = counts
       this.needInitPoint = !!this.mainTimeline.id && (counts[this.mainTimeline.id] || 0) === 0
-      uni.setNavigationBarTitle({ title: this.currentPerson.name || '人生时间线' })
     },
-    openCurrentPerson() {
-      if (this.currentPerson.id) {
-        uni.navigateTo({ url: `/pages/person-detail/index?personId=${this.currentPerson.id}` })
+    onSwitchUser(e) {
+      const idx = Number(e.detail.value)
+      if (idx < this.persons.length) {
+        const target = this.persons[idx]
+        if (target.id !== this.currentPerson.id) {
+          db.setDefaultPerson(target.id).then(() => this.load())
+        }
+      } else {
+        // 最后一个选项：添加用户
+        uni.navigateTo({ url: '/pages/edit-form/index?entityType=person' })
       }
     },
-    onHeaderAction() {
-      if (this.canSwitch) this.switchUser()
-      else this.addPerson()
+    async doSearch() {
+      const k = (this.keyword || '').trim()
+      if (!k) {
+        this.searching = false
+        return
+      }
+      this.searching = true
+      this.results = await db.searchEvents(k)
     },
-    addPerson() {
-      uni.navigateTo({ url: '/pages/edit-form/index?entityType=person' })
+    personName(id) {
+      return this.nameMap[id] || ''
     },
-    async switchUser() {
-      const persons = await db.getPersons()
-      const others = persons.filter((p) => p.id !== this.currentPerson.id)
-      const items = [...others.map((p) => p.name), '＋ 添加用户']
-      uni.showActionSheet({
-        itemList: items,
-        success: async (res) => {
-          if (res.tapIndex < others.length) {
-            await db.setDefaultPerson(others[res.tapIndex].id)
-          } else {
-            uni.navigateTo({ url: '/pages/edit-form/index?entityType=person' })
-          }
-          await this.load()
-        }
-      })
+    timelineName(id) {
+      return this.tlMap[id] || ''
+    },
+    openEvent(id) {
+      uni.navigateTo({ url: `/pages/event-detail/index?eventId=${id}` })
     },
     openMain() {
       if (this.mainTimeline.id) {
@@ -121,13 +168,24 @@ export default {
 
 <style scoped>
 .page { padding: 24rpx; padding-bottom: 140rpx; }
-.header { display: flex; align-items: center; background: #fff; border-radius: 16rpx; padding: 32rpx; box-shadow: 0 2rpx 8rpx rgba(0,0,0,.06); }
-.avatar { width: 100rpx; height: 100rpx; border-radius: 50%; }
-.avatar.placeholder { background: #ffb400; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 40rpx; }
-.info { flex: 1; margin-left: 24rpx; }
-.name { font-size: 36rpx; font-weight: 700; }
-.sub { font-size: 24rpx; color: #999; margin-top: 6rpx; }
-.switch-btn { padding: 12rpx 28rpx; border-radius: 32rpx; background: #fff4d6; color: #b8860b; font-size: 26rpx; }
+
+/* 顶部：左侧标题，右侧用户切换下拉框 */
+.page-header { display: flex; justify-content: space-between; align-items: center; padding: 8rpx 0 24rpx; }
+.page-title { font-size: 40rpx; font-weight: 700; }
+.dropdown-label { display: flex; align-items: center; background: #fff4d6; color: #b8860b; border-radius: 32rpx; padding: 10rpx 24rpx; font-size: 26rpx; }
+.dropdown-arrow { margin-left: 8rpx; font-size: 22rpx; }
+
+/* 搜索 */
+.search-bar { margin-top: 8rpx; }
+.search-input { background: #fff; border-radius: 12rpx; padding: 14rpx 20rpx; font-size: 28rpx; height: 76rpx; min-height: 76rpx; }
+
+/* 搜索结果 */
+.result-list { margin-top: 24rpx; display: flex; flex-direction: column; gap: 16rpx; }
+.result-item { background: #fff; border-radius: 16rpx; padding: 20rpx; }
+.r-title { font-size: 30rpx; font-weight: 600; }
+.r-sub { font-size: 24rpx; color: #999; margin-top: 6rpx; }
+.r-desc { font-size: 26rpx; color: #666; margin-top: 8rpx; }
+.empty { text-align: center; color: #bbb; padding: 60rpx 0; }
 
 .section { margin-top: 32rpx; }
 .section-title { font-size: 32rpx; font-weight: 600; margin-bottom: 20rpx; }
