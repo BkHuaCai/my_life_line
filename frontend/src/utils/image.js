@@ -51,7 +51,11 @@ export function chooseAvatar() {
       sourceType: ['album', 'camera'],
       success: async (res) => {
         const src = res.tempFilePaths[0]
-        const destPath = makeAvatarPath()
+        if (typeof uni.compressImage !== 'function') {
+          // H5 不支持 compressImage，直接使用原临时路径（开发用）
+          resolve(src)
+          return
+        }
         // 压缩并复制到目标路径
         uni.compressImage({
           src,
@@ -80,6 +84,11 @@ export function chooseAvatar() {
 
 function compressAndCopy(src, eventId) {
   return new Promise((resolve, reject) => {
+    if (typeof uni.compressImage !== 'function') {
+      // H5 不支持 compressImage，原图与缩略图均使用原临时路径（开发用）
+      resolve({ imagePath: src, thumbPath: src })
+      return
+    }
     const paths = makeImagePaths(eventId)
     const next = (step) => {
       if (step === 0) {
