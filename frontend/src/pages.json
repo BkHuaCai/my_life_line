@@ -1,0 +1,15 @@
+{
+  "pages": [
+    { "path": "pages/person-list/index", "style": { "navigationBarTitleText": "人生时间线" } },
+    { "path": "pages/person-detail/index", "style": { "navigationBarTitleText": "人物" } },
+    { "path": "pages/timeline/index", "style": { "navigationBarTitleText": "时间线" } },
+    { "path": "pages/event-detail/index", "style": { "navigationBarTitleText": "事件" } },
+    { "path": "pages/edit-form/index", "style": { "navigationBarTitleText": "编辑" } }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "人生时间线",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F8F8F8"
+  }
+}
