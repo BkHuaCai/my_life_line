@@ -38,16 +38,35 @@ Person 人物（UUID）
 
 ## 开发
 
+仓库为前后端一体 monorepo：前端 `frontend/`（uni-app），后端 `backend/`（后期社区功能占位）。以下命令均在 `frontend/` 目录内执行。
+
 ```bash
+cd frontend
+
 # 安装依赖
 npm install
 
 # 运行（H5 调试）
 npm run dev:h5
 
-# 构建安卓
+# 构建安卓资源
 npm run build:app
 ```
+
+## 测试
+
+```bash
+npm test        # 单元测试（vitest，覆盖纯逻辑与数据层）
+npm run dev:h5  # H5 调试
+```
+
+## 真机打包（APK）
+
+本仓库无法直接出 APK，需在 Windows 上用 HBuilderX 打开本项目：
+
+1. HBuilderX 菜单 → 文件 → 打开目录 → 选择项目根目录
+2. 运行 → 运行到手机或模拟器（真机需开启 USB 调试）
+3. 发行 → 原生 App 云打包（需 DCloud 账号）
 
 详细设计见 `docs/superpowers/specs/2026-08-12-life-timeline-design.md`。
 
