@@ -1,6 +1,6 @@
 <template>
   <view class="page">
-    <!-- 当前用户：右上角切换其他用户 -->
+    <!-- 当前用户：右上角切换 / 添加用户 -->
     <view class="header" @click="openCurrentPerson">
       <image v-if="currentPerson.avatar_path" class="avatar" :src="currentPerson.avatar_path" mode="aspectFill" />
       <view v-else class="avatar placeholder">{{ currentPerson.name ? currentPerson.name[0] : '?' }}</view>
@@ -9,7 +9,7 @@
         <view class="sub" v-if="currentPerson.birth_date">出生：{{ currentPerson.birth_date }}</view>
         <view class="sub" v-else>点击查看详情</view>
       </view>
-      <view class="switch-btn" @click.stop="switchUser">切换</view>
+      <view class="switch-btn" @click.stop="onHeaderAction">{{ canSwitch ? '切换' : '＋ 添加' }}</view>
     </view>
 
     <!-- 主线 -->
@@ -51,7 +51,7 @@ import { db } from '../../utils/db'
 
 export default {
   data() {
-    return { currentPerson: {}, mainTimeline: {}, otherTimelines: [], eventCounts: {}, needInitPoint: false }
+    return { currentPerson: {}, mainTimeline: {}, otherTimelines: [], eventCounts: {}, needInitPoint: false, canSwitch: false }
   },
   async onShow() {
     await this.load()
@@ -59,6 +59,7 @@ export default {
   methods: {
     async load() {
       this.currentPerson = (await db.getDefaultPerson()) || {}
+      this.canSwitch = (await db.getPersons()).length > 1
       if (!this.currentPerson.id) {
         this.mainTimeline = {}
         this.otherTimelines = []
@@ -79,17 +80,25 @@ export default {
         uni.navigateTo({ url: `/pages/person-detail/index?personId=${this.currentPerson.id}` })
       }
     },
+    onHeaderAction() {
+      if (this.canSwitch) this.switchUser()
+      else this.addPerson()
+    },
+    addPerson() {
+      uni.navigateTo({ url: '/pages/edit-form/index?entityType=person' })
+    },
     async switchUser() {
       const persons = await db.getPersons()
       const others = persons.filter((p) => p.id !== this.currentPerson.id)
-      if (!others.length) {
-        uni.showToast({ title: '暂无其他用户，可在「我的」页添加', icon: 'none' })
-        return
-      }
+      const items = [...others.map((p) => p.name), '＋ 添加用户']
       uni.showActionSheet({
-        itemList: others.map((p) => p.name),
+        itemList: items,
         success: async (res) => {
-          await db.setDefaultPerson(others[res.tapIndex].id)
+          if (res.tapIndex < others.length) {
+            await db.setDefaultPerson(others[res.tapIndex].id)
+          } else {
+            uni.navigateTo({ url: '/pages/edit-form/index?entityType=person' })
+          }
           await this.load()
         }
       })
