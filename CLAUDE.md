@@ -1,78 +1,45 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for AI coding agents working in this repository. This is the only project-instruction file the agent loads (no `.atomcode.md` / `AGENTS.md` exists).
 
 ## Project Overview
 
-A **local-first Android app** for recording life timeline events (time, photos, text). Built with uni-app (Vue 3), compiles to native Android APK. Data is stored locally in SQLite with no network dependency.
+A **local-first Android app** for recording life timeline events (time, photos, text). Built with uni-app (Vue 3), compiles to native Android APK. Data is stored locally in SQLite with no network dependency. The repo is a frontend/backend monorepo; only the frontend is implemented so far.
 
-## Common Commands
+## Repository Layout
 
-All commands run from the `frontend/` directory:
+- `frontend/` — the uni-app (Vue 3) app. All npm commands run from here.
+- `backend/` — placeholder for a future FastAPI sync/community server. No Python code yet; don't implement it in this phase.
+- `docs/superpowers/` — design spec + plan (`specs/2026-08-12-life-timeline-design.md` is the authoritative design doc).
+
+## Common Commands (from `frontend/`)
 
 ```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Run H5 development server (for debugging)
-npm run dev:h5
-
-# Build Android resources (outputs to dist/)
-npm run build:app
-
-# Run unit tests
-npm test
+npm install        # install dependencies
+npm run dev:h5     # H5 dev server (debugging)
+npm run build:app  # build Android resources → dist/
+npm test           # vitest unit tests (Node env, no DOM)
 ```
 
-**APK Building Note**: This repository produces Android resources only. To generate an APK, use HBuilderX on Windows:
-1. File → Open directory → Select project root
-2. Run → Run to phone/emulator (USB debugging enabled)
-3. Release → Native App Cloud Build (requires DCloud account)
+No lint or format tooling is configured (no ESLint/Prettier config anywhere) — `npm test` is the only automated check.
+
+**APK**: this repo produces Android resources only. Building an APK requires HBuilderX on Windows: open the project root → Run to device, or Release → Native App Cloud Build (needs a DCloud account).
 
 ## Architecture
 
-### Technology Stack
-- **Frontend**: uni-app (Vue 3) → compiled to Android App
-- **Storage**: SQLite via `plus.sqlite` API (native) or in-memory adapter (tests/H5)
-- **Images**: App private directory via `plus.io`, stored as compressed + thumbnail
+- **Data layer**: all CRUD goes through `src/utils/db.js` (`createDb(adapter)`); a module-level `db = createDb(resolveAdapter())` singleton is created at import time.
+- **Storage adapter**: `src/utils/storage.js` — `createSqliteAdapter()` wraps `plus.sqlite` (App only; DB `my_life_line` at path `_doc`), `createMemoryAdapter()` backs tests/H5. `resolveAdapter()` detects the environment via the global `plus`; code touching `plus.*` crashes outside a real App runtime.
+- **Images**: `image.js` writes compressed + thumbnail copies into the App private dir via `plus.io`.
+- **Schema**: `schema.js` defines tables `person`, `timeline`, `event`, `event_image`. All entities use UUID PKs (`id.js`). Events are `date_type = 'point'` or `'range'` (`date_end = null` means "ongoing").
+- **Pages**: every page must be registered in `src/pages.json` (including tabBar entries, whose icons are SVGs). Pages live at `src/pages/<name>/index.vue`; shared views in `src/components/`.
 
-### Data Model
-All entities use **UUID primary keys** for future sharing/community features:
+## Tests
 
-```
-Person (UUID) → Timeline (UUID) → Event (UUID)
-                                      ├── EventImage (multiple per event)
-                                      ├── date_point OR (date_start + date_end)
-                                      ├── title, description
-                                      └── cover_image_path
-```
+`npm test` (vitest, `environment: 'node'`) covers only pure logic in `src/utils/` (date, db, export, id, image, schema, storage). No component/page tests exist; `passWithNoTests: true` means an empty run still exits 0.
 
-Key tables: `person`, `timeline`, `event`, `event_image`
+## Gotchas
 
-### Code Structure
-```
-frontend/src/
-├── pages/           # Page components (person-list, person-detail, timeline, event-detail, edit-form)
-├── components/      # Timeline view components (timeline-axis, timeline-cards, timeline-grid)
-├── utils/           # Core utilities
-│   ├── db.js        # Data layer abstraction - all CRUD operations go through here
-│   ├── storage.js   # Storage adapter (SQLite for app, in-memory for tests/H5)
-│   ├── schema.js    # SQL table definitions
-│   ├── date.js      # Date utilities
-│   ├── image.js     # Image compression/management
-│   ├── export.js    # Import/export logic
-│   └── id.js        # UUID generation
-└── tests/           # Vitest unit tests
-```
-
-### Key Design Patterns
-
-1. **Storage Adapter Pattern**: `utils/storage.js` provides `createMemoryAdapter()` for tests/H5 and `createSqliteAdapter()` for the app. The `resolveAdapter()` function detects the environment automatically. This enables full offline functionality while keeping tests runnable without native APIs.
-
-2. **Data Layer Isolation**: All database operations go through `db.js`. This was designed for future sync capabilities — adding cloud sync would only require modifying `db.js` internals, not the UI layer.
-
-3. **UUID for Extensibility**: All entities use UUIDs instead of auto-increment IDs to prevent collisions when sharing timelines between users in future community features.
-
-4. **Date Type Support**: Events can be either a single time point (`date_type = 'point'`) or a range with optional "ongoing" end date (`date_type = 'range'`, `date_end = null` means "present").
+- The root-level `package-lock.json` (91 bytes) is a leftover stub — ignore it and never `npm install` at the repo root; real dependencies live under `frontend/`.
+- `frontend/package-lock.json` is gitignored yet tracked, so `git status` shows it modified after any install — that's expected, don't revert it.
+- SQL values are escaped manually via `esc()` in `storage.js` (no parameter binding); keep new SQL flowing through the same escaping.
+- `person.is_default` marks the default user (the "我的" tab); `db.js` auto-promotes the first created person and clears prior defaults.
