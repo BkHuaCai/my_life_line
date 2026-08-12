@@ -1,6 +1,7 @@
 import { uuid } from './id'
 import { createAllTablesSql } from './schema'
 import { effectiveDate } from './date'
+import { resolveAdapter } from './storage'
 
 export function createDb(adapter) {
   const now = () => new Date().toISOString()
@@ -99,3 +100,6 @@ export function createDb(adapter) {
     }
   }
 }
+
+// 应用级默认单例：App 端用 plus.sqlite，其余（H5/测试/Node）用内存适配器。
+export const db = createDb(resolveAdapter())

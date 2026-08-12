@@ -1,17 +1,15 @@
 <script>
+import { db } from './utils/db'
 export default {
-  onLaunch: function () {
-    console.log('App Launch')
-  },
-  onShow: function () {
-    console.log('App Show')
-  },
-  onHide: function () {
-    console.log('App Hide')
-  },
+  onLaunch() {
+    db.init().catch((e) => console.error('db init fail', e))
+  }
 }
 </script>
 
 <style>
-/*每个页面公共css */
+/* 全局基础样式 */
+page {
+  background-color: #f8f8f8;
+}
 </style>
