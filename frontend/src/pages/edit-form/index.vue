@@ -192,7 +192,7 @@ export default {
 .page { padding: 24rpx; }
 .field { margin-bottom: 32rpx; }
 .label { font-size: 26rpx; color: #888; display: block; margin-bottom: 12rpx; }
-.input { background: #fff; border-radius: 12rpx; padding: 20rpx; font-size: 30rpx; width: 100%; box-sizing: border-box; }
+.input { background: #fff; border-radius: 12rpx; padding: 20rpx; font-size: 30rpx; width: 100%; box-sizing: border-box; height: 84rpx; min-height: 84rpx; }
 .textarea { min-height: 160rpx; }
 .picker { background: #fff; border-radius: 12rpx; padding: 20rpx; font-size: 30rpx; color: #333; }
 .seg { display: flex; gap: 16rpx; }

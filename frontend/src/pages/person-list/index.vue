@@ -97,7 +97,7 @@ export default {
 <style scoped>
 .page { padding: 16rpx 24rpx 140rpx; }
 .search-bar { padding: 8rpx 0 16rpx; }
-.search-input { background: #fff; border-radius: 12rpx; padding: 14rpx 20rpx; font-size: 28rpx; }
+.search-input { background: #fff; border-radius: 12rpx; padding: 14rpx 20rpx; font-size: 28rpx; height: 76rpx; min-height: 76rpx; }
 .list { display: flex; flex-direction: column; gap: 20rpx; }
 .card { display: flex; align-items: center; background: #fff; border-radius: 16rpx; padding: 24rpx; box-shadow: 0 2rpx 8rpx rgba(0,0,0,.06); }
 .avatar { width: 88rpx; height: 88rpx; border-radius: 50%; }
