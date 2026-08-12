@@ -29,6 +29,29 @@
             <view class="picker">{{ initForm.date || '选择日期' }}</view>
           </picker>
         </view>
+        <view class="field">
+          <text class="label">时间精度（可选）</text>
+          <view class="pseg">
+            <view :class="['pseg-item', initForm.time_precision === 'none' ? 'active' : '']" @click="initForm.time_precision = 'none'">仅日期</view>
+            <view :class="['pseg-item', initForm.time_precision === 'hour' ? 'active' : '']" @click="initForm.time_precision = 'hour'">到时</view>
+            <view :class="['pseg-item', initForm.time_precision === 'minute' ? 'active' : '']" @click="initForm.time_precision = 'minute'">到分</view>
+            <view :class="['pseg-item', initForm.time_precision === 'second' ? 'active' : '']" @click="initForm.time_precision = 'second'">到秒</view>
+          </view>
+        </view>
+        <view class="field" v-if="initForm.time_precision !== 'none'">
+          <text class="label">时间</text>
+          <view class="time-row">
+            <picker class="time-picker" mode="selector" :range="hourRange" :value="initForm.hour" @change="(e) => (initForm.hour = Number(e.detail.value))">
+              <view class="picker">{{ pad(initForm.hour) }} 时</view>
+            </picker>
+            <picker v-if="initForm.time_precision === 'minute' || initForm.time_precision === 'second'" class="time-picker" mode="selector" :range="minuteRange" :value="initForm.minute" @change="(e) => (initForm.minute = Number(e.detail.value))">
+              <view class="picker">{{ pad(initForm.minute) }} 分</view>
+            </picker>
+            <picker v-if="initForm.time_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="initForm.second" @change="(e) => (initForm.second = Number(e.detail.value))">
+              <view class="picker">{{ pad(initForm.second) }} 秒</view>
+            </picker>
+          </view>
+        </view>
         <button class="save-btn" @click="saveInitialPoint">保存初始点</button>
       </view>
     </view>
@@ -37,6 +60,7 @@
 
 <script>
 import { db } from '../../utils/db'
+import { buildEventDate } from '../../utils/date'
 import timelineAxis from '../../components/timeline-axis.vue'
 import timelineGrid from '../../components/timeline-grid.vue'
 import timelineCards from '../../components/timeline-cards.vue'
@@ -50,7 +74,10 @@ export default {
       events: [],
       viewMode: 'axis',
       needInitialPoint: false,
-      initForm: { title: '', date: '' }
+      initForm: { title: '', date: '', time_precision: 'none', hour: 0, minute: 0, second: 0 },
+      hourRange: Array.from({ length: 24 }, (_, i) => i),
+      minuteRange: Array.from({ length: 60 }, (_, i) => i),
+      secondRange: Array.from({ length: 60 }, (_, i) => i)
     }
   },
   async onLoad(options) {
@@ -74,6 +101,9 @@ export default {
       this.viewMode = m
       uni.setStorageSync('timeline_view_mode', m)
     },
+    pad(n) {
+      return String(n == null ? 0 : n).padStart(2, '0')
+    },
     addEvent() {
       uni.navigateTo({ url: `/pages/edit-form/index?entityType=event&timelineId=${this.timelineId}` })
     },
@@ -88,9 +118,9 @@ export default {
         title,
         description: null,
         date_type: 'point',
-        date_point: this.initForm.date
+        date_point: buildEventDate(this.initForm.date, this.initForm.time_precision, this.initForm.hour, this.initForm.minute, this.initForm.second)
       })
-      this.initForm = { title: '', date: '' }
+      this.initForm = { title: '', date: '', time_precision: 'none', hour: 0, minute: 0, second: 0 }
       await this.load()
     }
   }
@@ -115,4 +145,10 @@ export default {
 .input { background: #f5f5f5; border-radius: 12rpx; padding: 20rpx; font-size: 30rpx; width: 100%; box-sizing: border-box; height: 84rpx; min-height: 84rpx; }
 .picker { background: #f5f5f5; border-radius: 12rpx; padding: 20rpx; font-size: 30rpx; color: #333; }
 .save-btn { margin-top: 16rpx; background: #ffb400; color: #fff; font-size: 32rpx; border-radius: 48rpx; }
+.pseg { display: flex; gap: 16rpx; }
+.pseg-item { flex: 1; text-align: center; padding: 16rpx; border-radius: 12rpx; background: #f5f5f5; color: #666; font-size: 26rpx; }
+.pseg-item.active { background: #ffb400; color: #fff; }
+.time-row { display: flex; gap: 16rpx; }
+.time-picker { flex: 1; }
+.time-picker .picker { text-align: center; }
 </style>

@@ -23,6 +23,29 @@
         </picker>
       </view>
       <view class="field">
+        <text class="label">出生时间精度（可选）</text>
+        <view class="seg">
+          <view :class="['seg-item', form.birth_precision === 'none' ? 'active' : '']" @click="setBirthPrecision('none')">仅日期</view>
+          <view :class="['seg-item', form.birth_precision === 'hour' ? 'active' : '']" @click="setBirthPrecision('hour')">到时</view>
+          <view :class="['seg-item', form.birth_precision === 'minute' ? 'active' : '']" @click="setBirthPrecision('minute')">到分</view>
+          <view :class="['seg-item', form.birth_precision === 'second' ? 'active' : '']" @click="setBirthPrecision('second')">到秒</view>
+        </view>
+      </view>
+      <view class="field" v-if="form.birth_precision !== 'none'">
+        <text class="label">出生时间</text>
+        <view class="time-row">
+          <picker class="time-picker" mode="selector" :range="hourRange" :value="form.birth_hour" @change="(e) => (form.birth_hour = Number(e.detail.value))">
+            <view class="picker">{{ pad(form.birth_hour) }} 时</view>
+          </picker>
+          <picker v-if="form.birth_precision === 'minute' || form.birth_precision === 'second'" class="time-picker" mode="selector" :range="minuteRange" :value="form.birth_minute" @change="(e) => (form.birth_minute = Number(e.detail.value))">
+            <view class="picker">{{ pad(form.birth_minute) }} 分</view>
+          </picker>
+          <picker v-if="form.birth_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="form.birth_second" @change="(e) => (form.birth_second = Number(e.detail.value))">
+            <view class="picker">{{ pad(form.birth_second) }} 秒</view>
+          </picker>
+        </view>
+      </view>
+      <view class="field">
         <text class="label">备注</text>
         <textarea class="input textarea" v-model="form.note" placeholder="一句话介绍" />
       </view>
@@ -64,6 +87,31 @@
         </picker>
       </view>
 
+      <view class="field" v-if="form.date_type === 'point'">
+        <text class="label">时间精度（可选）</text>
+        <view class="seg">
+          <view :class="['seg-item', form.time_precision === 'none' ? 'active' : '']" @click="setPrecision('none')">仅日期</view>
+          <view :class="['seg-item', form.time_precision === 'hour' ? 'active' : '']" @click="setPrecision('hour')">到时</view>
+          <view :class="['seg-item', form.time_precision === 'minute' ? 'active' : '']" @click="setPrecision('minute')">到分</view>
+          <view :class="['seg-item', form.time_precision === 'second' ? 'active' : '']" @click="setPrecision('second')">到秒</view>
+        </view>
+      </view>
+
+      <view class="field" v-if="form.date_type === 'point' && form.time_precision !== 'none'">
+        <text class="label">时间</text>
+        <view class="time-row">
+          <picker class="time-picker" mode="selector" :range="hourRange" :value="form.hour" @change="(e) => (form.hour = Number(e.detail.value))">
+            <view class="picker">{{ pad(form.hour) }} 时</view>
+          </picker>
+          <picker v-if="form.time_precision === 'minute' || form.time_precision === 'second'" class="time-picker" mode="selector" :range="minuteRange" :value="form.minute" @change="(e) => (form.minute = Number(e.detail.value))">
+            <view class="picker">{{ pad(form.minute) }} 分</view>
+          </picker>
+          <picker v-if="form.time_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="form.second" @change="(e) => (form.second = Number(e.detail.value))">
+            <view class="picker">{{ pad(form.second) }} 秒</view>
+          </picker>
+        </view>
+      </view>
+
       <template v-else>
         <view class="field">
           <text class="label">开始日期</text>
@@ -103,6 +151,7 @@
 <script>
 import { db } from '../../utils/db'
 import { chooseAndStoreImages, chooseAvatar } from '../../utils/image'
+import { parseEventDate, buildEventDate } from '../../utils/date'
 
 export default {
   data() {
@@ -115,6 +164,10 @@ export default {
         // person
         name: '',
         birth_date: '',
+        birth_precision: 'none',
+        birth_hour: 0,
+        birth_minute: 0,
+        birth_second: 0,
         note: '',
         avatar_path: '',
         // timeline
@@ -127,8 +180,15 @@ export default {
         date_point: '',
         date_start: '',
         date_end: '',
+        time_precision: 'none',
+        hour: 0,
+        minute: 0,
+        second: 0,
         images: []
-      }
+      },
+      hourRange: Array.from({ length: 24 }, (_, i) => i),
+      minuteRange: Array.from({ length: 60 }, (_, i) => i),
+      secondRange: Array.from({ length: 60 }, (_, i) => i)
     }
   },
   async onLoad(options) {
@@ -144,19 +204,36 @@ export default {
     async loadForm() {
       if (this.entityType === 'person') {
         const p = await db.getPerson(this.id)
-        this.form = { name: p.name, birth_date: p.birth_date || '', note: p.note || '', avatar_path: p.avatar_path || '' }
+        const { date, time, precision } = parseEventDate(p.birth_date)
+        const [hh = 0, mm = 0, ss = 0] = time ? time.split(':').map(Number) : []
+        this.form = {
+          name: p.name,
+          birth_date: date || '',
+          birth_precision: precision,
+          birth_hour: hh,
+          birth_minute: mm,
+          birth_second: ss,
+          note: p.note || '',
+          avatar_path: p.avatar_path || ''
+        }
       } else if (this.entityType === 'timeline') {
         const tl = await db.getTimeline(this.id)
         this.form = { name: tl.name, category: tl.category || '', is_main: tl.is_main || 0 }
       } else {
         const ev = await db.getEvent(this.id)
+        const { date, time, precision } = parseEventDate(ev.date_point)
+        const [hh = 0, mm = 0, ss = 0] = time ? time.split(':').map(Number) : []
         this.form = {
           title: ev.title,
           description: ev.description || '',
           date_type: ev.date_type,
-          date_point: ev.date_point || '',
+          date_point: date || '',
           date_start: ev.date_start || '',
           date_end: ev.date_end || '',
+          time_precision: precision,
+          hour: hh,
+          minute: mm,
+          second: ss,
           images: (await db.getImagesByEvent(ev.id)).map((im) => ({ preview: im.thumb_path || im.image_path, _path: im }))
         }
       }
@@ -171,6 +248,15 @@ export default {
         this.form.avatar_path = path
       }).catch(() => uni.showToast({ title: '选择头像失败', icon: 'none' }))
     },
+    setPrecision(p) {
+      this.form.time_precision = p
+    },
+    setBirthPrecision(p) {
+      this.form.birth_precision = p
+    },
+    pad(n) {
+      return String(n == null ? 0 : n).padStart(2, '0')
+    },
     removeImage(i) {
       this.form.images.splice(i, 1)
     },
@@ -181,7 +267,7 @@ export default {
       const { entityType, form } = this
       if (entityType === 'person') {
         if (!form.name) return uni.showToast({ title: '请填写姓名', icon: 'none' })
-        await db.savePerson({ id: this.id || undefined, name: form.name, birth_date: form.birth_date || null, note: form.note || null, avatar_path: form.avatar_path || null })
+        await db.savePerson({ id: this.id || undefined, name: form.name, birth_date: buildEventDate(form.birth_date, form.birth_precision, form.birth_hour, form.birth_minute, form.birth_second) || null, note: form.note || null, avatar_path: form.avatar_path || null })
       } else if (entityType === 'timeline') {
         if (!form.name) return uni.showToast({ title: '请填写名称', icon: 'none' })
         await db.saveTimeline({ id: this.id || undefined, person_id: this.personId, name: form.name, category: form.category || null, is_private: 1, is_main: form.is_main || 0 })
@@ -193,7 +279,7 @@ export default {
           title: form.title,
           description: form.description || null,
           date_type: form.date_type,
-          date_point: form.date_type === 'point' ? form.date_point || null : null,
+          date_point: form.date_type === 'point' ? buildEventDate(form.date_point, form.time_precision, form.hour, form.minute, form.second) || null : null,
           date_start: form.date_type === 'range' ? form.date_start || null : null,
           date_end: form.date_type === 'range' ? form.date_end || null : null
         }
@@ -215,6 +301,9 @@ export default {
 .seg { display: flex; gap: 16rpx; }
 .seg-item { flex: 1; text-align: center; padding: 18rpx; border-radius: 12rpx; background: #fff; color: #666; }
 .seg-item.active { background: #ffb400; color: #fff; }
+.time-row { display: flex; gap: 16rpx; }
+.time-picker { flex: 1; }
+.time-picker .picker { text-align: center; }
 .img-grid { display: flex; flex-wrap: wrap; gap: 16rpx; }
 .img-wrap { position: relative; width: 180rpx; height: 180rpx; }
 .img { width: 180rpx; height: 180rpx; border-radius: 12rpx; }
