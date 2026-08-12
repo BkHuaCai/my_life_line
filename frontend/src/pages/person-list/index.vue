@@ -19,21 +19,20 @@
       <view class="arrow">›</view>
     </view>
 
-    <!-- 用户列表（可切换） -->
+    <!-- 我管理的人（点击进入详情，不再切换） -->
     <view class="section">
       <view class="section-header">
-        <text class="section-title">切换用户</text>
+        <text class="section-title">我管理的人</text>
         <text class="add-user" @click="addPerson">＋ 添加</text>
       </view>
       <view class="user-list">
-        <view v-for="p in persons" :key="p.id" class="user-card" :class="{ active: p.id === currentPerson.id }" @click="switchPerson(p)">
+        <view v-for="p in persons" :key="p.id" class="user-card" @click="openPerson(p.id)">
           <image v-if="p.avatar_path" class="avatar-sm" :src="p.avatar_path" mode="aspectFill" />
           <view v-else class="avatar-sm placeholder">{{ p.name ? p.name[0] : '?' }}</view>
           <view class="user-info">
-            <view class="user-name">{{ p.name }}</view>
+            <view class="user-name">{{ p.name }}<text v-if="p.is_default === 1" class="me-badge">我</text></view>
             <view class="user-meta">{{ timelineCounts[p.id] || 0 }} 条时间线</view>
           </view>
-          <view class="check-icon" v-if="p.is_default === 1">✓</view>
         </view>
         <view v-if="!persons.length" class="empty-tip">还没有用户，点击添加</view>
       </view>
@@ -94,12 +93,6 @@ export default {
       // 获取所有用户
       this.persons = await db.getPersons()
 
-      // 如果没有默认用户但有用户，设置第一个为默认
-      if (!this.currentPerson.id && this.persons.length > 0) {
-        await db.setDefaultPerson(this.persons[0].id)
-        this.currentPerson = this.persons[0]
-      }
-
       // 获取每个用户的时间线数量
       const counts = {}
       const nameMap = {}
@@ -114,10 +107,8 @@ export default {
       this.nameMap = nameMap
       this.tlMap = tlMap
     },
-    async switchPerson(p) {
-      await db.setDefaultPerson(p.id)
-      this.currentPerson = p
-      uni.showToast({ title: `已切换到 ${p.name}`, icon: 'none' })
+    openPerson(id) {
+      uni.navigateTo({ url: `/pages/person-detail/index?personId=${id}` })
     },
     openCurrentPerson() {
       if (this.currentPerson.id) {
@@ -224,6 +215,7 @@ export default {
 .avatar-sm.placeholder { background: #ffb400; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 28rpx; }
 .user-info { flex: 1; margin-left: 16rpx; }
 .user-name { font-size: 28rpx; font-weight: 600; }
+.me-badge { display: inline-block; background: #ffb400; color: #fff; font-size: 20rpx; padding: 2rpx 10rpx; border-radius: 10rpx; margin-left: 10rpx; }
 .user-meta { font-size: 22rpx; color: #999; }
 .check-icon { color: #ffb400; font-weight: 600; font-size: 28rpx; }
 .empty-tip { text-align: center; color: #bbb; padding: 24rpx; }

@@ -20,6 +20,7 @@ export const TABLES = {
       name: 'TEXT NOT NULL',
       category: 'TEXT',
       is_private: 'INTEGER DEFAULT 1',
+      is_main: 'INTEGER DEFAULT 0',
       created_at: 'TEXT'
     }
   },

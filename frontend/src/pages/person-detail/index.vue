@@ -21,9 +21,10 @@
           <view class="tl-sub">{{ eventCount(tl.id) }} 个事件</view>
         </view>
         <view class="tl-cat" v-if="tl.category">{{ tl.category }}</view>
+        <view class="tl-cat main-badge" v-if="tl.is_main === 1">主线</view>
         <view class="actions">
           <view class="action-btn" @click.stop="editTimeline(tl)">编辑</view>
-          <view class="action-btn danger" @click.stop="deleteTimeline(tl)">删除</view>
+          <view class="action-btn danger" v-if="tl.is_main !== 1" @click.stop="deleteTimeline(tl)">删除</view>
         </view>
       </view>
       <view v-if="!timelines.length" class="empty">还没有时间线，点右下角添加</view>
@@ -115,6 +116,7 @@ export default {
 .tl-name { font-size: 32rpx; font-weight: 600; }
 .tl-sub { font-size: 24rpx; color: #999; margin-top: 4rpx; }
 .tl-cat { background: #fff4d6; color: #b8860b; font-size: 24rpx; padding: 6rpx 16rpx; border-radius: 20rpx; margin-right: 16rpx; }
+.main-badge { background: #ffb400; color: #fff; }
 .actions { display: flex; flex-direction: column; gap: 4rpx; }
 .action-btn { color: #4a6cf7; font-size: 26rpx; padding: 8rpx 16rpx; }
 .action-btn.danger { color: #ff5a5a; }

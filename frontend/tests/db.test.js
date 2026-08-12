@@ -29,8 +29,8 @@ describe('db.timeline', () => {
     const pid = await db.savePerson({ name: '小明' })
     await db.saveTimeline({ person_id: pid, name: '成长', category: '教育' })
     const list = await db.getTimelinesByPerson(pid)
-    expect(list.length).toBe(1)
-    expect(list[0].name).toBe('成长')
+    expect(list.length).toBe(2) // 自动创建的「主线」+ 新建的「成长」
+    expect(list.find((t) => t.name === '成长').category).toBe('教育')
   })
 })
 
@@ -111,5 +111,39 @@ describe('db.default person', () => {
     const pid = await db.savePerson({ name: '小明' })
     await db.deletePerson(pid)
     expect(await db.getPerson(pid)).toBeNull()
+  })
+})
+
+describe('db.main timeline', () => {
+  it('创建用户时自动生成默认「主线」', async () => {
+    const pid = await db.savePerson({ name: '小明' })
+    const main = await db.getMainTimeline(pid)
+    expect(main).toBeTruthy()
+    expect(main.name).toBe('主线')
+    expect(main.is_main).toBe(1)
+  })
+  it('默认用户「我」也有主线', async () => {
+    const def = await db.getDefaultPerson()
+    const main = await db.getMainTimeline(def.id)
+    expect(main).toBeTruthy()
+  })
+  it('主线不允许删除', async () => {
+    const pid = await db.savePerson({ name: '小明' })
+    const main = await db.getMainTimeline(pid)
+    await expect(db.deleteTimeline(main.id)).rejects.toThrow('主线不允许删除')
+    expect(await db.getTimeline(main.id)).not.toBeNull()
+  })
+  it('主线改名后仍保留 is_main 标记', async () => {
+    const pid = await db.savePerson({ name: '小明' })
+    const main = await db.getMainTimeline(pid)
+    await db.saveTimeline({ id: main.id, person_id: pid, name: '人生大事' })
+    const updated = await db.getTimeline(main.id)
+    expect(updated.name).toBe('人生大事')
+    expect(updated.is_main).toBe(1)
+  })
+  it('删除人物时级联删除其主线', async () => {
+    const pid = await db.savePerson({ name: '小明' })
+    await db.deletePerson(pid)
+    expect((await db.getTimelinesByPerson(pid)).length).toBe(0)
   })
 })

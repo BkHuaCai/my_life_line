@@ -21,6 +21,22 @@ export function createDb(adapter) {
     })
   }
 
+  // 每个用户都有一条默认「主线」时间线：创建用户时自动生成，可改名但不可删除
+  const ensureMainTimeline = async (personId) => {
+    const timelines = await adapter.all('timeline')
+    const hasMain = timelines.some((t) => t.person_id === personId && t.is_main === 1)
+    if (hasMain) return
+    await adapter.insert('timeline', {
+      id: uuid(),
+      person_id: personId,
+      name: '主线',
+      category: null,
+      is_private: 1,
+      is_main: 1,
+      created_at: now()
+    })
+  }
+
   const upsert = async (table, id, row, getter) => {
     if (id) {
       const existing = await getter(id)
@@ -40,6 +56,8 @@ export function createDb(adapter) {
     async init() {
       await adapter.init(createAllTablesSql())
       await ensureDefaultPerson()
+      const def = await this.getDefaultPerson()
+      if (def) await ensureMainTimeline(def.id)
     },
 
     // ---------- person ----------
@@ -68,6 +86,7 @@ export function createDb(adapter) {
     },
     async savePerson(p) {
       const id = await upsert('person', p.id, p, (id) => this.getPerson(id))
+      await ensureMainTimeline(id)
       // 如果没有默认用户，将第一个设为默认
       const persons = await adapter.all('person')
       const hasDefault = persons.some(r => r.is_default === 1)
@@ -82,7 +101,7 @@ export function createDb(adapter) {
         throw new Error('默认用户不允许删除')
       }
       const timelines = await this.getTimelinesByPerson(id)
-      for (const tl of timelines) await this.deleteTimeline(tl.id)
+      for (const tl of timelines) await this.deleteTimeline(tl.id, true) // 删除人物时允许级联删除其主线
       await adapter.delete('person', id)
     },
 
@@ -95,10 +114,21 @@ export function createDb(adapter) {
       const rows = await adapter.all('timeline')
       return rows.find((r) => r.id === id) || null
     },
+    async getMainTimeline(personId) {
+      const rows = await adapter.all('timeline')
+      return rows.find((r) => r.person_id === personId && r.is_main === 1) || null
+    },
     async saveTimeline(t) {
+      const existing = t.id ? await this.getTimeline(t.id) : null
+      // 主线改名时保留 is_main 标记
+      if (existing && existing.is_main === 1) t = { ...t, is_main: 1 }
       return upsert('timeline', t.id, t, (id) => this.getTimeline(id))
     },
-    async deleteTimeline(id) {
+    async deleteTimeline(id, force = false) {
+      const tl = await this.getTimeline(id)
+      if (!force && tl && tl.is_main === 1) {
+        throw new Error('主线不允许删除')
+      }
       const events = await this.getEventsByTimeline(id)
       for (const ev of events) await this.deleteEvent(ev.id)
       await adapter.delete('timeline', id)

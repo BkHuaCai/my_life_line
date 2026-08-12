@@ -119,6 +119,7 @@ export default {
         avatar_path: '',
         // timeline
         category: '',
+        is_main: 0,
         // event
         title: '',
         description: '',
@@ -146,7 +147,7 @@ export default {
         this.form = { name: p.name, birth_date: p.birth_date || '', note: p.note || '', avatar_path: p.avatar_path || '' }
       } else if (this.entityType === 'timeline') {
         const tl = await db.getTimeline(this.id)
-        this.form = { name: tl.name, category: tl.category || '' }
+        this.form = { name: tl.name, category: tl.category || '', is_main: tl.is_main || 0 }
       } else {
         const ev = await db.getEvent(this.id)
         this.form = {
@@ -183,7 +184,7 @@ export default {
         await db.savePerson({ id: this.id || undefined, name: form.name, birth_date: form.birth_date || null, note: form.note || null, avatar_path: form.avatar_path || null })
       } else if (entityType === 'timeline') {
         if (!form.name) return uni.showToast({ title: '请填写名称', icon: 'none' })
-        await db.saveTimeline({ id: this.id || undefined, person_id: this.personId, name: form.name, category: form.category || null, is_private: 1 })
+        await db.saveTimeline({ id: this.id || undefined, person_id: this.personId, name: form.name, category: form.category || null, is_private: 1, is_main: form.is_main || 0 })
       } else {
         if (!form.title) return uni.showToast({ title: '请填写标题', icon: 'none' })
         const row = {
