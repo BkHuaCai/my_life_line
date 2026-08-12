@@ -21,7 +21,10 @@
           <view class="tl-sub">{{ eventCount(tl.id) }} 个事件</view>
         </view>
         <view class="tl-cat" v-if="tl.category">{{ tl.category }}</view>
-        <view class="edit-btn" @click.stop="editTimeline(tl)">编辑</view>
+        <view class="actions">
+          <view class="action-btn" @click.stop="editTimeline(tl)">编辑</view>
+          <view class="action-btn danger" @click.stop="deleteTimeline(tl)">删除</view>
+        </view>
       </view>
       <view v-if="!timelines.length" class="empty">还没有时间线，点右下角添加</view>
     </view>
@@ -78,6 +81,18 @@ export default {
     },
     editTimeline(tl) {
       uni.navigateTo({ url: `/pages/edit-form/index?entityType=timeline&id=${tl.id}` })
+    },
+    deleteTimeline(tl) {
+      uni.showModal({
+        title: '删除时间线',
+        content: `确定删除「${tl.name}」吗？此时间线内的所有事件也将被删除，无法恢复！`,
+        success: async (res) => {
+          if (res.confirm) {
+            await db.deleteTimeline(tl.id)
+            await this.load()
+          }
+        }
+      })
     }
   }
 }
@@ -100,7 +115,9 @@ export default {
 .tl-name { font-size: 32rpx; font-weight: 600; }
 .tl-sub { font-size: 24rpx; color: #999; margin-top: 4rpx; }
 .tl-cat { background: #fff4d6; color: #b8860b; font-size: 24rpx; padding: 6rpx 16rpx; border-radius: 20rpx; margin-right: 16rpx; }
-.edit-btn { color: #4a6cf7; font-size: 26rpx; }
+.actions { display: flex; flex-direction: column; gap: 4rpx; }
+.action-btn { color: #4a6cf7; font-size: 26rpx; padding: 8rpx 16rpx; }
+.action-btn.danger { color: #ff5a5a; }
 .empty { text-align: center; color: #bbb; padding: 100rpx 0; }
 .fab { position: fixed; right: 40rpx; bottom: 60rpx; background: #ffb400; color: #fff; padding: 20rpx 32rpx; border-radius: 48rpx; font-size: 30rpx; box-shadow: 0 4rpx 16rpx rgba(0,0,0,.2); }
 </style>
