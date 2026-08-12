@@ -1,5 +1,10 @@
 <template>
   <view class="page">
+    <view class="header-bar">
+      <view class="title">人生时间线</view>
+      <view class="settings-btn" @click="showMoreMenu">⋮</view>
+    </view>
+
     <view class="search-bar">
       <input class="search-input" v-model="keyword" placeholder="搜索事件标题/描述" @confirm="doSearch" @input="doSearch" />
     </view>
@@ -39,10 +44,11 @@
 
 <script>
 import { db } from '../../utils/db'
+import { serialize, importData } from '../../utils/export'
 
 export default {
   data() {
-    return { persons: [], counts: {}, keyword: '', searching: false, results: [], nameMap: {}, tlMap: {} }
+    return { persons: [], counts: {}, keyword: '', searching: false, results: [], nameMap: {}, tlMap: {}, showMenu: false, exporting: false }
   },
   async onShow() {
     await this.load()
@@ -104,6 +110,55 @@ export default {
           }
         }
       })
+    },
+    showMoreMenu() {
+      uni.showActionSheet({
+        itemList: ['导出数据', '导入数据'],
+        success: (res) => {
+          if (res.tapIndex === 0) {
+            this.doExport()
+          } else if (res.tapIndex === 1) {
+            this.doImport()
+          }
+        }
+      })
+    },
+    async doExport() {
+      this.exporting = true
+      try {
+        const data = await serialize(db)
+        const jsonStr = JSON.stringify(data, null, 2)
+        const filePath = `_doc/export_${Date.now()}.json`
+        // 保存到文件
+        const fs = uni.getFileSystemManager()
+        await fs.writeFile({
+          filePath,
+          data: jsonStr,
+          encoding: 'utf8'
+        })
+        uni.showModal({
+          title: '导出成功',
+          content: `数据已导出到：${filePath}\n\n请在文件管理中找到该文件并备份。`,
+          showCancel: false
+        })
+      } catch (e) {
+        console.error('export fail', e)
+        uni.showToast({ title: '导出失败', icon: 'none' })
+      }
+      this.exporting = false
+    },
+    doImport() {
+      uni.showModal({
+        title: '导入数据',
+        content: '请先在文件管理中找到之前导出的 JSON 文件，选择后导入。\n\n注意：导入会合并到现有数据中。',
+        success: (res) => {
+          if (res.confirm) {
+            // 这里需要用户选择文件，uni-app H5 支持 chooseFile，但 App 端需要 plus.io
+            // 简化实现：提示用户复制 JSON 内容到剪贴板，或者后续完善
+            uni.showToast({ title: '导入功能开发中', icon: 'none' })
+          }
+        }
+      })
     }
   }
 }
@@ -111,6 +166,9 @@ export default {
 
 <style scoped>
 .page { padding: 16rpx 24rpx 140rpx; }
+.header-bar { display: flex; justify-content: space-between; align-items: center; padding: 16rpx 0; }
+.title { font-size: 40rpx; font-weight: 700; }
+.settings-btn { font-size: 40rpx; color: #666; padding: 8rpx 16rpx; }
 .search-bar { padding: 8rpx 0 16rpx; }
 .search-input { background: #fff; border-radius: 12rpx; padding: 14rpx 20rpx; font-size: 28rpx; height: 76rpx; min-height: 76rpx; }
 .list { display: flex; flex-direction: column; gap: 20rpx; }
