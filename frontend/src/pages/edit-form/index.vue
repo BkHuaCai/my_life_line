@@ -102,7 +102,7 @@
 
 <script>
 import { db } from '../../utils/db'
-import { chooseAndStoreImages, makeAvatarPath } from '../../utils/image'
+import { chooseAndStoreImages, chooseAvatar } from '../../utils/image'
 
 export default {
   data() {

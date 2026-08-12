@@ -57,6 +57,11 @@ export function chooseAvatar() {
           src,
           quality: 80,
           success: (r) => {
+            if (typeof uni.saveFile !== 'function') {
+              // H5 无 saveFile，直接使用压缩后的临时路径（开发用）
+              resolve(r.tempFilePath)
+              return
+            }
             uni.saveFile({
               tempFilePath: r.tempFilePath,
               success: (saveRes) => {
