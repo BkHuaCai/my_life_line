@@ -16,10 +16,11 @@ describe('db.person', () => {
     expect(p.id).toBe(id)
   })
   it('编辑已存在人物不改变 id', async () => {
+    const before = (await db.getPersons()).length // init 已自动创建默认用户
     const id = await db.savePerson({ name: '小明' })
     await db.savePerson({ id, name: '小红' })
     expect((await db.getPerson(id)).name).toBe('小红')
-    expect((await db.getPersons()).length).toBe(1)
+    expect((await db.getPersons()).length).toBe(before + 1)
   })
 })
 
@@ -87,5 +88,28 @@ describe('db.search', () => {
     expect(byTitle[0].title).toBe('第一次旅行')
     expect(byDesc.length).toBe(1)
     expect(byDesc[0].title).toBe('加班')
+  })
+})
+
+describe('db.default person', () => {
+  it('首次 init 自动创建默认用户', async () => {
+    const persons = await db.getPersons()
+    expect(persons.length).toBe(1)
+    expect(persons[0].is_default).toBe(1)
+    expect(persons[0].name).toBe('我')
+  })
+  it('已有用户时再次 init 不重复创建', async () => {
+    await db.init()
+    expect((await db.getPersons()).length).toBe(1)
+  })
+  it('默认用户不允许删除', async () => {
+    const def = await db.getDefaultPerson()
+    await expect(db.deletePerson(def.id)).rejects.toThrow('默认用户不允许删除')
+    expect(await db.getPerson(def.id)).not.toBeNull()
+  })
+  it('非默认用户仍可删除', async () => {
+    const pid = await db.savePerson({ name: '小明' })
+    await db.deletePerson(pid)
+    expect(await db.getPerson(pid)).toBeNull()
   })
 })

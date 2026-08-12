@@ -10,7 +10,7 @@
       </view>
       <view class="header-actions">
         <view class="action-btn" @click="editPerson">编辑</view>
-        <view class="action-btn danger" @click="deletePerson">删除</view>
+        <view class="action-btn danger" v-if="person.is_default !== 1" @click="deletePerson">删除</view>
       </view>
     </view>
 

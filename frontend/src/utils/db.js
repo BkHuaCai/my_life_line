@@ -6,6 +6,21 @@ import { resolveAdapter } from './storage'
 export function createDb(adapter) {
   const now = () => new Date().toISOString()
 
+  // 首次打开（无任何用户）时自动创建默认用户；默认用户不允许删除
+  const ensureDefaultPerson = async () => {
+    const rows = await adapter.all('person')
+    if (rows.length > 0) return
+    await adapter.insert('person', {
+      id: uuid(),
+      name: '我',
+      avatar_path: null,
+      birth_date: null,
+      note: null,
+      is_default: 1,
+      created_at: now()
+    })
+  }
+
   const upsert = async (table, id, row, getter) => {
     if (id) {
       const existing = await getter(id)
@@ -24,6 +39,7 @@ export function createDb(adapter) {
   return {
     async init() {
       await adapter.init(createAllTablesSql())
+      await ensureDefaultPerson()
     },
 
     // ---------- person ----------
@@ -61,6 +77,10 @@ export function createDb(adapter) {
       return id
     },
     async deletePerson(id) {
+      const person = await this.getPerson(id)
+      if (person && person.is_default === 1) {
+        throw new Error('默认用户不允许删除')
+      }
       const timelines = await this.getTimelinesByPerson(id)
       for (const tl of timelines) await this.deleteTimeline(tl.id)
       await adapter.delete('person', id)

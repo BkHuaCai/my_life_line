@@ -23,6 +23,8 @@ npm test           # vitest unit tests (Node env, no DOM)
 
 No lint or format tooling is configured (no ESLint/Prettier config anywhere) — `npm test` is the only automated check.
 
+**Node requirement**: use Node ≥ 22.12 (nvm has `v22.23.2`). vitest 4.1.10 loads its config via CJS `require('std-env')`, but std-env 4.x is ESM-only, so Node 20 fails with `ERR_REQUIRE_ESM`.
+
 **APK**: this repo produces Android resources only. Building an APK requires HBuilderX on Windows: open the project root → Run to device, or Release → Native App Cloud Build (needs a DCloud account).
 
 ## Architecture
@@ -42,4 +44,4 @@ No lint or format tooling is configured (no ESLint/Prettier config anywhere) —
 - The root-level `package-lock.json` (91 bytes) is a leftover stub — ignore it and never `npm install` at the repo root; real dependencies live under `frontend/`.
 - `frontend/package-lock.json` is gitignored yet tracked, so `git status` shows it modified after any install — that's expected, don't revert it.
 - SQL values are escaped manually via `esc()` in `storage.js` (no parameter binding); keep new SQL flowing through the same escaping.
-- `person.is_default` marks the default user (the "我的" tab); `db.js` auto-promotes the first created person and clears prior defaults.
+- `person.is_default` marks the default user (the "我的" tab). `db.init()` auto-creates one named "我" when no person exists (first launch); the default user cannot be deleted — `db.deletePerson` throws and the person-detail page hides its delete button. `db.js` auto-promotes the first created person and clears prior defaults.
