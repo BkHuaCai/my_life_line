@@ -3,6 +3,16 @@
     <!-- 人物表单 -->
     <template v-if="entityType === 'person'">
       <view class="field">
+        <text class="label">头像</text>
+        <view class="avatar-picker">
+          <view class="avatar-wrap" @click="chooseAvatar">
+            <image v-if="form.avatar_path" class="avatar-img" :src="form.avatar_path" mode="aspectFill" />
+            <view v-else class="avatar-placeholder">＋</view>
+          </view>
+          <text class="avatar-tip">点击更换头像</text>
+        </view>
+      </view>
+      <view class="field">
         <text class="label">姓名 *</text>
         <input class="input" v-model="form.name" placeholder="如：小明" />
       </view>
@@ -92,7 +102,7 @@
 
 <script>
 import { db } from '../../utils/db'
-import { chooseAndStoreImages } from '../../utils/image'
+import { chooseAndStoreImages, makeAvatarPath } from '../../utils/image'
 
 export default {
   data() {
@@ -106,6 +116,7 @@ export default {
         name: '',
         birth_date: '',
         note: '',
+        avatar_path: '',
         // timeline
         category: '',
         // event
@@ -132,7 +143,7 @@ export default {
     async loadForm() {
       if (this.entityType === 'person') {
         const p = await db.getPerson(this.id)
-        this.form = { name: p.name, birth_date: p.birth_date || '', note: p.note || '' }
+        this.form = { name: p.name, birth_date: p.birth_date || '', note: p.note || '', avatar_path: p.avatar_path || '' }
       } else if (this.entityType === 'timeline') {
         const tl = await db.getTimeline(this.id)
         this.form = { name: tl.name, category: tl.category || '' }
@@ -154,6 +165,11 @@ export default {
         for (const s of stored) this.form.images.push({ preview: s.thumb_path || s.image_path, _path: s })
       }).catch(() => uni.showToast({ title: '选择图片失败', icon: 'none' }))
     },
+    chooseAvatar() {
+      chooseAvatar().then((path) => {
+        this.form.avatar_path = path
+      }).catch(() => uni.showToast({ title: '选择头像失败', icon: 'none' }))
+    },
     removeImage(i) {
       this.form.images.splice(i, 1)
     },
@@ -164,7 +180,7 @@ export default {
       const { entityType, form } = this
       if (entityType === 'person') {
         if (!form.name) return uni.showToast({ title: '请填写姓名', icon: 'none' })
-        await db.savePerson({ id: this.id || undefined, name: form.name, birth_date: form.birth_date || null, note: form.note || null })
+        await db.savePerson({ id: this.id || undefined, name: form.name, birth_date: form.birth_date || null, note: form.note || null, avatar_path: form.avatar_path || null })
       } else if (entityType === 'timeline') {
         if (!form.name) return uni.showToast({ title: '请填写名称', icon: 'none' })
         await db.saveTimeline({ id: this.id || undefined, person_id: this.personId, name: form.name, category: form.category || null, is_private: 1 })
@@ -204,4 +220,11 @@ export default {
 .img-del { position: absolute; top: -12rpx; right: -12rpx; width: 40rpx; height: 40rpx; border-radius: 50%; background: rgba(0,0,0,.6); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 28rpx; }
 .img-add { width: 180rpx; height: 180rpx; border: 2rpx dashed #ccc; border-radius: 12rpx; display: flex; align-items: center; justify-content: center; color: #ccc; font-size: 48rpx; }
 .save-btn { margin-top: 40rpx; background: #ffb400; color: #fff; font-size: 32rpx; border-radius: 48rpx; }
+
+/* 头像选择 */
+.avatar-picker { display: flex; align-items: center; gap: 24rpx; }
+.avatar-wrap { width: 120rpx; height: 120rpx; border-radius: 50%; overflow: hidden; background: #f5f5f5; }
+.avatar-img { width: 100%; height: 100%; }
+.avatar-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 48rpx; color: #ccc; border: 2rpx dashed #ddd; border-radius: 50%; }
+.avatar-tip { font-size: 24rpx; color: #999; }
 </style>

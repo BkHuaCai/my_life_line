@@ -37,6 +37,42 @@ export function chooseAndStoreImages(eventId, count = 9) {
   })
 }
 
+// 生成头像存储路径
+export function makeAvatarPath(ext = 'jpg') {
+  const stamp = uniqueStamp()
+  return `_doc/avatars/${stamp}.${ext}`
+}
+
+// 选择并保存头像
+export function chooseAvatar() {
+  return new Promise((resolve, reject) => {
+    uni.chooseImage({
+      count: 1,
+      sourceType: ['album', 'camera'],
+      success: async (res) => {
+        const src = res.tempFilePaths[0]
+        const destPath = makeAvatarPath()
+        // 压缩并复制到目标路径
+        uni.compressImage({
+          src,
+          quality: 80,
+          success: (r) => {
+            uni.saveFile({
+              tempFilePath: r.tempFilePath,
+              success: (saveRes) => {
+                resolve(saveRes.savedFilePath)
+              },
+              fail: reject
+            })
+          },
+          fail: reject
+        })
+      },
+      fail: reject
+    })
+  })
+}
+
 function compressAndCopy(src, eventId) {
   return new Promise((resolve, reject) => {
     const paths = makeImagePaths(eventId)
