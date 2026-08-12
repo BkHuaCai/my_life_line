@@ -1,0 +1,57 @@
+import { describe, it, expect, beforeEach } from 'vitest'
+import { createMemoryAdapter } from '../src/utils/storage'
+import { createDb } from '../src/utils/db'
+import { serialize, importData } from '../src/utils/export'
+
+let db
+beforeEach(async () => {
+  db = createDb(createMemoryAdapter())
+  await db.init()
+})
+
+async function seed() {
+  const pid = await db.savePerson({ name: '小明', note: '测试' })
+  const tid = await db.saveTimeline({ person_id: pid, name: '成长', category: '教育' })
+  const eid = await db.saveEvent({
+    timeline_id: tid,
+    title: '毕业',
+    description: '本科毕业',
+    date_type: 'point',
+    date_point: '2019-06-30',
+    images: [{ image_path: 'a.jpg', thumb_path: 'a_t.jpg' }]
+  })
+  return { pid, tid, eid }
+}
+
+describe('export/import', () => {
+  it('serialize 输出嵌套结构并保留 id', async () => {
+    await seed()
+    const data = await serialize(db)
+    expect(data.version).toBe(1)
+    expect(data.persons.length).toBe(1)
+    expect(data.persons[0].timelines[0].events[0].title).toBe('毕业')
+    expect(data.persons[0].id).toBeTruthy()
+  })
+  it('round-trip：导出后再导入新库，数据等价', async () => {
+    await seed()
+    const data = await serialize(db)
+    const db2 = createDb(createMemoryAdapter())
+    await db2.init()
+    await importData(db2, data)
+    expect((await db2.getPersons()).length).toBe(1)
+    const p2 = (await db2.getPersons())[0]
+    expect(p2.name).toBe('小明')
+    const tls = await db2.getTimelinesByPerson(p2.id)
+    expect(tls.length).toBe(1)
+    const evs = await db2.getEventsByTimeline(tls[0].id)
+    expect(evs[0].title).toBe('毕业')
+    expect((await db2.getImagesByEvent(evs[0].id)).length).toBe(1)
+  })
+  it('重复导入不产生重复数据（按 id 幂等）', async () => {
+    await seed()
+    const data = await serialize(db)
+    await importData(db, data)
+    expect((await db.getPersons()).length).toBe(1)
+    expect((await db.getEventsByTimeline((await db.getTimelinesByPerson((await db.getPersons())[0].id))[0].id)).length).toBe(1)
+  })
+})
