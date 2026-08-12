@@ -8,6 +8,10 @@
         <view class="sub" v-if="person.birth_date">出生：{{ person.birth_date }}</view>
         <view class="sub" v-if="person.note">{{ person.note }}</view>
       </view>
+      <view class="header-actions">
+        <view class="action-btn" @click="editPerson">编辑</view>
+        <view class="action-btn danger" @click="deletePerson">删除</view>
+      </view>
     </view>
 
     <view class="list">
@@ -54,6 +58,21 @@ export default {
     openTimeline(id) {
       uni.navigateTo({ url: `/pages/timeline/index?timelineId=${id}` })
     },
+    editPerson() {
+      uni.navigateTo({ url: `/pages/edit-form/index?entityType=person&id=${this.personId}` })
+    },
+    deletePerson() {
+      uni.showModal({
+        title: '删除人物',
+        content: `确定删除「${this.person.name}」吗？此操作将同时删除该人物的所有时间线和事件，无法恢复！`,
+        success: async (res) => {
+          if (res.confirm) {
+            await db.deletePerson(this.personId)
+            uni.navigateBack()
+          }
+        }
+      })
+    },
     addTimeline() {
       uni.navigateTo({ url: `/pages/edit-form/index?entityType=timeline&personId=${this.personId}` })
     },
@@ -69,9 +88,12 @@ export default {
 .header { display: flex; align-items: center; background: #fff; border-radius: 16rpx; padding: 24rpx; margin-bottom: 24rpx; }
 .avatar { width: 100rpx; height: 100rpx; border-radius: 50%; }
 .avatar.placeholder { background: #ffb400; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 40rpx; }
-.meta { margin-left: 20rpx; }
+.meta { margin-left: 20rpx; flex: 1; }
 .name { font-size: 36rpx; font-weight: 700; }
 .sub { font-size: 24rpx; color: #999; margin-top: 4rpx; }
+.header-actions { display: flex; flex-direction: column; gap: 8rpx; }
+.action-btn { color: #4a6cf7; font-size: 26rpx; padding: 8rpx 16rpx; }
+.action-btn.danger { color: #ff5a5a; }
 .list { display: flex; flex-direction: column; gap: 20rpx; }
 .card { display: flex; align-items: center; background: #fff; border-radius: 16rpx; padding: 24rpx; }
 .tl-body { flex: 1; }

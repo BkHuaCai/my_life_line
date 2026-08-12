@@ -24,7 +24,10 @@
             <view class="name">{{ p.name }}</view>
             <view class="sub">{{ timelineCount(p.id) }} 条时间线</view>
           </view>
-          <view class="edit-btn" @click.stop="editPerson(p)">编辑</view>
+          <view class="actions">
+            <view class="edit-btn" @click.stop="editPerson(p)">编辑</view>
+            <view class="delete-btn" @click.stop="deletePerson(p)">删除</view>
+          </view>
         </view>
       </view>
       <view v-if="!persons.length" class="empty">还没有人物，点右下角 + 添加</view>
@@ -89,6 +92,18 @@ export default {
     },
     editPerson(p) {
       uni.navigateTo({ url: `/pages/edit-form/index?entityType=person&id=${p.id}` })
+    },
+    deletePerson(p) {
+      uni.showModal({
+        title: '删除人物',
+        content: `确定删除「${p.name}」吗？此操作将同时删除该人物的所有时间线和事件，无法恢复！`,
+        success: async (res) => {
+          if (res.confirm) {
+            await db.deletePerson(p.id)
+            await this.load()
+          }
+        }
+      })
     }
   }
 }
@@ -105,7 +120,9 @@ export default {
 .info { flex: 1; margin-left: 20rpx; }
 .name { font-size: 32rpx; font-weight: 600; }
 .sub { font-size: 24rpx; color: #999; margin-top: 4rpx; }
+.actions { display: flex; gap: 8rpx; }
 .edit-btn { color: #4a6cf7; font-size: 26rpx; padding: 8rpx 16rpx; }
+.delete-btn { color: #ff5a5a; font-size: 26rpx; padding: 8rpx 16rpx; }
 .empty { text-align: center; color: #bbb; padding: 120rpx 0; font-size: 28rpx; }
 .fab { position: fixed; right: 40rpx; bottom: 60rpx; width: 96rpx; height: 96rpx; border-radius: 50%; background: #ffb400; color: #fff; font-size: 48rpx; display: flex; align-items: center; justify-content: center; box-shadow: 0 4rpx 16rpx rgba(0,0,0,.2); }
 .result-list { display: flex; flex-direction: column; gap: 16rpx; }
