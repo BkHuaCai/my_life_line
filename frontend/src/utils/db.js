@@ -31,12 +31,34 @@ export function createDb(adapter) {
       const rows = await adapter.all('person')
       return rows.sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
     },
+    async getDefaultPerson() {
+      const rows = await adapter.all('person')
+      return rows.find((r) => r.is_default === 1) || rows[0] || null
+    },
+    async setDefaultPerson(id) {
+      // 清除其他默认标记
+      const persons = await adapter.all('person')
+      for (const p of persons) {
+        if (p.is_default === 1 && p.id !== id) {
+          await adapter.update('person', p.id, { is_default: 0 })
+        }
+      }
+      // 设置新的默认用户
+      await adapter.update('person', id, { is_default: 1 })
+    },
     async getPerson(id) {
       const rows = await adapter.all('person')
       return rows.find((r) => r.id === id) || null
     },
     async savePerson(p) {
-      return upsert('person', p.id, p, (id) => this.getPerson(id))
+      const id = await upsert('person', p.id, p, (id) => this.getPerson(id))
+      // 如果没有默认用户，将第一个设为默认
+      const persons = await adapter.all('person')
+      const hasDefault = persons.some(r => r.is_default === 1)
+      if (!hasDefault && persons.length > 0) {
+        await adapter.update('person', persons[0].id, { is_default: 1 })
+      }
+      return id
     },
     async deletePerson(id) {
       const timelines = await this.getTimelinesByPerson(id)

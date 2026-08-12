@@ -1,6 +1,7 @@
 {
   "pages": [
-    { "path": "pages/person-list/index", "style": { "navigationBarTitleText": "人生时间线" } },
+    { "path": "pages/index/index", "style": { "navigationBarTitleText": "人生时间线" } },
+    { "path": "pages/person-list/index", "style": { "navigationBarTitleText": "人物" } },
     { "path": "pages/person-detail/index", "style": { "navigationBarTitleText": "人物" } },
     { "path": "pages/timeline/index", "style": { "navigationBarTitleText": "时间线" } },
     { "path": "pages/event-detail/index", "style": { "navigationBarTitleText": "事件" } },
@@ -11,5 +12,25 @@
     "navigationBarTitleText": "人生时间线",
     "navigationBarBackgroundColor": "#F8F8F8",
     "backgroundColor": "#F8F8F8"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#ffb400",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "主页",
+        "iconPath": "static/tab-home.svg",
+        "selectedIconPath": "static/tab-home-active.svg"
+      },
+      {
+        "pagePath": "pages/person-list/index",
+        "text": "我的",
+        "iconPath": "static/tab-my.svg",
+        "selectedIconPath": "static/tab-my-active.svg"
+      }
+    ]
   }
 }

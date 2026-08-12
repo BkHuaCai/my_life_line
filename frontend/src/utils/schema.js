@@ -8,6 +8,7 @@ export const TABLES = {
       avatar_path: 'TEXT',
       birth_date: 'TEXT',
       note: 'TEXT',
+      is_default: 'INTEGER DEFAULT 0',
       created_at: 'TEXT'
     }
   },

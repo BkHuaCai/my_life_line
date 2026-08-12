@@ -1,10 +1,45 @@
 <template>
   <view class="page">
-    <view class="header-bar">
-      <view class="title">人生时间线</view>
-      <view class="settings-btn" @click="showMoreMenu">⋮</view>
+    <view class="header">
+      <view class="header-title">我的</view>
+      <view class="header-actions">
+        <view class="settings-btn" @click="showMoreMenu">⋮</view>
+      </view>
     </view>
 
+    <!-- 当前用户信息 -->
+    <view class="current-user" @click="openCurrentPerson">
+      <image v-if="currentPerson.avatar_path" class="avatar" :src="currentPerson.avatar_path" mode="aspectFill" />
+      <view v-else class="avatar placeholder">{{ currentPerson.name ? currentPerson.name[0] : '?' }}</view>
+      <view class="info">
+        <view class="name">{{ currentPerson.name || '请选择用户' }}</view>
+        <view class="sub" v-if="currentPerson.birth_date">出生：{{ currentPerson.birth_date }}</view>
+        <view class="sub" v-if="currentPerson.note">{{ currentPerson.note }}</view>
+      </view>
+      <view class="arrow">›</view>
+    </view>
+
+    <!-- 用户列表（可切换） -->
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">切换用户</text>
+        <text class="add-user" @click="addPerson">＋ 添加</text>
+      </view>
+      <view class="user-list">
+        <view v-for="p in persons" :key="p.id" class="user-card" :class="{ active: p.id === currentPerson.id }" @click="switchPerson(p)">
+          <image v-if="p.avatar_path" class="avatar-sm" :src="p.avatar_path" mode="aspectFill" />
+          <view v-else class="avatar-sm placeholder">{{ p.name ? p.name[0] : '?' }}</view>
+          <view class="user-info">
+            <view class="user-name">{{ p.name }}</view>
+            <view class="user-meta">{{ timelineCounts[p.id] || 0 }} 条时间线</view>
+          </view>
+          <view class="check-icon" v-if="p.is_default === 1">✓</view>
+        </view>
+        <view v-if="!persons.length" class="empty-tip">还没有用户，点击添加</view>
+      </view>
+    </view>
+
+    <!-- 搜索栏 -->
     <view class="search-bar">
       <input class="search-input" v-model="keyword" placeholder="搜索事件标题/描述" @confirm="doSearch" @input="doSearch" />
     </view>
@@ -20,25 +55,14 @@
       </view>
     </template>
 
-    <template v-else>
-      <view class="list">
-        <view v-for="p in persons" :key="p.id" class="card" @click="openPerson(p.id)">
-          <image v-if="p.avatar_path" class="avatar" :src="p.avatar_path" mode="aspectFill" />
-          <view v-else class="avatar placeholder">{{ p.name ? p.name[0] : '?' }}</view>
-          <view class="info">
-            <view class="name">{{ p.name }}</view>
-            <view class="sub">{{ timelineCount(p.id) }} 条时间线</view>
-          </view>
-          <view class="actions">
-            <view class="edit-btn" @click.stop="editPerson(p)">编辑</view>
-            <view class="delete-btn" @click.stop="deletePerson(p)">删除</view>
-          </view>
-        </view>
+    <!-- 功能操作 -->
+    <view class="menu-list" v-if="!searching">
+      <view class="menu-item" @click="goToPersonList">
+        <text class="menu-icon">👥</text>
+        <text class="menu-text">管理全部用户</text>
+        <text class="menu-arrow">›</text>
       </view>
-      <view v-if="!persons.length" class="empty">还没有人物，点右下角 + 添加</view>
-    </template>
-
-    <view class="fab" @click="addPerson">＋</view>
+    </view>
   </view>
 </template>
 
@@ -48,14 +72,35 @@ import { serialize, importData } from '../../utils/export'
 
 export default {
   data() {
-    return { persons: [], counts: {}, keyword: '', searching: false, results: [], nameMap: {}, tlMap: {}, showMenu: false, exporting: false }
+    return {
+      currentPerson: {},
+      persons: [],
+      timelineCounts: {},
+      keyword: '',
+      searching: false,
+      results: [],
+      nameMap: {},
+      tlMap: {}
+    }
   },
   async onShow() {
     await this.load()
   },
   methods: {
     async load() {
+      // 获取当前默认用户
+      this.currentPerson = (await db.getDefaultPerson()) || {}
+
+      // 获取所有用户
       this.persons = await db.getPersons()
+
+      // 如果没有默认用户但有用户，设置第一个为默认
+      if (!this.currentPerson.id && this.persons.length > 0) {
+        await db.setDefaultPerson(this.persons[0].id)
+        this.currentPerson = this.persons[0]
+      }
+
+      // 获取每个用户的时间线数量
       const counts = {}
       const nameMap = {}
       const tlMap = {}
@@ -65,12 +110,26 @@ export default {
         counts[p.id] = tls.length
         for (const tl of tls) tlMap[tl.id] = tl.name
       }
-      this.counts = counts
+      this.timelineCounts = counts
       this.nameMap = nameMap
       this.tlMap = tlMap
     },
-    timelineCount(id) {
-      return this.counts[id] || 0
+    async switchPerson(p) {
+      await db.setDefaultPerson(p.id)
+      this.currentPerson = p
+      uni.showToast({ title: `已切换到 ${p.name}`, icon: 'none' })
+    },
+    openCurrentPerson() {
+      if (this.currentPerson.id) {
+        uni.navigateTo({ url: `/pages/person-detail/index?personId=${this.currentPerson.id}` })
+      }
+    },
+    addPerson() {
+      uni.navigateTo({ url: '/pages/edit-form/index?entityType=person' })
+    },
+    goToPersonList() {
+      // 跳转到一个新的页面管理所有用户
+      uni.showToast({ title: '开发中', icon: 'none' })
     },
     personName(id) {
       return this.nameMap[id] || ''
@@ -87,29 +146,8 @@ export default {
       this.searching = true
       this.results = await db.searchEvents(k)
     },
-    openPerson(id) {
-      uni.navigateTo({ url: `/pages/person-detail/index?personId=${id}` })
-    },
     openEvent(id) {
       uni.navigateTo({ url: `/pages/event-detail/index?eventId=${id}` })
-    },
-    addPerson() {
-      uni.navigateTo({ url: '/pages/edit-form/index?entityType=person' })
-    },
-    editPerson(p) {
-      uni.navigateTo({ url: `/pages/edit-form/index?entityType=person&id=${p.id}` })
-    },
-    deletePerson(p) {
-      uni.showModal({
-        title: '删除人物',
-        content: `确定删除「${p.name}」吗？此操作将同时删除该人物的所有时间线和事件，无法恢复！`,
-        success: async (res) => {
-          if (res.confirm) {
-            await db.deletePerson(p.id)
-            await this.load()
-          }
-        }
-      })
     },
     showMoreMenu() {
       uni.showActionSheet({
@@ -124,12 +162,10 @@ export default {
       })
     },
     async doExport() {
-      this.exporting = true
       try {
         const data = await serialize(db)
         const jsonStr = JSON.stringify(data, null, 2)
         const filePath = `_doc/export_${Date.now()}.json`
-        // 保存到文件
         const fs = uni.getFileSystemManager()
         await fs.writeFile({
           filePath,
@@ -145,7 +181,6 @@ export default {
         console.error('export fail', e)
         uni.showToast({ title: '导出失败', icon: 'none' })
       }
-      this.exporting = false
     },
     doImport() {
       uni.showModal({
@@ -153,8 +188,6 @@ export default {
         content: '请先在文件管理中找到之前导出的 JSON 文件，选择后导入。\n\n注意：导入会合并到现有数据中。',
         success: (res) => {
           if (res.confirm) {
-            // 这里需要用户选择文件，uni-app H5 支持 chooseFile，但 App 端需要 plus.io
-            // 简化实现：提示用户复制 JSON 内容到剪贴板，或者后续完善
             uni.showToast({ title: '导入功能开发中', icon: 'none' })
           }
         }
@@ -165,27 +198,52 @@ export default {
 </script>
 
 <style scoped>
-.page { padding: 16rpx 24rpx 140rpx; }
-.header-bar { display: flex; justify-content: space-between; align-items: center; padding: 16rpx 0; }
-.title { font-size: 40rpx; font-weight: 700; }
+.page { padding: 24rpx; padding-bottom: 140rpx; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24rpx; }
+.header-title { font-size: 40rpx; font-weight: 700; }
 .settings-btn { font-size: 40rpx; color: #666; padding: 8rpx 16rpx; }
-.search-bar { padding: 8rpx 0 16rpx; }
+
+/* 当前用户 */
+.current-user { display: flex; align-items: center; background: #fff; border-radius: 16rpx; padding: 32rpx; box-shadow: 0 2rpx 8rpx rgba(0,0,0,.06); }
+.avatar { width: 100rpx; height: 100rpx; border-radius: 50%; }
+.avatar.placeholder { background: #ffb400; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 40rpx; }
+.info { flex: 1; margin-left: 24rpx; }
+.name { font-size: 36rpx; font-weight: 700; }
+.sub { font-size: 24rpx; color: #999; margin-top: 6rpx; }
+.arrow { font-size: 40rpx; color: #ccc; }
+
+/* 用户列表 */
+.section { margin-top: 32rpx; }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
+.section-title { font-size: 28rpx; font-weight: 600; color: #666; }
+.add-user { color: #ffb400; font-size: 26rpx; }
+.user-list { display: flex; flex-direction: column; gap: 12rpx; }
+.user-card { display: flex; align-items: center; background: #fff; border-radius: 12rpx; padding: 20rpx; }
+.user-card.active { border: 2rpx solid #ffb400; }
+.avatar-sm { width: 64rpx; height: 64rpx; border-radius: 50%; }
+.avatar-sm.placeholder { background: #ffb400; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 28rpx; }
+.user-info { flex: 1; margin-left: 16rpx; }
+.user-name { font-size: 28rpx; font-weight: 600; }
+.user-meta { font-size: 22rpx; color: #999; }
+.check-icon { color: #ffb400; font-weight: 600; font-size: 28rpx; }
+.empty-tip { text-align: center; color: #bbb; padding: 24rpx; }
+
+/* 搜索 */
+.search-bar { margin-top: 32rpx; }
 .search-input { background: #fff; border-radius: 12rpx; padding: 14rpx 20rpx; font-size: 28rpx; height: 76rpx; min-height: 76rpx; }
-.list { display: flex; flex-direction: column; gap: 20rpx; }
-.card { display: flex; align-items: center; background: #fff; border-radius: 16rpx; padding: 24rpx; box-shadow: 0 2rpx 8rpx rgba(0,0,0,.06); }
-.avatar { width: 88rpx; height: 88rpx; border-radius: 50%; }
-.avatar.placeholder { background: #ffb400; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 36rpx; }
-.info { flex: 1; margin-left: 20rpx; }
-.name { font-size: 32rpx; font-weight: 600; }
-.sub { font-size: 24rpx; color: #999; margin-top: 4rpx; }
-.actions { display: flex; gap: 8rpx; }
-.edit-btn { color: #4a6cf7; font-size: 26rpx; padding: 8rpx 16rpx; }
-.delete-btn { color: #ff5a5a; font-size: 26rpx; padding: 8rpx 16rpx; }
-.empty { text-align: center; color: #bbb; padding: 120rpx 0; font-size: 28rpx; }
-.fab { position: fixed; right: 40rpx; bottom: 60rpx; width: 96rpx; height: 96rpx; border-radius: 50%; background: #ffb400; color: #fff; font-size: 48rpx; display: flex; align-items: center; justify-content: center; box-shadow: 0 4rpx 16rpx rgba(0,0,0,.2); }
-.result-list { display: flex; flex-direction: column; gap: 16rpx; }
+
+/* 搜索结果 */
+.result-list { margin-top: 16rpx; display: flex; flex-direction: column; gap: 16rpx; }
 .result-item { background: #fff; border-radius: 16rpx; padding: 20rpx; }
 .r-title { font-size: 30rpx; font-weight: 600; }
 .r-sub { font-size: 24rpx; color: #999; margin-top: 6rpx; }
 .r-desc { font-size: 26rpx; color: #666; margin-top: 8rpx; }
+.empty { text-align: center; color: #bbb; padding: 60rpx 0; }
+
+/* 菜单 */
+.menu-list { margin-top: 32rpx; display: flex; flex-direction: column; gap: 12rpx; }
+.menu-item { display: flex; align-items: center; background: #fff; border-radius: 12rpx; padding: 24rpx; }
+.menu-icon { font-size: 36rpx; margin-right: 16rpx; }
+.menu-text { flex: 1; font-size: 28rpx; }
+.menu-arrow { color: #ccc; font-size: 32rpx; }
 </style>

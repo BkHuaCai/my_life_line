@@ -11,6 +11,7 @@ node_modules
 .DS_Store
 dist
 *.local
+package-lock.json
 
 # uni-app 原生构建产物
 unpackage
