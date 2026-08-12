@@ -147,5 +147,5 @@ export default {
 .tl-count { font-size: 24rpx; color: #999; }
 .empty-tip { text-align: center; color: #bbb; padding: 32rpx; }
 
-.fab { position: fixed; right: 40rpx; bottom: 60rpx; background: #ffb400; color: #fff; padding: 20rpx 32rpx; border-radius: 48rpx; font-size: 30rpx; box-shadow: 0 4rpx 16rpx rgba(0,0,0,.2); }
+.fab { position: fixed; right: 40rpx; bottom: 180rpx; background: #ffb400; color: #fff; padding: 20rpx 32rpx; border-radius: 48rpx; font-size: 30rpx; box-shadow: 0 4rpx 16rpx rgba(0,0,0,.2); }
 </style>
