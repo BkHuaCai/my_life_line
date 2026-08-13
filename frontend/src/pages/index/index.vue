@@ -31,7 +31,9 @@
     <!-- 主线 + 其他时间线 -->
     <template v-else>
       <view class="section" v-if="mainTimeline.id">
-        <view class="section-title">主线</view>
+        <view class="section-header">
+          <text class="section-title">主线</text>
+        </view>
         <view class="main-card" @click="openMain">
           <view class="main-info">
             <view class="main-name">{{ mainTimeline.name }} <text class="main-badge">主线</text></view>
@@ -45,8 +47,11 @@
       </view>
 
       <view class="section" v-if="currentPerson.id">
-        <view class="section-title">其他时间线</view>
-        <view class="timeline-list">
+        <view class="section-header">
+          <text class="section-title">其他时间线</text>
+          <text class="section-add" @click="addTimeline">＋ 新建</text>
+        </view>
+        <view class="timeline-list" v-if="otherTimelines.length">
           <view v-for="tl in otherTimelines" :key="tl.id" class="timeline-card" @click="openTimeline(tl.id)">
             <view class="tl-name">{{ tl.name }}</view>
             <view class="tl-meta">
@@ -54,12 +59,33 @@
               <text class="tl-count">{{ eventCounts[tl.id] || 0 }} 个事件</text>
             </view>
           </view>
-          <view v-if="!otherTimelines.length" class="empty-tip" @click="addTimeline">还没有其他时间线，点此添加</view>
+        </view>
+        <view class="empty-state" v-else>
+          <view class="empty-icon">🗂️</view>
+          <view class="empty-title">还没有其他时间线</view>
+          <view class="empty-desc">为教育、旅行、健康等主题创建专属时间线</view>
+          <button class="empty-btn" @click="addTimeline">＋ 创建时间线</button>
+        </view>
+      </view>
+
+      <!-- 数据概览 -->
+      <view class="section stats" v-if="currentPerson.id">
+        <view class="section-header">
+          <text class="section-title">数据概览</text>
+        </view>
+        <view class="stats-card">
+          <view class="stat">
+            <view class="stat-num">{{ timelineTotal }}</view>
+            <view class="stat-label">时间线</view>
+          </view>
+          <view class="stat-divider"></view>
+          <view class="stat">
+            <view class="stat-num">{{ eventTotal }}</view>
+            <view class="stat-label">事件</view>
+          </view>
         </view>
       </view>
     </template>
-
-    <view class="fab" v-if="currentPerson.id" @click="addTimeline">＋ 时间线</view>
   </view>
 </template>
 
@@ -82,6 +108,15 @@ export default {
       results: [],
       nameMap: {},
       tlMap: {}
+    }
+  },
+  computed: {
+    // 数据概览：时间线总数（主线 + 其他）、事件总数
+    timelineTotal() {
+      return this.otherTimelines.length + (this.mainTimeline.id ? 1 : 0)
+    },
+    eventTotal() {
+      return Object.values(this.eventCounts).reduce((sum, n) => sum + n, 0)
     }
   },
   async onShow() {
@@ -167,7 +202,7 @@ export default {
 </script>
 
 <style scoped>
-.page { padding: 24rpx; padding-bottom: 140rpx; }
+.page { padding: 24rpx; padding-bottom: 48rpx; }
 
 /* 顶部：左侧标题，右侧用户切换下拉框 */
 .page-header { display: flex; justify-content: space-between; align-items: center; padding: 8rpx 0 24rpx; }
@@ -188,7 +223,9 @@ export default {
 .empty { text-align: center; color: var(--text-light); padding: 60rpx 0; }
 
 .section { margin-top: 32rpx; }
-.section-title { font-size: 32rpx; font-weight: 600; margin-bottom: 20rpx; }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
+.section-title { font-size: 32rpx; font-weight: 600; }
+.section-add { color: var(--primary); font-size: 26rpx; padding: 8rpx 0 8rpx 24rpx; }
 .main-card { display: flex; align-items: center; background: var(--bg-card); border-radius: 16rpx; padding: 28rpx; box-shadow: var(--shadow-card); border: 2rpx solid var(--primary-soft); }
 .main-info { flex: 1; }
 .main-name { font-size: 32rpx; font-weight: 700; }
@@ -203,7 +240,16 @@ export default {
 .tl-meta { display: flex; align-items: center; gap: 12rpx; margin-top: 8rpx; }
 .tl-cat { background: var(--primary-soft); color: var(--primary-dark); font-size: 22rpx; padding: 4rpx 12rpx; border-radius: 12rpx; }
 .tl-count { font-size: 24rpx; color: var(--text-grey); }
-.empty-tip { text-align: center; color: var(--text-light); padding: 32rpx; }
+.empty-state { background: var(--bg-card); border-radius: 16rpx; padding: 56rpx 32rpx; display: flex; flex-direction: column; align-items: center; box-shadow: var(--shadow-card); }
+.empty-icon { font-size: 80rpx; }
+.empty-title { font-size: 30rpx; font-weight: 600; margin-top: 20rpx; }
+.empty-desc { font-size: 24rpx; color: var(--text-grey); margin-top: 10rpx; }
+.empty-btn { margin-top: 32rpx; background: var(--primary); color: var(--primary-contrast); font-size: 30rpx; border-radius: 48rpx; border: none; padding: 0 48rpx; height: 80rpx; line-height: 80rpx; }
+.empty-btn::after { border: none; }
 
-.fab { position: fixed; right: 40rpx; bottom: 180rpx; background: var(--primary); color: var(--primary-contrast); padding: 20rpx 32rpx; border-radius: 48rpx; font-size: 30rpx; box-shadow: 0 4rpx 16rpx rgba(0,0,0,.2); }
+.stats-card { display: flex; align-items: center; background: var(--bg-card); border-radius: 16rpx; padding: 36rpx 0; box-shadow: var(--shadow-card); }
+.stat { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.stat-num { font-size: 44rpx; font-weight: 700; color: var(--primary); }
+.stat-label { font-size: 24rpx; color: var(--text-grey); margin-top: 6rpx; }
+.stat-divider { width: 2rpx; height: 60rpx; background: var(--border); }
 </style>
