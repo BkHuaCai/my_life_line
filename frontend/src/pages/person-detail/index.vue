@@ -5,7 +5,7 @@
       <view v-else class="avatar placeholder">{{ person.name ? person.name[0] : '?' }}</view>
       <view class="meta">
         <view class="name">{{ person.name }}</view>
-        <view class="sub" v-if="person.birth_date">出生：{{ person.birth_date }}</view>
+        <view class="sub" v-if="person.birth_date">起始：{{ person.birth_date }}</view>
         <view class="sub" v-if="person.note">{{ person.note }}</view>
       </view>
       <view class="header-actions">
@@ -43,7 +43,7 @@ export default {
   },
   async onLoad(options) {
     this.personId = options.personId
-    uni.setNavigationBarTitle({ title: '人物' })
+    uni.setNavigationBarTitle({ title: '档案' })
   },
   async onShow() {
     await this.load()
@@ -67,8 +67,8 @@ export default {
     },
     deletePerson() {
       uni.showModal({
-        title: '删除人物',
-        content: `确定删除「${this.person.name}」吗？此操作将同时删除该人物的所有时间线和事件，无法恢复！`,
+        title: '删除档案',
+        content: `确定删除「${this.person.name}」吗？此操作将同时删除该档案的所有时间线和事件，无法恢复！`,
         success: async (res) => {
           if (res.confirm) {
             await db.deletePerson(this.personId)

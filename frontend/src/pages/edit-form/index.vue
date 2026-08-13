@@ -13,17 +13,17 @@
         </view>
       </view>
       <view class="field">
-        <text class="label">姓名 *</text>
-        <input class="input" v-model="form.name" placeholder="如：小明" />
+        <text class="label">名称 *</text>
+        <input class="input" v-model="form.name" placeholder="如：小明、布丁、我的电脑" />
       </view>
       <view class="field">
-        <text class="label">出生日期</text>
+        <text class="label">起始日期</text>
         <picker mode="date" :value="form.birth_date" @change="(e) => (form.birth_date = e.detail.value)">
           <view class="picker">{{ form.birth_date || '选择日期' }}</view>
         </picker>
       </view>
       <view class="field">
-        <text class="label">出生时间精度（可选）</text>
+        <text class="label">起始时间精度（可选）</text>
         <view class="seg">
           <view :class="['seg-item', form.birth_precision === 'none' ? 'active' : '']" @click="setBirthPrecision('none')">仅日期</view>
           <view :class="['seg-item', form.birth_precision === 'hour' ? 'active' : '']" @click="setBirthPrecision('hour')">到时</view>
@@ -32,7 +32,7 @@
         </view>
       </view>
       <view class="field" v-if="form.birth_precision !== 'none'">
-        <text class="label">出生时间</text>
+        <text class="label">起始时间</text>
         <view class="time-row">
           <picker class="time-picker" mode="selector" :range="hourRange" :value="form.birth_hour" @change="(e) => (form.birth_hour = Number(e.detail.value))">
             <view class="picker">{{ pad(form.birth_hour) }} 时</view>
@@ -196,8 +196,8 @@ export default {
     this.id = options.id || ''
     this.personId = options.personId || ''
     this.timelineId = options.timelineId || ''
-    const titles = { person: '编辑人物', timeline: '编辑时间线', event: '编辑事件' }
-    uni.setNavigationBarTitle({ title: this.id ? titles[this.entityType] : `新建${this.entityType === 'person' ? '人物' : this.entityType === 'timeline' ? '时间线' : '事件'}` })
+    const titles = { person: '编辑档案', timeline: '编辑时间线', event: '编辑事件' }
+    uni.setNavigationBarTitle({ title: this.id ? titles[this.entityType] : `新建${this.entityType === 'person' ? '档案' : this.entityType === 'timeline' ? '时间线' : '事件'}` })
     if (this.id) await this.loadForm()
   },
   methods: {
@@ -266,7 +266,7 @@ export default {
     async save() {
       const { entityType, form } = this
       if (entityType === 'person') {
-        if (!form.name) return uni.showToast({ title: '请填写姓名', icon: 'none' })
+        if (!form.name) return uni.showToast({ title: '请填写名称', icon: 'none' })
         await db.savePerson({ id: this.id || undefined, name: form.name, birth_date: buildEventDate(form.birth_date, form.birth_precision, form.birth_hour, form.birth_minute, form.birth_second) || null, note: form.note || null, avatar_path: form.avatar_path || null })
       } else if (entityType === 'timeline') {
         if (!form.name) return uni.showToast({ title: '请填写名称', icon: 'none' })

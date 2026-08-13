@@ -5,7 +5,7 @@
       <view class="page-title">人生时间线</view>
       <picker class="user-dropdown" mode="selector" :range="userOptions" :value="userIndex" @change="onSwitchUser">
         <view class="dropdown-label">
-          <text class="dropdown-name">{{ currentPerson.name || '选择用户' }}</text>
+          <text class="dropdown-name">{{ currentPerson.name || '选择档案' }}</text>
           <text class="dropdown-arrow">▾</text>
         </view>
       </picker>
@@ -92,7 +92,7 @@ export default {
       const persons = await db.getPersons()
       this.persons = persons
       // 下拉框选项：全部用户 + 末尾追加「＋ 添加用户」
-      this.userOptions = [...persons.map((p) => p.name), '＋ 添加用户']
+      this.userOptions = [...persons.map((p) => p.name), '＋ 添加档案']
       this.currentPerson = (await db.getDefaultPerson()) || persons[0] || {}
       this.userIndex = persons.findIndex((p) => p.id === this.currentPerson.id)
       if (this.userIndex < 0) this.userIndex = 0

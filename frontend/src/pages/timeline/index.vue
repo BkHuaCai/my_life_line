@@ -18,10 +18,10 @@
     <view class="mask" v-if="needInitialPoint">
       <view class="init-card">
         <view class="init-title">填写初始点</view>
-        <view class="init-desc">「{{ timeline.name }}」还没有任何事件，请先填写这条时间线的起点（如出生日期），保存后才能继续使用。</view>
+        <view class="init-desc">「{{ timeline.name }}」还没有任何事件，请先填写这条时间线的起点（如出生或开始日期），保存后才能继续使用。</view>
         <view class="field">
           <text class="label">标题</text>
-          <input class="input" v-model="initForm.title" placeholder="如：出生" />
+          <input class="input" v-model="initForm.title" placeholder="如：出生、购入" />
         </view>
         <view class="field">
           <text class="label">日期 *</text>

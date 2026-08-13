@@ -12,17 +12,17 @@
       <image v-if="currentPerson.avatar_path" class="avatar" :src="currentPerson.avatar_path" mode="aspectFill" />
       <view v-else class="avatar placeholder">{{ currentPerson.name ? currentPerson.name[0] : '?' }}</view>
       <view class="info">
-        <view class="name">{{ currentPerson.name || '请选择用户' }}</view>
-        <view class="sub" v-if="currentPerson.birth_date">出生：{{ currentPerson.birth_date }}</view>
+        <view class="name">{{ currentPerson.name || '请选择档案' }}</view>
+        <view class="sub" v-if="currentPerson.birth_date">起始：{{ currentPerson.birth_date }}</view>
         <view class="sub" v-if="currentPerson.note">{{ currentPerson.note }}</view>
       </view>
       <view class="arrow">›</view>
     </view>
 
-    <!-- 我管理的人（点击进入详情，不再切换） -->
+    <!-- 我的档案（点击进入详情，不再切换） -->
     <view class="section">
       <view class="section-header">
-        <text class="section-title">我管理的人</text>
+        <text class="section-title">我的档案</text>
         <text class="add-user" @click="addPerson">＋ 添加</text>
       </view>
       <view class="user-list">
@@ -34,7 +34,7 @@
             <view class="user-meta">{{ timelineCounts[p.id] || 0 }} 条时间线</view>
           </view>
         </view>
-        <view v-if="!persons.length" class="empty-tip">还没有用户，点击添加</view>
+        <view v-if="!persons.length" class="empty-tip">还没有档案，点击添加</view>
       </view>
     </view>
 
