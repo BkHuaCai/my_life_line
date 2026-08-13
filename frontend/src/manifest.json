@@ -40,6 +40,16 @@
                     "<uses-permission android:name=\"android.permission.WRITE_SETTINGS\"/>"
                 ]
             },
+            /* 图标配置（Android 各密度；路径相对工程根目录 frontend/） */
+            "icons" : {
+                "android" : {
+                    "mdpi" : "src/static/icon/android/icon-48.png",
+                    "hdpi" : "src/static/icon/android/icon-72.png",
+                    "xhdpi" : "src/static/icon/android/icon-96.png",
+                    "xxhdpi" : "src/static/icon/android/icon-144.png",
+                    "xxxhdpi" : "src/static/icon/android/icon-192.png"
+                }
+            },
             /* ios打包配置 */
             "ios" : {},
             /* SDK配置 */

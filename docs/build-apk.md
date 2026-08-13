@@ -124,7 +124,10 @@ powershell -ExecutionPolicy Bypass -File scripts\pack-apk.ps1 -NoOpen
 - **基本设置**
   - `应用名称`：默认「时光档案」，可在此修改。
   - `AppID`：点击「重新获取」，用 DCloud 账号在线申请并自动回填（**必填项**）。
-- **图标配置**：配置 Android 各尺寸启动图标（可准备一张 1024×1024 的 PNG 自动生成）。
+- **图标配置**：仓库已内置一套生成好的应用图标（主图 `frontend/src/static/icon/app-icon-1024.png`，Android 各密度尺寸在 `frontend/src/static/icon/android/`），`manifest.json` 已预配置，直接打包即可。想换成自己的图标时，在 HBuilderX 中操作：
+  1. 双击 `src/manifest.json`，进入「图标配置」；
+  2. Android 图标区点击「上传图标」，选择一张 **1024×1024** 的 PNG（可先用仓库里的 `src/static/icon/app-icon-1024.png` 参考效果）；
+  3. 点击「自动生成所有图标」，预览确认后保存——HBuilderX 会把各尺寸图标写入 manifest.json。
 - **启动界面**：可选，不配则用默认。
 - **App模块配置**：**必须勾选「SQLite」**——本项目数据层依赖 `plus.sqlite` 存储，云打包未勾选时运行会报「打包时未添加sqlite模块」。对应 manifest.json 中的 `app-plus → modules → SQLite`（本仓库已默认声明，一般无需改动）。
 - **App权限**：本项目纯本地存储、无网络依赖，已声明的相机等权限一般无需改动。
