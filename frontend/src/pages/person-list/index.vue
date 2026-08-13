@@ -316,8 +316,8 @@ export default {
 .theme-section { background: var(--bg-card); border-radius: 16rpx; padding: 24rpx; }
 .theme-label { font-size: 24rpx; color: var(--text-sub); margin: 24rpx 0 16rpx; }
 .theme-label:first-child { margin-top: 0; }
-.theme-row { display: flex; flex-wrap: wrap; gap: 24rpx 20rpx; }
-.theme-item { display: flex; flex-direction: column; align-items: center; gap: 8rpx; width: 80rpx; }
+.theme-row { display: grid; grid-template-columns: repeat(6, 1fr); row-gap: 24rpx; column-gap: 20rpx; }
+.theme-item { display: flex; flex-direction: column; align-items: center; gap: 8rpx; }
 .swatch { width: 64rpx; height: 64rpx; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .swatch.selected { border: 4rpx solid var(--text-main); box-sizing: border-box; }
 .swatch-custom { background: linear-gradient(135deg, #ff0000, #ff9500, #ffff00, #07c160, #007aff, #7c4dff, #ff4d8d); }
