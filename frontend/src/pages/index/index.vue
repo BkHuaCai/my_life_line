@@ -2,7 +2,7 @@
   <view class="page">
     <!-- 顶部：左侧标题，右侧用户切换下拉框 -->
     <view class="page-header">
-      <view class="page-title">人生时间线</view>
+      <view class="page-title">时光档案</view>
       <picker class="user-dropdown" mode="selector" :range="userOptions" :value="userIndex" @change="onSwitchUser">
         <view class="dropdown-label">
           <text class="dropdown-name">{{ currentPerson.name || '选择档案' }}</text>

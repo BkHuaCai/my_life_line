@@ -1,6 +1,6 @@
 {
   "pages": [
-    { "path": "pages/index/index", "style": { "navigationBarTitleText": "人生时间线" } },
+    { "path": "pages/index/index", "style": { "navigationBarTitleText": "时光档案" } },
     { "path": "pages/person-list/index", "style": { "navigationBarTitleText": "档案" } },
     { "path": "pages/person-detail/index", "style": { "navigationBarTitleText": "档案" } },
     { "path": "pages/timeline/index", "style": { "navigationBarTitleText": "时间线" } },
@@ -9,7 +9,7 @@
   ],
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "人生时间线",
+    "navigationBarTitleText": "时光档案",
     "navigationBarBackgroundColor": "#FFFFFF",
     "backgroundColor": "#F6F7FB"
   },
