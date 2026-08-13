@@ -60,17 +60,24 @@
         <text class="section-title">主题配色</text>
       </view>
       <view class="theme-section">
-        <view class="theme-label">预设主题</view>
+        <view class="theme-label">预设颜色</view>
         <view class="theme-row">
-          <view v-for="t in presetThemes" :key="t.id" class="theme-item" @click="selectTheme(t.primary)">
-            <view class="swatch" :class="{ selected: themePrimary === t.primary }" :style="{ background: t.primary }">
-              <text v-if="themePrimary === t.primary" class="check">✓</text>
+          <view v-for="c in presetColors" :key="c" class="theme-item" @click="pickPreset(c)">
+            <view class="swatch" :class="{ selected: !showPalette && themePrimary === c }" :style="{ background: c }">
+              <text v-if="!showPalette && themePrimary === c" class="check">✓</text>
             </view>
-            <text class="theme-name">{{ t.name }}</text>
+          </view>
+          <view class="theme-item" @click="customSelected = true">
+            <view class="swatch swatch-custom" :class="{ selected: showPalette }">
+              <text v-if="showPalette" class="check">✓</text>
+            </view>
+            <text class="theme-name">自定义</text>
           </view>
         </view>
-        <view class="theme-label">自定义颜色（调色盘）</view>
-        <color-picker :value="themePrimary" @change="selectTheme" />
+        <template v-if="showPalette">
+          <view class="theme-label">自定义颜色（调色盘）</view>
+          <color-picker :value="themePrimary" @change="selectTheme" />
+        </template>
       </view>
     </view>
   </view>
@@ -79,7 +86,7 @@
 <script>
 import { db } from '../../utils/db'
 import { serialize, importData } from '../../utils/export'
-import { PRESET_THEMES, getThemePrimary, saveThemePrimary } from '../../utils/theme'
+import { PRESET_COLORS, getThemePrimary, saveThemePrimary } from '../../utils/theme'
 import ColorPicker from '../../components/color-picker.vue'
 
 export default {
@@ -94,8 +101,15 @@ export default {
       results: [],
       nameMap: {},
       tlMap: {},
-      presetThemes: PRESET_THEMES,
+      presetColors: PRESET_COLORS,
+      customSelected: false,
       themePrimary: getThemePrimary()
+    }
+  },
+  computed: {
+    // 调色盘仅在选中「自定义」或当前主色不在预设内时展示
+    showPalette() {
+      return this.customSelected || !this.presetColors.includes(this.themePrimary)
     }
   },
   async onShow() {
@@ -123,6 +137,7 @@ export default {
       this.nameMap = nameMap
       this.tlMap = tlMap
       this.themePrimary = getThemePrimary()
+      this.customSelected = !this.presetColors.includes(this.themePrimary)
     },
     openPerson(id) {
       uni.navigateTo({ url: `/pages/person-detail/index?personId=${id}` })
@@ -134,6 +149,10 @@ export default {
     },
     addPerson() {
       uni.navigateTo({ url: '/pages/edit-form/index?entityType=person' })
+    },
+    pickPreset(primary) {
+      this.customSelected = false
+      this.selectTheme(primary)
     },
     selectTheme(primary) {
       this.themePrimary = primary
@@ -301,6 +320,7 @@ export default {
 .theme-item { display: flex; flex-direction: column; align-items: center; gap: 8rpx; width: 80rpx; }
 .swatch { width: 64rpx; height: 64rpx; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .swatch.selected { border: 4rpx solid var(--text-main); box-sizing: border-box; }
+.swatch-custom { background: linear-gradient(135deg, #ff0000, #ff9500, #ffff00, #07c160, #007aff, #7c4dff, #ff4d8d); }
 .check { color: #fff; font-size: 30rpx; font-weight: 700; }
 .theme-name { font-size: 20rpx; color: var(--text-sub); }
 </style>

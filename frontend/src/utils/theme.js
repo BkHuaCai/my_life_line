@@ -9,20 +9,13 @@
 
 export const STORAGE_KEY = 'app_theme'
 
-// 预设主题（软件主流配色）
-export const PRESET_THEMES = [
-  { id: 'indigo', name: '靛蓝', primary: '#4a6cf7' },
-  { id: 'blue', name: '天蓝', primary: '#007aff' },
-  { id: 'green', name: '翠绿', primary: '#07c160' },
-  { id: 'teal', name: '青碧', primary: '#00b578' },
-  { id: 'orange', name: '活力橙', primary: '#ff9500' },
-  { id: 'pink', name: '浪漫粉', primary: '#ff4d8d' },
-  { id: 'purple', name: '紫罗兰', primary: '#7c4dff' },
-  { id: 'red', name: '炽红', primary: '#e54d42' }
+// 预设固定颜色（软件主流配色），共 11 色；自定义颜色由[我的]页调色盘选择
+export const PRESET_COLORS = [
+  '#4a6cf7', '#007aff', '#10aeff', '#07c160', '#00b578',
+  '#ffb400', '#ff9500', '#ff3b30', '#ff4d8d', '#7c4dff', '#333333'
 ]
 
-// 自定义主色由[我的]页的 HSV 调色盘交互选择，此处不再维护固定色板
-export const DEFAULT_PRIMARY = PRESET_THEMES[0].primary
+export const DEFAULT_PRIMARY = PRESET_COLORS[0]
 
 function hexToRgb(hex) {
   const h = (hex || '').replace('#', '')
