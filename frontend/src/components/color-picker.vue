@@ -13,7 +13,6 @@
     <!-- 当前颜色预览 -->
     <view class="cp-foot">
       <view class="cp-preview" :style="{ background: value }"></view>
-      <text class="cp-hex">{{ value }}</text>
     </view>
   </view>
 </template>
@@ -137,5 +136,4 @@ export default {
 .cp-hue-thumb { top: 50%; }
 .cp-foot { display: flex; align-items: center; margin-top: 24rpx; }
 .cp-preview { width: 48rpx; height: 48rpx; border-radius: 50%; border: 2rpx solid var(--border); }
-.cp-hex { margin-left: 16rpx; font-size: 26rpx; color: var(--text-main); }
 </style>
