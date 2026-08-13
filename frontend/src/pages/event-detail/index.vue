@@ -70,12 +70,12 @@ export default {
 .swiper-wrap { width: 100%; }
 .swiper { width: 100%; height: 640rpx; }
 .img { width: 100%; height: 640rpx; }
-.no-img { width: 100%; height: 320rpx; background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #bbb; }
+.no-img { width: 100%; height: 320rpx; background: var(--bg-muted); display: flex; align-items: center; justify-content: center; color: var(--text-light); }
 .meta { padding: 24rpx; }
-.date { color: #ffb400; font-weight: 600; }
+.date { color: var(--primary); font-weight: 600; }
 .title { font-size: 40rpx; font-weight: 700; margin-top: 12rpx; }
-.desc { font-size: 30rpx; color: #555; margin-top: 16rpx; line-height: 1.6; }
+.desc { font-size: 30rpx; color: var(--text-sub); margin-top: 16rpx; line-height: 1.6; }
 .actions { display: flex; gap: 24rpx; padding: 24rpx; }
-.btn { flex: 1; background: #ffb400; color: #fff; border-radius: 48rpx; }
-.btn.danger { background: #ff5a5a; }
+.btn { flex: 1; background: var(--primary); color: var(--primary-contrast); border-radius: 48rpx; }
+.btn.danger { background: var(--danger); }
 </style>

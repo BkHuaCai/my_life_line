@@ -294,27 +294,27 @@ export default {
 <style scoped>
 .page { padding: 24rpx; }
 .field { margin-bottom: 32rpx; }
-.label { font-size: 26rpx; color: #888; display: block; margin-bottom: 12rpx; }
-.input { background: #fff; border-radius: 12rpx; padding: 20rpx; font-size: 30rpx; width: 100%; box-sizing: border-box; height: 84rpx; min-height: 84rpx; }
+.label { font-size: 26rpx; color: var(--text-sub); display: block; margin-bottom: 12rpx; }
+.input { background: var(--bg-card); border-radius: 12rpx; padding: 20rpx; font-size: 30rpx; width: 100%; box-sizing: border-box; height: 84rpx; min-height: 84rpx; }
 .textarea { min-height: 160rpx; }
-.picker { background: #fff; border-radius: 12rpx; padding: 20rpx; font-size: 30rpx; color: #333; }
+.picker { background: var(--bg-card); border-radius: 12rpx; padding: 20rpx; font-size: 30rpx; color: var(--text-main); }
 .seg { display: flex; gap: 16rpx; }
-.seg-item { flex: 1; text-align: center; padding: 18rpx; border-radius: 12rpx; background: #fff; color: #666; }
-.seg-item.active { background: #ffb400; color: #fff; }
+.seg-item { flex: 1; text-align: center; padding: 18rpx; border-radius: 12rpx; background: var(--bg-card); color: var(--text-sub); }
+.seg-item.active { background: var(--primary); color: var(--primary-contrast); }
 .time-row { display: flex; gap: 16rpx; }
 .time-picker { flex: 1; }
 .time-picker .picker { text-align: center; }
 .img-grid { display: flex; flex-wrap: wrap; gap: 16rpx; }
 .img-wrap { position: relative; width: 180rpx; height: 180rpx; }
 .img { width: 180rpx; height: 180rpx; border-radius: 12rpx; }
-.img-del { position: absolute; top: -12rpx; right: -12rpx; width: 40rpx; height: 40rpx; border-radius: 50%; background: rgba(0,0,0,.6); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 28rpx; }
-.img-add { width: 180rpx; height: 180rpx; border: 2rpx dashed #ccc; border-radius: 12rpx; display: flex; align-items: center; justify-content: center; color: #ccc; font-size: 48rpx; }
-.save-btn { margin-top: 40rpx; background: #ffb400; color: #fff; font-size: 32rpx; border-radius: 48rpx; }
+.img-del { position: absolute; top: -12rpx; right: -12rpx; width: 40rpx; height: 40rpx; border-radius: 50%; background: rgba(0,0,0,.6); color: var(--primary-contrast); display: flex; align-items: center; justify-content: center; font-size: 28rpx; }
+.img-add { width: 180rpx; height: 180rpx; border: 2rpx dashed var(--text-light); border-radius: 12rpx; display: flex; align-items: center; justify-content: center; color: var(--text-light); font-size: 48rpx; }
+.save-btn { margin-top: 40rpx; background: var(--primary); color: var(--primary-contrast); font-size: 32rpx; border-radius: 48rpx; }
 
 /* 头像选择 */
 .avatar-picker { display: flex; align-items: center; gap: 24rpx; }
-.avatar-wrap { width: 120rpx; height: 120rpx; border-radius: 50%; overflow: hidden; background: #f5f5f5; }
+.avatar-wrap { width: 120rpx; height: 120rpx; border-radius: 50%; overflow: hidden; background: var(--bg-muted); }
 .avatar-img { width: 100%; height: 100%; }
-.avatar-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 48rpx; color: #ccc; border: 2rpx dashed #ddd; border-radius: 50%; }
-.avatar-tip { font-size: 24rpx; color: #999; }
+.avatar-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 48rpx; color: var(--text-light); border: 2rpx dashed var(--border); border-radius: 50%; }
+.avatar-tip { font-size: 24rpx; color: var(--text-grey); }
 </style>

@@ -129,25 +129,25 @@ export default {
 
 <style scoped>
 .page { padding-bottom: 140rpx; }
-.toolbar { position: sticky; top: 0; background: #f8f8f8; padding: 16rpx 24rpx; z-index: 10; }
-.seg { display: flex; background: #eee; border-radius: 12rpx; overflow: hidden; }
-.seg-item { flex: 1; text-align: center; padding: 16rpx; font-size: 28rpx; color: #666; }
-.seg-item.active { background: #fff; color: #ffb400; font-weight: 600; }
-.fab { position: fixed; right: 40rpx; bottom: 60rpx; background: #ffb400; color: #fff; padding: 20rpx 32rpx; border-radius: 48rpx; font-size: 30rpx; box-shadow: 0 4rpx 16rpx rgba(0,0,0,.2); }
+.toolbar { position: sticky; top: 0; background: var(--bg-page); padding: 16rpx 24rpx; z-index: 10; }
+.seg { display: flex; background: var(--bg-muted); border-radius: 12rpx; overflow: hidden; }
+.seg-item { flex: 1; text-align: center; padding: 16rpx; font-size: 28rpx; color: var(--text-sub); }
+.seg-item.active { background: var(--bg-card); color: var(--primary); font-weight: 600; }
+.fab { position: fixed; right: 40rpx; bottom: 60rpx; background: var(--primary); color: var(--primary-contrast); padding: 20rpx 32rpx; border-radius: 48rpx; font-size: 30rpx; box-shadow: 0 4rpx 16rpx rgba(0,0,0,.2); }
 
 /* 初始点覆盖层 */
 .mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.45); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 40rpx; }
-.init-card { width: 100%; background: #fff; border-radius: 20rpx; padding: 40rpx; }
+.init-card { width: 100%; background: var(--bg-card); border-radius: 20rpx; padding: 40rpx; }
 .init-title { font-size: 36rpx; font-weight: 700; margin-bottom: 12rpx; }
-.init-desc { font-size: 26rpx; color: #888; margin-bottom: 32rpx; line-height: 1.6; }
+.init-desc { font-size: 26rpx; color: var(--text-sub); margin-bottom: 32rpx; line-height: 1.6; }
 .field { margin-bottom: 28rpx; }
-.label { font-size: 26rpx; color: #888; display: block; margin-bottom: 12rpx; }
-.input { background: #f5f5f5; border-radius: 12rpx; padding: 20rpx; font-size: 30rpx; width: 100%; box-sizing: border-box; height: 84rpx; min-height: 84rpx; }
-.picker { background: #f5f5f5; border-radius: 12rpx; padding: 20rpx; font-size: 30rpx; color: #333; }
-.save-btn { margin-top: 16rpx; background: #ffb400; color: #fff; font-size: 32rpx; border-radius: 48rpx; }
+.label { font-size: 26rpx; color: var(--text-sub); display: block; margin-bottom: 12rpx; }
+.input { background: var(--bg-muted); border-radius: 12rpx; padding: 20rpx; font-size: 30rpx; width: 100%; box-sizing: border-box; height: 84rpx; min-height: 84rpx; }
+.picker { background: var(--bg-muted); border-radius: 12rpx; padding: 20rpx; font-size: 30rpx; color: var(--text-main); }
+.save-btn { margin-top: 16rpx; background: var(--primary); color: var(--primary-contrast); font-size: 32rpx; border-radius: 48rpx; }
 .pseg { display: flex; gap: 16rpx; }
-.pseg-item { flex: 1; text-align: center; padding: 16rpx; border-radius: 12rpx; background: #f5f5f5; color: #666; font-size: 26rpx; }
-.pseg-item.active { background: #ffb400; color: #fff; }
+.pseg-item { flex: 1; text-align: center; padding: 16rpx; border-radius: 12rpx; background: var(--bg-muted); color: var(--text-sub); font-size: 26rpx; }
+.pseg-item.active { background: var(--primary); color: var(--primary-contrast); }
 .time-row { display: flex; gap: 16rpx; }
 .time-picker { flex: 1; }
 .time-picker .picker { text-align: center; }

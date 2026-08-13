@@ -49,8 +49,8 @@ export default {
 <style scoped>
 .grid { padding: 16rpx; }
 .group { margin-bottom: 32rpx; }
-.gh { font-size: 28rpx; font-weight: 700; margin-bottom: 12rpx; border-left: 6rpx solid #ffb400; padding-left: 12rpx; }
+.gh { font-size: 28rpx; font-weight: 700; margin-bottom: 12rpx; border-left: 6rpx solid var(--primary); padding-left: 12rpx; }
 .cells { display: flex; flex-wrap: wrap; gap: 8rpx; }
 .cell { width: 30.5%; aspect-ratio: 1; border-radius: 8rpx; }
-.empty { text-align: center; color: #bbb; padding: 120rpx 0; }
+.empty { text-align: center; color: var(--text-light); padding: 120rpx 0; }
 </style>

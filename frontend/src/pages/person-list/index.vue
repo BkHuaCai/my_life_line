@@ -54,12 +54,29 @@
       </view>
     </template>
 
-    <!-- 功能操作 -->
-    <view class="menu-list" v-if="!searching">
-      <view class="menu-item" @click="goToPersonList">
-        <text class="menu-icon">👥</text>
-        <text class="menu-text">管理全部用户</text>
-        <text class="menu-arrow">›</text>
+    <!-- 主题配色 -->
+    <view class="section" v-if="!searching">
+      <view class="section-header">
+        <text class="section-title">主题配色</text>
+      </view>
+      <view class="theme-section">
+        <view class="theme-label">预设主题</view>
+        <view class="theme-row">
+          <view v-for="t in presetThemes" :key="t.id" class="theme-item" @click="selectTheme(t.primary)">
+            <view class="swatch" :class="{ selected: themePrimary === t.primary }" :style="{ background: t.primary }">
+              <text v-if="themePrimary === t.primary" class="check">✓</text>
+            </view>
+            <text class="theme-name">{{ t.name }}</text>
+          </view>
+        </view>
+        <view class="theme-label">自定义颜色</view>
+        <view class="theme-row">
+          <view v-for="c in customColors" :key="c" class="theme-item" @click="selectTheme(c)">
+            <view class="swatch" :class="{ selected: themePrimary === c }" :style="{ background: c }">
+              <text v-if="themePrimary === c" class="check">✓</text>
+            </view>
+          </view>
+        </view>
       </view>
     </view>
   </view>
@@ -68,6 +85,7 @@
 <script>
 import { db } from '../../utils/db'
 import { serialize, importData } from '../../utils/export'
+import { PRESET_THEMES, CUSTOM_COLORS, getThemePrimary, saveThemePrimary } from '../../utils/theme'
 
 export default {
   data() {
@@ -79,7 +97,10 @@ export default {
       searching: false,
       results: [],
       nameMap: {},
-      tlMap: {}
+      tlMap: {},
+      presetThemes: PRESET_THEMES,
+      customColors: CUSTOM_COLORS,
+      themePrimary: getThemePrimary()
     }
   },
   async onShow() {
@@ -106,6 +127,7 @@ export default {
       this.timelineCounts = counts
       this.nameMap = nameMap
       this.tlMap = tlMap
+      this.themePrimary = getThemePrimary()
     },
     openPerson(id) {
       uni.navigateTo({ url: `/pages/person-detail/index?personId=${id}` })
@@ -118,9 +140,9 @@ export default {
     addPerson() {
       uni.navigateTo({ url: '/pages/edit-form/index?entityType=person' })
     },
-    goToPersonList() {
-      // 跳转到一个新的页面管理所有用户
-      uni.showToast({ title: '开发中', icon: 'none' })
+    selectTheme(primary) {
+      this.themePrimary = primary
+      saveThemePrimary(primary)
     },
     personName(id) {
       return this.nameMap[id] || ''
@@ -174,13 +196,35 @@ export default {
       }
     },
     doImport() {
-      uni.showModal({
-        title: '导入数据',
-        content: '请先在文件管理中找到之前导出的 JSON 文件，选择后导入。\n\n注意：导入会合并到现有数据中。',
+      uni.chooseFile({
+        count: 1,
+        extension: ['json'],
         success: (res) => {
-          if (res.confirm) {
-            uni.showToast({ title: '导入功能开发中', icon: 'none' })
-          }
+          const file = res.tempFiles && res.tempFiles[0]
+          if (!file || !file.path) return
+          uni.showLoading({ title: '导入中' })
+          const fs = uni.getFileSystemManager()
+          fs.readFile({
+            filePath: file.path,
+            encoding: 'utf8',
+            success: async (r) => {
+              try {
+                const data = JSON.parse(r.data)
+                await importData(db, data)
+                uni.hideLoading()
+                uni.showToast({ title: '导入成功', icon: 'success' })
+                this.load()
+              } catch (e) {
+                console.error('import fail', e)
+                uni.hideLoading()
+                uni.showToast({ title: '导入失败，文件格式不正确', icon: 'none' })
+              }
+            },
+            fail: () => {
+              uni.hideLoading()
+              uni.showToast({ title: '读取文件失败', icon: 'none' })
+            }
+          })
         }
       })
     }
@@ -192,50 +236,54 @@ export default {
 .page { padding: 24rpx; padding-bottom: 140rpx; }
 .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24rpx; }
 .header-title { font-size: 40rpx; font-weight: 700; }
-.settings-btn { font-size: 40rpx; color: #666; padding: 8rpx 16rpx; }
+.settings-btn { font-size: 40rpx; color: var(--text-sub); padding: 8rpx 16rpx; }
 
 /* 当前用户 */
-.current-user { display: flex; align-items: center; background: #fff; border-radius: 16rpx; padding: 32rpx; box-shadow: 0 2rpx 8rpx rgba(0,0,0,.06); }
+.current-user { display: flex; align-items: center; background: var(--bg-card); border-radius: 16rpx; padding: 32rpx; box-shadow: var(--shadow-card); }
 .avatar { width: 100rpx; height: 100rpx; border-radius: 50%; }
-.avatar.placeholder { background: #ffb400; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 40rpx; }
+.avatar.placeholder { background: var(--primary); color: var(--primary-contrast); display: flex; align-items: center; justify-content: center; font-size: 40rpx; }
 .info { flex: 1; margin-left: 24rpx; }
 .name { font-size: 36rpx; font-weight: 700; }
-.sub { font-size: 24rpx; color: #999; margin-top: 6rpx; }
-.arrow { font-size: 40rpx; color: #ccc; }
+.sub { font-size: 24rpx; color: var(--text-grey); margin-top: 6rpx; }
+.arrow { font-size: 40rpx; color: var(--text-light); }
 
 /* 用户列表 */
 .section { margin-top: 32rpx; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
-.section-title { font-size: 28rpx; font-weight: 600; color: #666; }
-.add-user { color: #ffb400; font-size: 26rpx; }
+.section-title { font-size: 28rpx; font-weight: 600; color: var(--text-sub); }
+.add-user { color: var(--primary); font-size: 26rpx; }
 .user-list { display: flex; flex-direction: column; gap: 12rpx; }
-.user-card { display: flex; align-items: center; background: #fff; border-radius: 12rpx; padding: 20rpx; }
-.user-card.active { border: 2rpx solid #ffb400; }
+.user-card { display: flex; align-items: center; background: var(--bg-card); border-radius: 12rpx; padding: 20rpx; }
+.user-card.active { border: 2rpx solid var(--primary); }
 .avatar-sm { width: 64rpx; height: 64rpx; border-radius: 50%; }
-.avatar-sm.placeholder { background: #ffb400; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 28rpx; }
+.avatar-sm.placeholder { background: var(--primary); color: var(--primary-contrast); display: flex; align-items: center; justify-content: center; font-size: 28rpx; }
 .user-info { flex: 1; margin-left: 16rpx; }
 .user-name { font-size: 28rpx; font-weight: 600; }
-.me-badge { display: inline-block; background: #ffb400; color: #fff; font-size: 20rpx; padding: 2rpx 10rpx; border-radius: 10rpx; margin-left: 10rpx; }
-.user-meta { font-size: 22rpx; color: #999; }
-.check-icon { color: #ffb400; font-weight: 600; font-size: 28rpx; }
-.empty-tip { text-align: center; color: #bbb; padding: 24rpx; }
+.me-badge { display: inline-block; background: var(--primary); color: var(--primary-contrast); font-size: 20rpx; padding: 2rpx 10rpx; border-radius: 10rpx; margin-left: 10rpx; }
+.user-meta { font-size: 22rpx; color: var(--text-grey); }
+.check-icon { color: var(--primary); font-weight: 600; font-size: 28rpx; }
+.empty-tip { text-align: center; color: var(--text-light); padding: 24rpx; }
 
 /* 搜索 */
 .search-bar { margin-top: 32rpx; }
-.search-input { background: #fff; border-radius: 12rpx; padding: 14rpx 20rpx; font-size: 28rpx; height: 76rpx; min-height: 76rpx; }
+.search-input { background: var(--bg-card); border-radius: 12rpx; padding: 14rpx 20rpx; font-size: 28rpx; height: 76rpx; min-height: 76rpx; }
 
 /* 搜索结果 */
 .result-list { margin-top: 16rpx; display: flex; flex-direction: column; gap: 16rpx; }
-.result-item { background: #fff; border-radius: 16rpx; padding: 20rpx; }
+.result-item { background: var(--bg-card); border-radius: 16rpx; padding: 20rpx; }
 .r-title { font-size: 30rpx; font-weight: 600; }
-.r-sub { font-size: 24rpx; color: #999; margin-top: 6rpx; }
-.r-desc { font-size: 26rpx; color: #666; margin-top: 8rpx; }
-.empty { text-align: center; color: #bbb; padding: 60rpx 0; }
+.r-sub { font-size: 24rpx; color: var(--text-grey); margin-top: 6rpx; }
+.r-desc { font-size: 26rpx; color: var(--text-sub); margin-top: 8rpx; }
+.empty { text-align: center; color: var(--text-light); padding: 60rpx 0; }
 
-/* 菜单 */
-.menu-list { margin-top: 32rpx; display: flex; flex-direction: column; gap: 12rpx; }
-.menu-item { display: flex; align-items: center; background: #fff; border-radius: 12rpx; padding: 24rpx; }
-.menu-icon { font-size: 36rpx; margin-right: 16rpx; }
-.menu-text { flex: 1; font-size: 28rpx; }
-.menu-arrow { color: #ccc; font-size: 32rpx; }
+/* 主题配色 */
+.theme-section { background: var(--bg-card); border-radius: 16rpx; padding: 24rpx; }
+.theme-label { font-size: 24rpx; color: var(--text-sub); margin: 24rpx 0 16rpx; }
+.theme-label:first-child { margin-top: 0; }
+.theme-row { display: flex; flex-wrap: wrap; gap: 24rpx 20rpx; }
+.theme-item { display: flex; flex-direction: column; align-items: center; gap: 8rpx; width: 80rpx; }
+.swatch { width: 64rpx; height: 64rpx; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.swatch.selected { border: 4rpx solid var(--text-main); box-sizing: border-box; }
+.check { color: #fff; font-size: 30rpx; font-weight: 700; }
+.theme-name { font-size: 20rpx; color: var(--text-sub); }
 </style>

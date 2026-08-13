@@ -36,12 +36,12 @@ export default {
 
 <style scoped>
 .cards { padding: 16rpx; display: flex; flex-direction: column; gap: 24rpx; }
-.card { background: #fff; border-radius: 16rpx; overflow: hidden; box-shadow: 0 2rpx 8rpx rgba(0,0,0,.06); }
+.card { background: var(--bg-card); border-radius: 16rpx; overflow: hidden; box-shadow: var(--shadow-card); }
 .big { width: 100%; height: 360rpx; }
-.big.placeholder { display: flex; align-items: center; justify-content: center; background: #f0f0f0; color: #ccc; font-size: 64rpx; }
+.big.placeholder { display: flex; align-items: center; justify-content: center; background: var(--bg-muted); color: var(--text-light); font-size: 64rpx; }
 .body { padding: 20rpx; }
-.d { font-size: 24rpx; color: #ffb400; font-weight: 600; }
+.d { font-size: 24rpx; color: var(--primary); font-weight: 600; }
 .t { font-size: 32rpx; font-weight: 700; margin-top: 8rpx; }
-.desc { font-size: 26rpx; color: #888; margin-top: 8rpx; }
-.empty { text-align: center; color: #bbb; padding: 120rpx 0; }
+.desc { font-size: 26rpx; color: var(--text-sub); margin-top: 8rpx; }
+.empty { text-align: center; color: var(--text-light); padding: 120rpx 0; }
 </style>

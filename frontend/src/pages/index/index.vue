@@ -172,38 +172,38 @@ export default {
 /* 顶部：左侧标题，右侧用户切换下拉框 */
 .page-header { display: flex; justify-content: space-between; align-items: center; padding: 8rpx 0 24rpx; }
 .page-title { font-size: 40rpx; font-weight: 700; }
-.dropdown-label { display: flex; align-items: center; background: #fff4d6; color: #b8860b; border-radius: 32rpx; padding: 10rpx 24rpx; font-size: 26rpx; }
+.dropdown-label { display: flex; align-items: center; background: var(--primary-soft); color: var(--primary-dark); border-radius: 32rpx; padding: 10rpx 24rpx; font-size: 26rpx; }
 .dropdown-arrow { margin-left: 8rpx; font-size: 22rpx; }
 
 /* 搜索 */
 .search-bar { margin-top: 8rpx; }
-.search-input { background: #fff; border-radius: 12rpx; padding: 14rpx 20rpx; font-size: 28rpx; height: 76rpx; min-height: 76rpx; }
+.search-input { background: var(--bg-card); border-radius: 12rpx; padding: 14rpx 20rpx; font-size: 28rpx; height: 76rpx; min-height: 76rpx; }
 
 /* 搜索结果 */
 .result-list { margin-top: 24rpx; display: flex; flex-direction: column; gap: 16rpx; }
-.result-item { background: #fff; border-radius: 16rpx; padding: 20rpx; }
+.result-item { background: var(--bg-card); border-radius: 16rpx; padding: 20rpx; }
 .r-title { font-size: 30rpx; font-weight: 600; }
-.r-sub { font-size: 24rpx; color: #999; margin-top: 6rpx; }
-.r-desc { font-size: 26rpx; color: #666; margin-top: 8rpx; }
-.empty { text-align: center; color: #bbb; padding: 60rpx 0; }
+.r-sub { font-size: 24rpx; color: var(--text-grey); margin-top: 6rpx; }
+.r-desc { font-size: 26rpx; color: var(--text-sub); margin-top: 8rpx; }
+.empty { text-align: center; color: var(--text-light); padding: 60rpx 0; }
 
 .section { margin-top: 32rpx; }
 .section-title { font-size: 32rpx; font-weight: 600; margin-bottom: 20rpx; }
-.main-card { display: flex; align-items: center; background: #fff; border-radius: 16rpx; padding: 28rpx; box-shadow: 0 2rpx 8rpx rgba(0,0,0,.06); border: 2rpx solid #ffe3a3; }
+.main-card { display: flex; align-items: center; background: var(--bg-card); border-radius: 16rpx; padding: 28rpx; box-shadow: var(--shadow-card); border: 2rpx solid var(--primary-soft); }
 .main-info { flex: 1; }
 .main-name { font-size: 32rpx; font-weight: 700; }
-.main-badge { display: inline-block; background: #ffb400; color: #fff; font-size: 20rpx; padding: 2rpx 12rpx; border-radius: 12rpx; margin-left: 12rpx; vertical-align: middle; }
-.main-meta { font-size: 24rpx; color: #999; margin-top: 8rpx; }
-.main-warn { color: #ff5a5a; }
-.arrow { font-size: 40rpx; color: #ccc; }
+.main-badge { display: inline-block; background: var(--primary); color: var(--primary-contrast); font-size: 20rpx; padding: 2rpx 12rpx; border-radius: 12rpx; margin-left: 12rpx; vertical-align: middle; }
+.main-meta { font-size: 24rpx; color: var(--text-grey); margin-top: 8rpx; }
+.main-warn { color: var(--danger); }
+.arrow { font-size: 40rpx; color: var(--text-light); }
 
 .timeline-list { display: flex; flex-direction: column; gap: 16rpx; }
-.timeline-card { background: #fff; border-radius: 16rpx; padding: 24rpx; box-shadow: 0 2rpx 8rpx rgba(0,0,0,.06); }
+.timeline-card { background: var(--bg-card); border-radius: 16rpx; padding: 24rpx; box-shadow: var(--shadow-card); }
 .tl-name { font-size: 30rpx; font-weight: 600; }
 .tl-meta { display: flex; align-items: center; gap: 12rpx; margin-top: 8rpx; }
-.tl-cat { background: #fff4d6; color: #b8860b; font-size: 22rpx; padding: 4rpx 12rpx; border-radius: 12rpx; }
-.tl-count { font-size: 24rpx; color: #999; }
-.empty-tip { text-align: center; color: #bbb; padding: 32rpx; }
+.tl-cat { background: var(--primary-soft); color: var(--primary-dark); font-size: 22rpx; padding: 4rpx 12rpx; border-radius: 12rpx; }
+.tl-count { font-size: 24rpx; color: var(--text-grey); }
+.empty-tip { text-align: center; color: var(--text-light); padding: 32rpx; }
 
-.fab { position: fixed; right: 40rpx; bottom: 180rpx; background: #ffb400; color: #fff; padding: 20rpx 32rpx; border-radius: 48rpx; font-size: 30rpx; box-shadow: 0 4rpx 16rpx rgba(0,0,0,.2); }
+.fab { position: fixed; right: 40rpx; bottom: 180rpx; background: var(--primary); color: var(--primary-contrast); padding: 20rpx 32rpx; border-radius: 48rpx; font-size: 30rpx; box-shadow: 0 4rpx 16rpx rgba(0,0,0,.2); }
 </style>
