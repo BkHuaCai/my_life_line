@@ -165,17 +165,17 @@ if (-not $NoOpen) {
   $cli = Join-Path (Split-Path $HbxPath -Parent) 'cli.exe'
   if (Test-Path $cli) {
     try {
-      & $cli project open --path $repoRoot | Out-Null
+      & $cli project open --path $FrontendDir | Out-Null
       if ($LASTEXITCODE -eq 0) {
-        Write-Ok "已自动导入项目：$repoRoot"
+        Write-Ok "已自动导入项目：$FrontendDir"
       } else {
-        Write-Warn2 'CLI 导入未生效，请手动操作：文件 -> 导入 -> 从本地目录导入，选择仓库根目录'
+        Write-Warn2 'CLI 导入未生效，请手动操作：文件 -> 导入 -> 从本地目录导入，选择 frontend 目录'
       }
     } catch {
-      Write-Warn2 'CLI 导入异常，请手动操作：文件 -> 导入 -> 从本地目录导入，选择仓库根目录'
+      Write-Warn2 'CLI 导入异常，请手动操作：文件 -> 导入 -> 从本地目录导入，选择 frontend 目录'
     }
   } else {
-    Write-Warn2 '未找到 cli.exe，请手动操作：文件 -> 导入 -> 从本地目录导入，选择仓库根目录'
+    Write-Warn2 '未找到 cli.exe，请手动操作：文件 -> 导入 -> 从本地目录导入，选择 frontend 目录'
   }
 }
 
@@ -185,9 +185,9 @@ Write-Host @"
 云打包剩余步骤（需 DCloud 账号 + 图形界面，脚本无法全自动）：
   1. HBuilderX 中登录 DCloud 账号（菜单：帮助 -> 登录）
   2. 导入项目（若上面已自动导入可跳过）：
-     文件 -> 导入 -> 从本地目录导入，选择 $repoRoot
-     （CLI 工程须导入整个仓库根目录，编译走项目内编译器）
-  3. 双击 frontend/src/manifest.json -> 基本设置 -> AppID 点「重新获取」
+     文件 -> 导入 -> 从本地目录导入，选择 $FrontendDir
+     （CLI 工程根目录；导入仓库根目录识别不到工程）
+  3. 双击 src/manifest.json -> 基本设置 -> AppID 点「重新获取」
   4. 菜单「发行」->「原生App-云打包」-> 平台勾选 Android
   5. 证书：自用/调试选「使用公共测试证书」，正式上架选「使用自有证书」
   6. 点「打包」，云端编译完成后在「发行」面板下载 APK

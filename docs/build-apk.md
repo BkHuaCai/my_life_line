@@ -115,9 +115,9 @@ powershell -ExecutionPolicy Bypass -File scripts\pack-apk.ps1 -NoOpen
 ### 5.1 导入项目
 
 1. 启动 HBuilderX，登录 DCloud 账号（菜单 **帮助 → 登录**，或右上角头像）。
-2. 菜单 **文件 → 导入 → 从本地目录导入**，选择仓库根目录（`my_life_line/`）。
-   > 本项目是 CLI 工程，必须导入**整个项目根目录**（而不是只导 `src/`），这样编译会走项目内的编译器（`node_modules`），与 `npm run build:app` 保持一致。
-3. 导入后项目管理器出现 `frontend` 工程，双击 `frontend/src/manifest.json` 打开可视化配置。
+2. 菜单 **文件 → 导入 → 从本地目录导入**，选择 `my_life_line/frontend/`（**不是**仓库根目录 `my_life_line/`）。
+   > 本项目是 CLI 工程，HBuilderX 通过 `src/manifest.json` 识别 uni-app 工程，工程根目录就是 `frontend/`；导入仓库根目录会识别不到工程。
+3. 导入后项目管理器出现 `frontend` 工程，双击 `src/manifest.json` 打开可视化配置。
 
 ### 5.2 配置应用信息（manifest.json）
 
@@ -130,7 +130,7 @@ powershell -ExecutionPolicy Bypass -File scripts\pack-apk.ps1 -NoOpen
 - **App权限**：本项目纯本地存储、无网络依赖，已声明的相机等权限一般无需改动。
 - **版本信息**：版本号/版本名称默认 1.0.0 / 100，发版时递增。
 
-保存后 HBuilderX 会自动把配置同步回 `frontend/src/manifest.json`。
+保存后 HBuilderX 会自动把配置同步回 `src/manifest.json`。
 
 ### 5.3 发行 → 原生App-云打包
 

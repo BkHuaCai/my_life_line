@@ -17,10 +17,7 @@
             "delay" : 0
         },
         /* 模块配置 */
-        "modules" : {
-            /* 数据层依赖 plus.sqlite，云打包必须勾选该原生模块 */
-            "SQLite" : {}
-        },
+        "modules" : {},
         /* 应用发布信息 */
         "distribute" : {
             /* android打包配置 */
@@ -44,11 +41,14 @@
                 ]
             },
             /* ios打包配置 */
-            "ios" : {
-                "dSYMs" : false
-            },
+            "ios" : {},
             /* SDK配置 */
-            "sdkConfigs" : {}
+            "sdkConfigs" : {},
+            "icons" : {
+                "android" : {
+                    "hdpi" : "unpackage/res/icons/Snipaste_2026-08-14_00-54-34.png"
+                }
+            }
         }
     },
     /* 快应用特有相关 */
