@@ -112,7 +112,7 @@
         </view>
       </view>
 
-      <template v-else>
+      <template v-else-if="form.date_type === 'range'">
         <view class="field">
           <text class="label">开始日期</text>
           <picker mode="date" :value="form.date_start" @change="(e) => (form.date_start = e.detail.value)">
