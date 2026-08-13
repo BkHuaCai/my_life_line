@@ -125,6 +125,47 @@
             <view class="picker">{{ form.date_end || '至今' }}</view>
           </picker>
         </view>
+
+        <view class="field">
+          <text class="label">时间精度（可选，开始与结束共用）</text>
+          <view class="seg">
+            <view :class="['seg-item', form.time_precision === 'none' ? 'active' : '']" @click="setPrecision('none')">仅日期</view>
+            <view :class="['seg-item', form.time_precision === 'hour' ? 'active' : '']" @click="setPrecision('hour')">到时</view>
+            <view :class="['seg-item', form.time_precision === 'minute' ? 'active' : '']" @click="setPrecision('minute')">到分</view>
+            <view :class="['seg-item', form.time_precision === 'second' ? 'active' : '']" @click="setPrecision('second')">到秒</view>
+          </view>
+        </view>
+
+        <template v-if="form.time_precision !== 'none'">
+          <view class="field">
+            <text class="label">开始时间</text>
+            <view class="time-row">
+              <picker class="time-picker" mode="selector" :range="hourRange" :value="form.start_hour" @change="(e) => (form.start_hour = Number(e.detail.value))">
+                <view class="picker">{{ pad(form.start_hour) }} 时</view>
+              </picker>
+              <picker v-if="form.time_precision === 'minute' || form.time_precision === 'second'" class="time-picker" mode="selector" :range="minuteRange" :value="form.start_minute" @change="(e) => (form.start_minute = Number(e.detail.value))">
+                <view class="picker">{{ pad(form.start_minute) }} 分</view>
+              </picker>
+              <picker v-if="form.time_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="form.start_second" @change="(e) => (form.start_second = Number(e.detail.value))">
+                <view class="picker">{{ pad(form.start_second) }} 秒</view>
+              </picker>
+            </view>
+          </view>
+          <view class="field" v-if="form.date_end">
+            <text class="label">结束时间</text>
+            <view class="time-row">
+              <picker class="time-picker" mode="selector" :range="hourRange" :value="form.end_hour" @change="(e) => (form.end_hour = Number(e.detail.value))">
+                <view class="picker">{{ pad(form.end_hour) }} 时</view>
+              </picker>
+              <picker v-if="form.time_precision === 'minute' || form.time_precision === 'second'" class="time-picker" mode="selector" :range="minuteRange" :value="form.end_minute" @change="(e) => (form.end_minute = Number(e.detail.value))">
+                <view class="picker">{{ pad(form.end_minute) }} 分</view>
+              </picker>
+              <picker v-if="form.time_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="form.end_second" @change="(e) => (form.end_second = Number(e.detail.value))">
+                <view class="picker">{{ pad(form.end_second) }} 秒</view>
+              </picker>
+            </view>
+          </view>
+        </template>
       </template>
 
       <view class="field">
@@ -184,6 +225,12 @@ export default {
         hour: 0,
         minute: 0,
         second: 0,
+        start_hour: 0,
+        start_minute: 0,
+        start_second: 0,
+        end_hour: 0,
+        end_minute: 0,
+        end_second: 0,
         images: []
       },
       hourRange: Array.from({ length: 24 }, (_, i) => i),
@@ -221,19 +268,33 @@ export default {
         this.form = { name: tl.name, category: tl.category || '', is_main: tl.is_main || 0 }
       } else {
         const ev = await db.getEvent(this.id)
-        const { date, time, precision } = parseEventDate(ev.date_point)
-        const [hh = 0, mm = 0, ss = 0] = time ? time.split(':').map(Number) : []
+        // 时间点取 date_point，时间段取 date_start（回退 date_end）解析精度，开始/结束共用同一精度
+        const p = parseEventDate(ev.date_point)
+        const s = parseEventDate(ev.date_start)
+        const e = parseEventDate(ev.date_end)
+        const precision = ev.date_type === 'range'
+          ? (s.precision !== 'none' ? s.precision : e.precision)
+          : p.precision
+        const [ph = 0, pm = 0, ps = 0] = p.time ? p.time.split(':').map(Number) : []
+        const [sh = 0, sm = 0, ss = 0] = s.time ? s.time.split(':').map(Number) : []
+        const [eh = 0, em = 0, es = 0] = e.time ? e.time.split(':').map(Number) : []
         this.form = {
           title: ev.title,
           description: ev.description || '',
           date_type: ev.date_type,
-          date_point: date || '',
-          date_start: ev.date_start || '',
-          date_end: ev.date_end || '',
+          date_point: p.date || '',
+          date_start: s.date || '',
+          date_end: e.date || '',
           time_precision: precision,
-          hour: hh,
-          minute: mm,
-          second: ss,
+          hour: ph,
+          minute: pm,
+          second: ps,
+          start_hour: sh,
+          start_minute: sm,
+          start_second: ss,
+          end_hour: eh,
+          end_minute: em,
+          end_second: es,
           images: (await db.getImagesByEvent(ev.id)).map((im) => ({ preview: im.thumb_path || im.image_path, _path: im }))
         }
       }
@@ -280,8 +341,8 @@ export default {
           description: form.description || null,
           date_type: form.date_type,
           date_point: form.date_type === 'point' ? buildEventDate(form.date_point, form.time_precision, form.hour, form.minute, form.second) || null : null,
-          date_start: form.date_type === 'range' ? form.date_start || null : null,
-          date_end: form.date_type === 'range' ? form.date_end || null : null
+          date_start: form.date_type === 'range' ? buildEventDate(form.date_start, form.time_precision, form.start_hour, form.start_minute, form.start_second) || null : null,
+          date_end: form.date_type === 'range' ? buildEventDate(form.date_end, form.time_precision, form.end_hour, form.end_minute, form.end_second) || null : null
         }
         await db.saveEvent({ ...row, images: form.images.map((im) => im._path) })
       }

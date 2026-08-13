@@ -60,6 +60,14 @@ describe('formatEventDate', () => {
   it('时间段事件显示起止', () => {
     expect(formatEventDate({ date_type: 'range', date_start: '2015-09-01', date_end: '2019-06-30' })).toBe('2015-09-01 ~ 2019-06-30')
   })
+  it('时间段事件按精度展示开始/结束的时/分/秒', () => {
+    expect(formatEventDate({ date_type: 'range', date_start: '2015-09-01 08', date_end: '2019-06-30 18' })).toBe('2015-09-01 08 ~ 2019-06-30 18')
+    expect(formatEventDate({ date_type: 'range', date_start: '2015-09-01 08:30', date_end: '2019-06-30 18:45' })).toBe('2015-09-01 08:30 ~ 2019-06-30 18:45')
+    expect(formatEventDate({ date_type: 'range', date_start: '2015-09-01 08:30:05', date_end: '2019-06-30 18:45:09' })).toBe('2015-09-01 08:30:05 ~ 2019-06-30 18:45:09')
+  })
+  it('时间段带结束时间、无结束日期显示"至今"', () => {
+    expect(formatEventDate({ date_type: 'range', date_start: '2019-08-01 09:00', date_end: null })).toBe('2019-08-01 09:00 ~ 至今')
+  })
   it('时间段无结束日期显示"至今"', () => {
     expect(formatEventDate({ date_type: 'range', date_start: '2019-08-01', date_end: null })).toBe('2019-08-01 ~ 至今')
   })
