@@ -10,10 +10,6 @@
       <view class="cp-hue-bar"></view>
       <view class="cp-thumb cp-hue-thumb" :style="{ left: huePct }"></view>
     </view>
-    <!-- 当前颜色预览 -->
-    <view class="cp-foot">
-      <view class="cp-preview" :style="{ background: value }"></view>
-    </view>
   </view>
 </template>
 
@@ -134,6 +130,4 @@ export default {
 .cp-thumb { position: absolute; width: 36rpx; height: 36rpx; border-radius: 50%; border: 4rpx solid #fff; box-shadow: 0 0 6rpx rgba(0,0,0,.4); transform: translate(-50%, -50%); box-sizing: border-box; }
 .cp-sv-thumb { top: 50%; left: 50%; }
 .cp-hue-thumb { top: 50%; }
-.cp-foot { display: flex; align-items: center; margin-top: 24rpx; }
-.cp-preview { width: 48rpx; height: 48rpx; border-radius: 50%; border: 2rpx solid var(--border); }
 </style>
