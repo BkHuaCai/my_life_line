@@ -8,16 +8,27 @@
       </view>
     </view>
 
-    <timeline-axis v-if="viewMode === 'axis'" :events="events" />
-    <timeline-grid v-else-if="viewMode === 'grid'" :events="events" />
-    <timeline-cards v-else :events="events" />
+    <!-- 未填写初始点：时间线暂无法展示 -->
+    <view class="no-init-tip" v-if="showNoInitHint">
+      <view class="no-init-icon">⚠️</view>
+      <view class="no-init-text">尚未填写初始点，时间线内容暂无法展示</view>
+      <button class="no-init-btn" @click="reopenInitPoint">填写初始点</button>
+    </view>
+    <template v-else>
+      <timeline-axis v-if="viewMode === 'axis'" :events="events" />
+      <timeline-grid v-else-if="viewMode === 'grid'" :events="events" />
+      <timeline-cards v-else :events="events" />
+    </template>
 
-    <view class="fab" @click="addEvent">＋ 事件</view>
+    <view class="fab" v-if="!showNoInitHint" @click="addEvent">＋ 事件</view>
 
     <!-- 主线初始点：主线还没有任何事件时，必须先填写初始点 -->
     <view class="mask" v-if="needInitialPoint">
       <view class="init-card">
-        <view class="init-title">填写初始点</view>
+        <view class="init-head">
+          <view class="init-title">填写初始点</view>
+          <view class="init-close" @click="closeInitPoint">×</view>
+        </view>
         <view class="init-desc">「{{ timeline.name }}」还没有任何事件，请先填写这条时间线的起点（如出生或开始日期），保存后才能继续使用。</view>
         <view class="field">
           <text class="label">标题</text>
@@ -80,6 +91,12 @@ export default {
       secondRange: Array.from({ length: 60 }, (_, i) => i)
     }
   },
+  computed: {
+    // 主线未填初始点且用户已叉掉弹窗时，提示时间线暂无法展示
+    showNoInitHint() {
+      return this.timeline.is_main === 1 && !this.events.length && !this.needInitialPoint
+    }
+  },
   async onLoad(options) {
     this.timelineId = options.timelineId
     this.viewMode = uni.getStorageSync('timeline_view_mode') || 'axis'
@@ -103,6 +120,12 @@ export default {
     },
     pad(n) {
       return String(n == null ? 0 : n).padStart(2, '0')
+    },
+    closeInitPoint() {
+      this.needInitialPoint = false
+    },
+    reopenInitPoint() {
+      this.needInitialPoint = true
     },
     addEvent() {
       uni.navigateTo({ url: `/pages/edit-form/index?entityType=event&timelineId=${this.timelineId}` })
@@ -138,7 +161,9 @@ export default {
 /* 初始点覆盖层 */
 .mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.45); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 40rpx; }
 .init-card { width: 100%; background: var(--bg-card); border-radius: 20rpx; padding: 40rpx; }
-.init-title { font-size: 36rpx; font-weight: 700; margin-bottom: 12rpx; }
+.init-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12rpx; }
+.init-title { font-size: 36rpx; font-weight: 700; }
+.init-close { font-size: 44rpx; color: var(--text-light); line-height: 1; padding: 4rpx 8rpx; }
 .init-desc { font-size: 26rpx; color: var(--text-sub); margin-bottom: 32rpx; line-height: 1.6; }
 .field { margin-bottom: 28rpx; }
 .label { font-size: 26rpx; color: var(--text-sub); display: block; margin-bottom: 12rpx; }
@@ -151,4 +176,11 @@ export default {
 .time-row { display: flex; gap: 16rpx; }
 .time-picker { flex: 1; }
 .time-picker .picker { text-align: center; }
+
+/* 未填写初始点提示 */
+.no-init-tip { margin-top: 120rpx; display: flex; flex-direction: column; align-items: center; padding: 0 60rpx; }
+.no-init-icon { font-size: 80rpx; }
+.no-init-text { font-size: 28rpx; color: var(--text-grey); margin-top: 24rpx; text-align: center; }
+.no-init-btn { margin-top: 40rpx; background: var(--primary); color: var(--primary-contrast); font-size: 30rpx; border-radius: 48rpx; border: none; padding: 0 48rpx; height: 80rpx; line-height: 80rpx; }
+.no-init-btn::after { border: none; }
 </style>
