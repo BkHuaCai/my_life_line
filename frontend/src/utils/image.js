@@ -9,9 +9,9 @@ function uniqueStamp() {
 }
 export function makeImagePaths(eventId, ext = 'jpg') {
   const stamp = uniqueStamp()
-  const imagePath = `_doc/images/${eventId}_${stamp}.${ext}`
-  const thumbPath = `_doc/images/${eventId}_${stamp}_thumb.${ext}`
-  return { imagePath, thumbPath }
+  const image_path = `_doc/images/${eventId}_${stamp}.${ext}`
+  const thumb_path = `_doc/images/${eventId}_${stamp}_thumb.${ext}`
+  return { image_path, thumb_path }
 }
 
 // 设备函数：从相册/相机选择图片，压缩并写入应用私有目录。
@@ -86,17 +86,17 @@ function compressAndCopy(src, eventId) {
   return new Promise((resolve, reject) => {
     if (typeof uni.compressImage !== 'function') {
       // H5 不支持 compressImage，原图与缩略图均使用原临时路径（开发用）
-      resolve({ imagePath: src, thumbPath: src })
+      resolve({ image_path: src, thumb_path: src })
       return
     }
     const paths = makeImagePaths(eventId)
     const next = (step) => {
       if (step === 0) {
         // 压缩图
-        uni.compressImage({ src, quality: 80, success: (r) => { paths.imagePath = r.tempFilePath; next(1) }, fail: reject })
+        uni.compressImage({ src, quality: 80, success: (r) => { paths.image_path = r.tempFilePath; next(1) }, fail: reject })
       } else if (step === 1) {
         // 缩略图（宽 240）
-        uni.compressImage({ src, compressedWidth: 240, success: (r) => { paths.thumbPath = r.tempFilePath; resolve(paths) }, fail: reject })
+        uni.compressImage({ src, compressedWidth: 240, success: (r) => { paths.thumb_path = r.tempFilePath; resolve(paths) }, fail: reject })
       }
     }
     next(0)
