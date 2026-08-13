@@ -12,8 +12,10 @@ export default {
 
 <style>
 /* 全局主题 CSS 变量：默认软件主流配色（靛蓝）
-   运行时由 utils/theme.js 写入根元素覆盖，实现自定义配色 */
-page {
+   必须定义在 :root（html）而非 page 上：
+   page 在 App 端会被编译为 body，body 自身携带变量值后，
+   运行时写入 <html> 的内联变量无法再级联穿透，导致自定义配色不生效 */
+:root {
   --primary: #4a6cf7;
   --primary-dark: #3a56d4;
   --primary-soft: #eef1ff;
@@ -28,6 +30,8 @@ page {
   --text-light: #c0c4cc;
   --border: #e5e6eb;
   --shadow-card: 0 2rpx 8rpx rgba(31, 35, 41, 0.06);
+}
+page {
   background-color: var(--bg-page);
 }
 </style>

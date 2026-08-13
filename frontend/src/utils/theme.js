@@ -21,13 +21,7 @@ export const PRESET_THEMES = [
   { id: 'red', name: '炽红', primary: '#e54d42' }
 ]
 
-// 自定义色板：可自由选择的主色
-export const CUSTOM_COLORS = [
-  '#4a6cf7', '#007aff', '#1677ff', '#10aeff',
-  '#00b578', '#07c160', '#52c41a', '#ff9500',
-  '#ff3b30', '#ff2d55', '#ff4d8d', '#7c4dff'
-]
-
+// 自定义主色由[我的]页的 HSV 调色盘交互选择，此处不再维护固定色板
 export const DEFAULT_PRIMARY = PRESET_THEMES[0].primary
 
 function hexToRgb(hex) {
@@ -35,6 +29,47 @@ function hexToRgb(hex) {
   const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h
   if (full.length !== 6) return [0, 0, 0]
   return [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16))
+}
+
+/**
+ * 十六进制颜色转 HSV（色相 0~360，饱和度/明度 0~1）。
+ * 供调色盘组件与 buildTheme 使用。
+ */
+export function hexToHsv(hex) {
+  const [r, g, b] = hexToRgb(hex)
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  const v = max / 255
+  const d = max - min
+  let s = max === 0 ? 0 : d / max
+  let h = 0
+  if (d !== 0) {
+    if (max === r) h = ((g - b) / d) % 6
+    else if (max === g) h = (b - r) / d + 2
+    else h = (r - g) / d + 4
+    h *= 60
+    if (h < 0) h += 360
+  }
+  return { h, s, v }
+}
+
+/** HSV 转十六进制颜色（#rrggbb），h 可为任意实数（自动归一化到 0~360）。 */
+export function hsvToHex(h, s, v) {
+  h = ((h % 360) + 360) % 360
+  const c = v * s
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1))
+  const m = v - c
+  let r = 0
+  let g = 0
+  let b = 0
+  if (h < 60) [r, g, b] = [c, x, 0]
+  else if (h < 120) [r, g, b] = [x, c, 0]
+  else if (h < 180) [r, g, b] = [0, c, x]
+  else if (h < 240) [r, g, b] = [0, x, c]
+  else if (h < 300) [r, g, b] = [x, 0, c]
+  else [r, g, b] = [c, 0, x]
+  const to255 = (n) => Math.round((n + m) * 255)
+  return '#' + [r, g, b].map((n) => to255(n).toString(16).padStart(2, '0')).join('')
 }
 
 /**

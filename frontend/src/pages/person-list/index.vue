@@ -69,14 +69,8 @@
             <text class="theme-name">{{ t.name }}</text>
           </view>
         </view>
-        <view class="theme-label">自定义颜色</view>
-        <view class="theme-row">
-          <view v-for="c in customColors" :key="c" class="theme-item" @click="selectTheme(c)">
-            <view class="swatch" :class="{ selected: themePrimary === c }" :style="{ background: c }">
-              <text v-if="themePrimary === c" class="check">✓</text>
-            </view>
-          </view>
-        </view>
+        <view class="theme-label">自定义颜色（调色盘）</view>
+        <color-picker :value="themePrimary" @change="selectTheme" />
       </view>
     </view>
   </view>
@@ -85,9 +79,11 @@
 <script>
 import { db } from '../../utils/db'
 import { serialize, importData } from '../../utils/export'
-import { PRESET_THEMES, CUSTOM_COLORS, getThemePrimary, saveThemePrimary } from '../../utils/theme'
+import { PRESET_THEMES, getThemePrimary, saveThemePrimary } from '../../utils/theme'
+import ColorPicker from '../../components/color-picker.vue'
 
 export default {
+  components: { ColorPicker },
   data() {
     return {
       currentPerson: {},
@@ -99,7 +95,6 @@ export default {
       nameMap: {},
       tlMap: {},
       presetThemes: PRESET_THEMES,
-      customColors: CUSTOM_COLORS,
       themePrimary: getThemePrimary()
     }
   },
@@ -178,18 +173,40 @@ export default {
       try {
         const data = await serialize(db)
         const jsonStr = JSON.stringify(data, null, 2)
-        const filePath = `_doc/export_${Date.now()}.json`
-        const fs = uni.getFileSystemManager()
-        await fs.writeFile({
-          filePath,
-          data: jsonStr,
-          encoding: 'utf8'
+        const fileName = `export_${Date.now()}.json`
+        // #ifdef H5
+        // H5 无原生文件系统，触发浏览器下载
+        const blob = new Blob([jsonStr], { type: 'application/json' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = fileName
+        a.click()
+        URL.revokeObjectURL(url)
+        uni.showModal({
+          title: '导出成功',
+          content: `数据已导出：${fileName}\n\n请到浏览器下载目录中查找该文件。`,
+          showCancel: false
+        })
+        // #endif
+        // #ifndef H5
+        // App 使用 uni.writeFile（基于 plus.io），不能用小程序专属的 getFileSystemManager
+        const filePath = `_doc/${fileName}`
+        await new Promise((resolve, reject) => {
+          uni.writeFile({
+            filePath,
+            data: jsonStr,
+            encoding: 'utf8',
+            success: () => resolve(),
+            fail: (err) => reject(err)
+          })
         })
         uni.showModal({
           title: '导出成功',
           content: `数据已导出到：${filePath}\n\n请在文件管理中找到该文件并备份。`,
           showCancel: false
         })
+        // #endif
       } catch (e) {
         console.error('export fail', e)
         uni.showToast({ title: '导出失败', icon: 'none' })
