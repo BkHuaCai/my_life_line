@@ -41,7 +41,7 @@
 
 - `.page` 增加 `padding-top: var(--status-bar-height)`。
 - 模板顶部 `.header` 中：删除 `.header-title`（"我的"大标题文字），**保留 `.settings-btn`（⋮ 按钮）**。
-- `.header` 容器改为右对齐（`justify-content: flex-end`）或直接保留容器仅去标题，确保 ⋮ 按钮位于右上角。
+- `.header` 容器样式改为 `justify-content: flex-end`，⋮ 按钮保持在页面右上角。
 - `showMoreMenu` / `doExport` / `doImport` 方法及 `serialize` / `importData` 导入**全部保留**（导出/导入入口仍可用）。
 
 ## 兼容性
