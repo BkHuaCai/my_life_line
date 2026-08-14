@@ -1,15 +1,5 @@
 <template>
   <view class="page">
-    <!-- 顶部：右侧用户切换下拉框 -->
-    <view class="page-header">
-      <picker class="user-dropdown" mode="selector" :range="userOptions" :value="userIndex" @change="onSwitchUser">
-        <view class="dropdown-label">
-          <text class="dropdown-name">{{ currentPerson.name || '选择档案' }}</text>
-          <text class="dropdown-arrow">▾</text>
-        </view>
-      </picker>
-    </view>
-
     <!-- 顶部搜索：按关键字搜索时间线内容 -->
     <view class="search-bar">
       <input class="search-input" v-model="keyword" placeholder="搜索时间线内容（标题/描述）" @confirm="doSearch" @input="doSearch" />
@@ -32,6 +22,12 @@
       <view class="section" v-if="mainTimeline.id">
         <view class="section-header">
           <text class="section-title">主线</text>
+          <picker class="user-dropdown" mode="selector" :range="userOptions" :value="userIndex" @change="onSwitchUser">
+            <view class="dropdown-label">
+              <text class="dropdown-name">{{ currentPerson.name || '选择档案' }}</text>
+              <text class="dropdown-arrow">▾</text>
+            </view>
+          </picker>
         </view>
         <view class="main-card" @click="openMain">
           <view class="main-info">
@@ -205,10 +201,8 @@ export default {
 <style scoped>
 .page { padding: 24rpx; padding-bottom: 48rpx; }
 
-/* 顶部：右侧用户切换下拉框 */
-.page-header { display: flex; justify-content: flex-end; align-items: center; padding: 8rpx 0 24rpx; }
-.page-title { font-size: 40rpx; font-weight: 700; }
-.dropdown-label { display: flex; align-items: center; background: var(--primary-soft); color: var(--primary-dark); border-radius: 32rpx; padding: 10rpx 24rpx; font-size: 26rpx; }
+/* 主线 section-header：标题左、用户切换下拉框右，同一水平线 */
+.dropdown-label { display: flex; align-items: center; background: var(--primary-soft); color: var(--primary-dark); border-radius: 32rpx; padding: 8rpx 24rpx; font-size: 26rpx; }
 .dropdown-arrow { margin-left: 8rpx; font-size: 22rpx; }
 
 /* 搜索 */
