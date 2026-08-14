@@ -104,6 +104,7 @@ export default {
   },
   async onShow() {
     applyTheme(getThemePrimary())
+    if (db.ready) await db.ready.catch(() => {})
     await this.load()
   },
   methods: {

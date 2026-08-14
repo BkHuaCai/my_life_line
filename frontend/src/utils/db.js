@@ -53,11 +53,18 @@ export function createDb(adapter) {
   }
 
   return {
+    // 应用级单例在 App.vue onLaunch 启动一次；各页面 onShow 通过 await db.ready
+    // 等待初始化完成，避免真机 SQLite 首次建表/插默认用户与首屏查询的竞态
+    ready: null,
     async init() {
-      await adapter.init(createAllTablesSql())
-      await ensureDefaultPerson()
-      const def = await this.getDefaultPerson()
-      if (def) await ensureMainTimeline(def.id)
+      if (this.ready) return this.ready
+      this.ready = (async () => {
+        await adapter.init(createAllTablesSql())
+        await ensureDefaultPerson()
+        const def = await this.getDefaultPerson()
+        if (def) await ensureMainTimeline(def.id)
+      })()
+      return this.ready
     },
 
     // ---------- person ----------

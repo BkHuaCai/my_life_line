@@ -250,6 +250,7 @@ export default {
   },
   onShow() {
     applyTheme(getThemePrimary())
+    if (db.ready) db.ready.catch(() => {})
   },
   methods: {
     async loadForm() {

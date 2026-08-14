@@ -1,7 +1,23 @@
 <template>
   <view class="page">
+    <!-- 顶部：问候语 + 用户切换下拉框，右侧右对齐主线标题 -->
+    <view class="hero">
+      <view class="greet">
+        <view class="greet-name">{{ currentPerson.name || '时光档案' }}</view>
+        <view class="greet-sub">{{ heroSub }}</view>
+      </view>
+      <picker class="user-dropdown" mode="selector" :range="userOptions" :value="userIndex" @change="onSwitchUser">
+        <view class="dropdown-label">
+          <view class="avatar-dot">{{ (currentPerson.name || '?')[0] }}</view>
+          <text class="dropdown-name">{{ currentPerson.name || '选择档案' }}</text>
+          <text class="dropdown-arrow">▾</text>
+        </view>
+      </picker>
+    </view>
+
     <!-- 顶部搜索：按关键字搜索时间线内容 -->
     <view class="search-bar">
+      <text class="search-icon">🔍</text>
       <input class="search-input" v-model="keyword" placeholder="搜索时间线内容（标题/描述）" @confirm="doSearch" @input="doSearch" />
     </view>
 
@@ -19,15 +35,28 @@
 
     <!-- 主线 + 其他时间线 -->
     <template v-else>
+      <!-- 数据概览：紧贴 hero 的统计带，参考主流首页 dashboard 条 -->
+      <view class="stats-band" v-if="currentPerson.id">
+        <view class="stat-cell">
+          <view class="stat-num">{{ timelineTotal }}</view>
+          <view class="stat-label">时间线</view>
+        </view>
+        <view class="stat-cell">
+          <view class="stat-num">{{ eventTotal }}</view>
+          <view class="stat-label">事件</view>
+        </view>
+        <view class="stat-cell">
+          <view class="stat-num">{{ persons.length }}</view>
+          <view class="stat-label">档案</view>
+        </view>
+      </view>
+
       <view class="section" v-if="mainTimeline.id">
         <view class="section-header">
-          <text class="section-title">主线</text>
-          <picker class="user-dropdown" mode="selector" :range="userOptions" :value="userIndex" @change="onSwitchUser">
-            <view class="dropdown-label">
-              <text class="dropdown-name">{{ currentPerson.name || '选择档案' }}</text>
-              <text class="dropdown-arrow">▾</text>
-            </view>
-          </picker>
+          <view class="title-wrap">
+            <view class="title-bar"></view>
+            <text class="section-title">主线</text>
+          </view>
         </view>
         <view class="main-card" @click="openMain">
           <view class="main-info">
@@ -43,16 +72,23 @@
 
       <view class="section" v-if="currentPerson.id">
         <view class="section-header">
-          <text class="section-title">其他时间线</text>
+          <view class="title-wrap">
+            <view class="title-bar"></view>
+            <text class="section-title">其他时间线</text>
+          </view>
           <text class="section-add" @click="addTimeline">＋ 新建</text>
         </view>
         <view class="timeline-list" v-if="otherTimelines.length">
           <view v-for="tl in otherTimelines" :key="tl.id" class="timeline-card" @click="openTimeline(tl.id)">
-            <view class="tl-name">{{ tl.name }}</view>
-            <view class="tl-meta">
-              <text class="tl-cat" v-if="tl.category">{{ tl.category }}</text>
-              <text class="tl-count">{{ eventCounts[tl.id] || 0 }} 个事件</text>
+            <view class="tl-thumb" :class="thumbTheme(tl.id)">{{ tl.name ? tl.name[0] : '〜' }}</view>
+            <view class="tl-body">
+              <view class="tl-name">{{ tl.name }}</view>
+              <view class="tl-meta">
+                <text class="tl-cat" v-if="tl.category">{{ tl.category }}</text>
+                <text class="tl-count">{{ eventCounts[tl.id] || 0 }} 个事件</text>
+              </view>
             </view>
+            <view class="tl-arrow">›</view>
           </view>
         </view>
         <view class="empty-state" v-else>
@@ -60,24 +96,6 @@
           <view class="empty-title">还没有其他时间线</view>
           <view class="empty-desc">为教育、旅行、健康等主题创建专属时间线</view>
           <button class="empty-btn" @click="addTimeline">＋ 创建时间线</button>
-        </view>
-      </view>
-
-      <!-- 数据概览 -->
-      <view class="section stats" v-if="currentPerson.id">
-        <view class="section-header">
-          <text class="section-title">数据概览</text>
-        </view>
-        <view class="stats-card">
-          <view class="stat">
-            <view class="stat-num">{{ timelineTotal }}</view>
-            <view class="stat-label">时间线</view>
-          </view>
-          <view class="stat-divider"></view>
-          <view class="stat">
-            <view class="stat-num">{{ eventTotal }}</view>
-            <view class="stat-label">事件</view>
-          </view>
         </view>
       </view>
     </template>
@@ -113,10 +131,28 @@ export default {
     },
     eventTotal() {
       return Object.values(this.eventCounts).reduce((sum, n) => sum + n, 0)
+    },
+    // 顶部问候语：按事件总数给一句话引导，避免首页空时单调
+    heroSub() {
+      if (!this.currentPerson.id) return '点击右侧切换或添加档案'
+      if (this.needInitPoint) return '主线待填写初始点，先去打个点吧'
+      if (this.eventTotal === 0) return '还没有事件，点「主线」开始记录'
+      return `共 ${this.timelineTotal} 条时间线 · ${this.eventTotal} 个事件`
+    },
+    // 其他时间线卡片左缩略图按名称首字符循环分配点缀色，让列表更有层次
+    thumbTheme() {
+      return (id) => {
+        const tl = this.otherTimelines.find((t) => t.id === id)
+        const seed = (tl && tl.name ? tl.name.length : 0) % 5
+        return ['tone-0', 'tone-1', 'tone-2', 'tone-3', 'tone-4'][seed]
+      }
     }
   },
   async onShow() {
     applyTheme(getThemePrimary())
+    // 首次启动等 db.init() 完成（建表+插默认用户+主线），否则真机 SQLite 慢于首屏查询时
+    // currentPerson.id 为空，导致「其他时间线」「数据概览」两个 v-if 整块消失
+    if (db.ready) await db.ready.catch(() => {})
     await this.load()
   },
   methods: {
@@ -199,52 +235,76 @@ export default {
 </script>
 
 <style scoped>
-.page { padding: 24rpx; padding-bottom: 48rpx; }
+.page { padding: 24rpx; padding-bottom: 140rpx; }
 
-/* 主线 section-header：标题左、用户切换下拉框右，同一水平线 */
-.dropdown-label { display: flex; align-items: center; background: var(--primary-soft); color: var(--primary-dark); border-radius: 32rpx; padding: 8rpx 24rpx; font-size: 26rpx; }
+/* 顶部 hero：问候语 + 用户切换，参考主流首页个人区 */
+.hero { display: flex; justify-content: space-between; align-items: center; padding: 8rpx 4rpx 24rpx; }
+.greet-name { font-size: 44rpx; font-weight: 800; color: var(--text-main); }
+.greet-sub { font-size: 24rpx; color: var(--text-grey); margin-top: 8rpx; }
+.dropdown-label { display: flex; align-items: center; background: var(--primary-soft); color: var(--primary-dark); border-radius: 32rpx; padding: 8rpx 20rpx 8rpx 8rpx; font-size: 26rpx; }
+.avatar-dot { width: 44rpx; height: 44rpx; border-radius: 50%; background: var(--primary); color: var(--primary-contrast); display: flex; align-items: center; justify-content: center; font-size: 26rpx; font-weight: 700; }
+.dropdown-name { margin-left: 12rpx; }
 .dropdown-arrow { margin-left: 8rpx; font-size: 22rpx; }
 
-/* 搜索 */
-.search-bar { margin-top: 8rpx; }
-.search-input { background: var(--bg-card); border-radius: 12rpx; padding: 14rpx 20rpx; font-size: 28rpx; height: 76rpx; min-height: 76rpx; }
+/* 搜索：带图标圆角，参考主流搜索条 */
+.search-bar { display: flex; align-items: center; background: var(--bg-card); border-radius: 40rpx; padding: 0 24rpx; box-shadow: var(--shadow-card); }
+.search-icon { font-size: 26rpx; color: var(--text-grey); margin-right: 12rpx; }
+.search-input { flex: 1; font-size: 28rpx; height: 76rpx; min-height: 76rpx; }
 
 /* 搜索结果 */
 .result-list { margin-top: 24rpx; display: flex; flex-direction: column; gap: 16rpx; }
-.result-item { background: var(--bg-card); border-radius: 16rpx; padding: 20rpx; }
+.result-item { background: var(--bg-card); border-radius: 16rpx; padding: 24rpx; box-shadow: var(--shadow-card); }
 .r-title { font-size: 30rpx; font-weight: 600; }
 .r-sub { font-size: 24rpx; color: var(--text-grey); margin-top: 6rpx; }
 .r-desc { font-size: 26rpx; color: var(--text-sub); margin-top: 8rpx; }
 .empty { text-align: center; color: var(--text-light); padding: 60rpx 0; }
 
-.section { margin-top: 32rpx; }
+/* 统计带：紧贴 hero 的三栏 dashboard，参考主流首页数字条 */
+.stats-band { display: flex; margin-top: 24rpx; background: var(--bg-card); border-radius: 20rpx; box-shadow: var(--shadow-card); overflow: hidden; }
+.stat-cell { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 28rpx 0; }
+.stat-cell:not(:last-child) { border-right: 2rpx solid var(--border); }
+.stat-num { font-size: 44rpx; font-weight: 800; color: var(--primary); }
+.stat-label { font-size: 24rpx; color: var(--text-grey); margin-top: 6rpx; }
+
+/* 分区：左侧主色竖条 + 标题，更有节奏感 */
+.section { margin-top: 40rpx; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
-.section-title { font-size: 32rpx; font-weight: 600; }
+.title-wrap { display: flex; align-items: center; gap: 16rpx; }
+.title-bar { width: 8rpx; height: 32rpx; border-radius: 4rpx; background: var(--primary); }
+.section-title { font-size: 32rpx; font-weight: 700; color: var(--text-main); }
 .section-add { color: var(--primary); font-size: 26rpx; padding: 8rpx 0 8rpx 24rpx; }
-.main-card { display: flex; align-items: center; background: var(--bg-card); border-radius: 16rpx; padding: 28rpx; box-shadow: var(--shadow-card); border: 2rpx solid var(--primary-soft); }
+
+/* 主线卡：主色淡描边 + 右箭头 */
+.main-card { display: flex; align-items: center; background: var(--bg-card); border-radius: 20rpx; padding: 32rpx; box-shadow: var(--shadow-card); border: 2rpx solid var(--primary-soft); }
 .main-info { flex: 1; }
-.main-name { font-size: 32rpx; font-weight: 700; }
-.main-badge { display: inline-block; background: var(--primary); color: var(--primary-contrast); font-size: 20rpx; padding: 2rpx 12rpx; border-radius: 12rpx; margin-left: 12rpx; vertical-align: middle; }
-.main-meta { font-size: 24rpx; color: var(--text-grey); margin-top: 8rpx; }
+.main-name { font-size: 34rpx; font-weight: 700; }
+.main-badge { display: inline-block; background: var(--primary); color: var(--primary-contrast); font-size: 20rpx; padding: 2rpx 16rpx; border-radius: 12rpx; margin-left: 12rpx; vertical-align: middle; }
+.main-meta { font-size: 24rpx; color: var(--text-grey); margin-top: 10rpx; }
 .main-warn { color: var(--danger); }
 .arrow { font-size: 40rpx; color: var(--text-light); }
 
+/* 其他时间线卡：左缩略图色块 + 标题 + 元信息 + 右箭头 */
 .timeline-list { display: flex; flex-direction: column; gap: 16rpx; }
-.timeline-card { background: var(--bg-card); border-radius: 16rpx; padding: 24rpx; box-shadow: var(--shadow-card); }
+.timeline-card { display: flex; align-items: center; background: var(--bg-card); border-radius: 20rpx; padding: 20rpx 24rpx; box-shadow: var(--shadow-card); }
+.tl-thumb { width: 72rpx; height: 72rpx; border-radius: 16rpx; display: flex; align-items: center; justify-content: center; font-size: 34rpx; font-weight: 700; color: #fff; flex-shrink: 0; }
+.tl-body { flex: 1; margin-left: 20rpx; }
 .tl-name { font-size: 30rpx; font-weight: 600; }
 .tl-meta { display: flex; align-items: center; gap: 12rpx; margin-top: 8rpx; }
-.tl-cat { background: var(--primary-soft); color: var(--primary-dark); font-size: 22rpx; padding: 4rpx 12rpx; border-radius: 12rpx; }
+.tl-cat { background: var(--primary-soft); color: var(--primary-dark); font-size: 22rpx; padding: 4rpx 14rpx; border-radius: 12rpx; }
 .tl-count { font-size: 24rpx; color: var(--text-grey); }
-.empty-state { background: var(--bg-card); border-radius: 16rpx; padding: 56rpx 32rpx; display: flex; flex-direction: column; align-items: center; box-shadow: var(--shadow-card); }
+.tl-arrow { font-size: 36rpx; color: var(--text-light); margin-left: 12rpx; }
+/* 五色循环点缀，让列表更有层次（不走主题色，避免与主色冲突） */
+.tl-thumb.tone-0 { background: #f55; }
+.tl-thumb.tone-1 { background: #f90; }
+.tl-thumb.tone-2 { background: #3c9; }
+.tl-thumb.tone-3 { background: #39c; }
+.tl-thumb.tone-4 { background: #96c; }
+
+/* 空状态：居中引导 + 主色按钮 */
+.empty-state { background: var(--bg-card); border-radius: 20rpx; padding: 56rpx 32rpx; display: flex; flex-direction: column; align-items: center; box-shadow: var(--shadow-card); }
 .empty-icon { font-size: 80rpx; }
 .empty-title { font-size: 30rpx; font-weight: 600; margin-top: 20rpx; }
 .empty-desc { font-size: 24rpx; color: var(--text-grey); margin-top: 10rpx; }
 .empty-btn { margin-top: 32rpx; background: var(--primary); color: var(--primary-contrast); font-size: 30rpx; border-radius: 48rpx; border: none; padding: 0 48rpx; height: 80rpx; line-height: 80rpx; }
 .empty-btn::after { border: none; }
-
-.stats-card { display: flex; align-items: center; background: var(--bg-card); border-radius: 16rpx; padding: 36rpx 0; box-shadow: var(--shadow-card); }
-.stat { flex: 1; display: flex; flex-direction: column; align-items: center; }
-.stat-num { font-size: 44rpx; font-weight: 700; color: var(--primary); }
-.stat-label { font-size: 24rpx; color: var(--text-grey); margin-top: 6rpx; }
-.stat-divider { width: 2rpx; height: 60rpx; background: var(--border); }
 </style>

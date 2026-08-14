@@ -122,12 +122,12 @@ export function applyTheme(primary) {
     root.style.setProperty('--primary-soft', theme.primarySoft)
     root.style.setProperty('--primary-contrast', theme.primaryContrast)
   }
-  // 原生层 tabBar 选中色
+  // 原生层 tabBar 选中色：H5/异步环境用 fail 回调吞错，避免未在 tabBar 页时报错冒泡
   if (typeof uni !== 'undefined' && uni.setTabBarStyle) {
     try {
-      uni.setTabBarStyle({ selectedColor: primary })
+      uni.setTabBarStyle({ selectedColor: primary, fail: () => {} })
     } catch (e) {
-      // 忽略不支持的环境
+      // 同步抛错也吞掉（极少数老环境）
     }
   }
 }
