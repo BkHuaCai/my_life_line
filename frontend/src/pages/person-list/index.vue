@@ -1,7 +1,6 @@
 <template>
   <view class="page">
     <view class="header">
-      <view class="header-title">我的</view>
       <view class="header-actions">
         <view class="settings-btn" @click="showMoreMenu">⋮</view>
       </view>
@@ -246,8 +245,8 @@ export default {
 </script>
 
 <style scoped>
-.page { padding: 24rpx; padding-bottom: 140rpx; }
-.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24rpx; }
+.page { padding: 24rpx; padding-bottom: 140rpx; padding-top: var(--status-bar-height); }
+.header { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 24rpx; }
 .header-title { font-size: 44rpx; font-weight: 800; }
 .settings-btn { font-size: 40rpx; color: var(--text-sub); padding: 8rpx 16rpx; }
 
