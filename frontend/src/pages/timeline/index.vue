@@ -135,16 +135,23 @@ export default {
         uni.showToast({ title: '请选择日期', icon: 'none' })
         return
       }
-      const title = (this.initForm.title || '').trim() || '起点'
-      await db.saveEvent({
-        timeline_id: this.timelineId,
-        title,
-        description: null,
-        date_type: 'point',
-        date_point: buildEventDate(this.initForm.date, this.initForm.time_precision, this.initForm.hour, this.initForm.minute, this.initForm.second)
-      })
-      this.initForm = { title: '', date: '', time_precision: 'none', hour: 0, minute: 0, second: 0 }
-      await this.load()
+      try {
+        const title = (this.initForm.title || '').trim() || '起点'
+        await db.saveEvent({
+          timeline_id: this.timelineId,
+          title,
+          description: null,
+          date_type: 'point',
+          date_point: buildEventDate(this.initForm.date, this.initForm.time_precision, this.initForm.hour, this.initForm.minute, this.initForm.second)
+        })
+        this.initForm = { title: '', date: '', time_precision: 'none', hour: 0, minute: 0, second: 0 }
+        // 保存成功后直接关闭弹窗，避免依赖重新查询结果
+        this.needInitialPoint = false
+        await this.load()
+      } catch (err) {
+        console.error('保存初始点失败', err)
+        uni.showToast({ title: '保存失败，请重试', icon: 'none' })
+      }
     }
   }
 }

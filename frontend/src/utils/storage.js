@@ -65,13 +65,13 @@ export function createSqliteAdapter() {
     },
     async update(table, id, patch) {
       const sets = Object.entries(patch).map(([c, v]) => `"${c}"=${esc(v)}`).join(',')
-      await exec(`UPDATE "${table}" SET ${sets} WHERE id='${esc(id)}'`)
+      await exec(`UPDATE "${table}" SET ${sets} WHERE id=${esc(id)}`)
     },
     async delete(table, id) {
-      await exec(`DELETE FROM "${table}" WHERE id='${esc(id)}'`)
+      await exec(`DELETE FROM "${table}" WHERE id=${esc(id)}`)
     },
     async deleteWhere(table, field, value) {
-      await exec(`DELETE FROM "${table}" WHERE "${field}"='${esc(value)}'`)
+      await exec(`DELETE FROM "${table}" WHERE "${field}"=${esc(value)}`)
     },
     async all(table) {
       open()
