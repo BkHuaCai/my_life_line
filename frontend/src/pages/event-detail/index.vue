@@ -23,6 +23,20 @@
       <button class="btn" @click="edit">编辑</button>
       <button class="btn danger" @click="remove">删除</button>
     </view>
+
+    <!-- 前后事件：同时间线按日期排序的上一条/下一条，无需返回列表即可浏览 -->
+    <view class="pager" v-if="prev || next">
+      <view class="pager-item" v-if="prev" @click="goAdjacent(prev.id)">
+        <text class="pager-arrow">←</text>
+        <text class="pager-label">上一个</text>
+        <text class="pager-title">{{ prev.title }}</text>
+      </view>
+      <view class="pager-item pager-right" v-if="next" @click="goAdjacent(next.id)">
+        <text class="pager-label">下一个</text>
+        <text class="pager-title">{{ next.title }}</text>
+        <text class="pager-arrow">→</text>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -33,7 +47,7 @@ import { applyTheme, getThemePrimary } from '../../utils/theme'
 
 export default {
   data() {
-    return { eventId: '', event: {}, images: [], dateText: '' }
+    return { eventId: '', event: {}, images: [], dateText: '', prev: null, next: null }
   },
   async onLoad(options) {
     this.eventId = options.eventId
@@ -49,6 +63,15 @@ export default {
       this.images = await db.getImagesByEvent(this.eventId)
       this.dateText = formatEventDate(this.event)
       if (this.event.title) uni.setNavigationBarTitle({ title: this.event.title })
+      // 前后事件：同时间线按日期排序的上一条/下一条
+      const adj = await db.getAdjacentEvents(this.eventId)
+      this.prev = adj.prev
+      this.next = adj.next
+    },
+    goAdjacent(id) {
+      // 切换到前后事件后刷新本页内容（不 navigateBack，保持浏览连贯）
+      this.eventId = id
+      this.load()
     },
     preview(i) {
       uni.previewImage({ urls: this.images.map((im) => im.image_path || im.thumb_path), current: i })
@@ -89,4 +112,12 @@ export default {
 .btn { flex: 1; background: var(--primary); color: var(--primary-contrast); border-radius: 48rpx; font-size: 30rpx; }
 .btn.danger { background: var(--danger); }
 .btn::after { border: none; }
+
+/* 前后事件浏览：底部上一条/下一条入口 */
+.pager { display: flex; gap: 16rpx; padding: 24rpx; }
+.pager-item { flex: 1; display: flex; align-items: center; gap: 8rpx; background: var(--bg-card); border-radius: 16rpx; padding: 20rpx 24rpx; box-shadow: var(--shadow-card); overflow: hidden; }
+.pager-item.pager-right { justify-content: flex-end; }
+.pager-arrow { color: var(--primary); font-size: 36rpx; font-weight: 700; }
+.pager-label { font-size: 22rpx; color: var(--text-grey); flex-shrink: 0; }
+.pager-title { font-size: 24rpx; color: var(--text-sub); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 </style>

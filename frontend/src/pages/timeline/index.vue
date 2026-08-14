@@ -14,6 +14,12 @@
       <view class="no-init-text">尚未填写初始点，时间线内容暂无法展示</view>
       <button class="no-init-btn" @click="reopenInitPoint">填写初始点</button>
     </view>
+    <!-- 非主线时间线无事件：引导用户添加第一个事件 -->
+    <view class="empty-tl" v-else-if="!events.length">
+      <view class="empty-tl-icon">📝</view>
+      <view class="empty-tl-title">这里还什么都没有</view>
+      <view class="empty-tl-desc">点右下角「＋ 事件」记录这条时间线的第一个时刻</view>
+    </view>
     <template v-else>
       <timeline-axis v-if="viewMode === 'axis'" :events="events" />
       <timeline-grid v-else-if="viewMode === 'grid'" :events="events" />
@@ -193,4 +199,10 @@ export default {
 .no-init-text { font-size: 28rpx; color: var(--text-grey); margin-top: 24rpx; text-align: center; }
 .no-init-btn { margin-top: 40rpx; background: var(--primary); color: var(--primary-contrast); font-size: 30rpx; border-radius: 48rpx; border: none; padding: 0 48rpx; height: 80rpx; line-height: 80rpx; }
 .no-init-btn::after { border: none; }
+
+/* 非主线时间线无事件引导卡 */
+.empty-tl { margin-top: 160rpx; display: flex; flex-direction: column; align-items: center; padding: 0 60rpx; }
+.empty-tl-icon { font-size: 88rpx; }
+.empty-tl-title { font-size: 32rpx; font-weight: 700; color: var(--text-main); margin-top: 24rpx; }
+.empty-tl-desc { font-size: 24rpx; color: var(--text-grey); margin-top: 12rpx; text-align: center; line-height: 1.6; }
 </style>

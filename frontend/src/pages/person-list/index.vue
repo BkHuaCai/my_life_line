@@ -19,6 +19,18 @@
       <view class="arrow">›</view>
     </view>
 
+    <!-- 本月概览：本月新增事件数 + 最活跃时间线，让我的页有数据脉动 -->
+    <view class="month-overview" v-if="currentPerson.id">
+      <view class="mo-cell">
+        <view class="mo-num">{{ monthOverview.monthCount }}</view>
+        <view class="mo-label">本月新增</view>
+      </view>
+      <view class="mo-cell mo-active" v-if="monthOverview.activeTimeline" @click="openTimeline(monthOverview.activeTimeline.id)">
+        <view class="mo-name">{{ monthOverview.activeTimeline.name }}</view>
+        <view class="mo-label">最活跃 · {{ monthOverview.activeCount }} 个事件</view>
+      </view>
+    </view>
+
     <!-- 我的档案（点击进入详情，不再切换） -->
     <view class="section">
       <view class="section-header">
@@ -80,6 +92,7 @@ export default {
       currentPerson: {},
       persons: [],
       timelineCounts: {},
+      monthOverview: { monthCount: 0, activeTimeline: null, activeCount: 0 },
       presetColors: PRESET_COLORS,
       customSelected: false,
       themePrimary: getThemePrimary()
@@ -111,11 +124,18 @@ export default {
         counts[p.id] = tls.length
       }
       this.timelineCounts = counts
+      // 本月概览：本月新增事件数 + 最活跃时间线
+      if (this.currentPerson.id) {
+        this.monthOverview = await db.getMonthOverview(this.currentPerson.id)
+      }
       this.themePrimary = getThemePrimary()
       this.customSelected = !this.presetColors.includes(this.themePrimary)
     },
     openPerson(id) {
       uni.navigateTo({ url: `/pages/person-detail/index?personId=${id}` })
+    },
+    openTimeline(id) {
+      uni.navigateTo({ url: `/pages/timeline/index?timelineId=${id}` })
     },
     openCurrentPerson() {
       if (this.currentPerson.id) {
@@ -258,6 +278,14 @@ export default {
 .user-meta { font-size: 22rpx; color: var(--text-grey); margin-top: 6rpx; }
 .check-icon { color: var(--primary); font-weight: 600; font-size: 28rpx; }
 .empty-tip { text-align: center; color: var(--text-light); padding: 24rpx; }
+
+/* 本月概览：双栏小卡，本月新增数 + 最活跃时间线 */
+.month-overview { display: flex; gap: 16rpx; margin-top: 20rpx; }
+.mo-cell { flex: 1; background: var(--bg-card); border-radius: 20rpx; padding: 28rpx 24rpx; box-shadow: var(--shadow-card); display: flex; flex-direction: column; }
+.mo-cell.mo-active { justify-content: center; }
+.mo-num { font-size: 44rpx; font-weight: 800; color: var(--primary); }
+.mo-name { font-size: 30rpx; font-weight: 700; color: var(--text-main); }
+.mo-label { font-size: 22rpx; color: var(--text-grey); margin-top: 6rpx; }
 
 /* 主题配色 */
 .theme-section { background: var(--bg-card); border-radius: 20rpx; padding: 28rpx 24rpx; box-shadow: var(--shadow-card); }

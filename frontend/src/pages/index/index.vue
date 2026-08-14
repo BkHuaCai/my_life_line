@@ -51,6 +51,37 @@
         </view>
       </view>
 
+      <!-- 时光机：历史上同月同日发生的事件，每日有新内容 -->
+      <view class="time-machine" v-if="currentPerson.id && todayEvents.length">
+        <view class="tm-head">
+          <text class="tm-title">🕯️ 时光机</text>
+          <text class="tm-date">历史上的今天 · {{ todayLabel }}</text>
+        </view>
+        <swiper class="tm-swiper" indicator-dots indicator-active-color="var(--primary)" circular>
+          <swiper-item v-for="t in todayEvents" :key="t.id" @click="openEvent(t.id)">
+            <view class="tm-card">
+              <view class="tm-year">{{ t._year }} 年</view>
+              <view class="tm-event">{{ t.title }}</view>
+              <view class="tm-tl">{{ tlMap[t.timeline_id] || '' }}</view>
+            </view>
+          </swiper-item>
+        </swiper>
+      </view>
+      <view class="time-machine tm-empty" v-else-if="currentPerson.id && eventTotal > 0">
+        <text class="tm-empty-text">今天还没有历史事件，去打个新事件吧</text>
+      </view>
+
+      <!-- 本月活动：主色进度条，让首页有动的数据脉动 -->
+      <view class="month-bar" v-if="currentPerson.id">
+        <view class="mb-text">
+          <text class="mb-label">本月新增</text>
+          <text class="mb-count">{{ monthCount }} 个事件</text>
+        </view>
+        <view class="mb-track">
+          <view class="mb-fill" :style="{ width: monthFillWidth }"></view>
+        </view>
+      </view>
+
       <view class="section" v-if="mainTimeline.id">
         <view class="section-header">
           <view class="title-wrap">
@@ -59,6 +90,7 @@
           </view>
         </view>
         <view class="main-card" @click="openMain">
+          <view class="main-cover"></view>
           <view class="main-info">
             <view class="main-name">{{ mainTimeline.name }} <text class="main-badge">主线</text></view>
             <view class="main-meta">
@@ -122,7 +154,11 @@ export default {
       results: [],
       nameMap: {},
       tlMap: {},
-      _searchTimer: null
+      _searchTimer: null,
+      todayEvents: [],
+      todayLabel: '',
+      monthCount: 0,
+      monthFillWidth: '0%'
     }
   },
   computed: {
@@ -188,6 +224,21 @@ export default {
       for (const tl of tls) counts[tl.id] = (await db.getEventsByTimeline(tl.id)).length
       this.eventCounts = counts
       this.needInitPoint = !!this.mainTimeline.id && (counts[this.mainTimeline.id] || 0) === 0
+      // 时光机：历史上同月同日的事件
+      const now = new Date()
+      this.todayLabel = `${now.getMonth() + 1}月${now.getDate()}日`
+      this.todayEvents = await db.getTodayEvents(this.currentPerson.id)
+      // 本月活动：本月新增事件数 + 进度条（本月新增 / 全年事件总数，上限 100%）
+      const overview = await db.getMonthOverview(this.currentPerson.id)
+      this.monthCount = overview.monthCount
+      const total = this.eventTotal || overview.activeCount || 0
+      this.monthFillWidth = (total > 0 ? Math.min(100, Math.round((overview.monthCount / total) * 100)) : 0) + '%'
+    },
+    onPullDownRefresh() {
+      this.load().then(() => {
+        uni.stopPullDownRefresh()
+        uni.showToast({ title: '已刷新', icon: 'none', duration: 800 })
+      }).catch(() => uni.stopPullDownRefresh())
     },
     onSwitchUser(e) {
       const idx = Number(e.detail.value)
@@ -273,6 +324,27 @@ export default {
 .stat-num { font-size: 44rpx; font-weight: 800; color: var(--primary); }
 .stat-label { font-size: 24rpx; color: var(--text-grey); margin-top: 6rpx; }
 
+/* 时光机：历史上同月同日的事件轮播，每日有新内容 */
+.time-machine { margin-top: 24rpx; background: var(--bg-card); border-radius: 20rpx; padding: 24rpx; box-shadow: var(--shadow-card); }
+.tm-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
+.tm-title { font-size: 30rpx; font-weight: 700; color: var(--text-main); }
+.tm-date { font-size: 22rpx; color: var(--text-grey); }
+.tm-swiper { height: 180rpx; }
+.tm-card { display: flex; flex-direction: column; justify-content: center; height: 100%; padding: 0 8rpx; }
+.tm-year { font-size: 24rpx; color: var(--primary); font-weight: 600; }
+.tm-event { font-size: 32rpx; font-weight: 700; color: var(--text-main); margin-top: 8rpx; }
+.tm-tl { font-size: 22rpx; color: var(--text-grey); margin-top: 6rpx; }
+.time-machine.tm-empty { padding: 28rpx 24rpx; display: flex; justify-content: center; }
+.tm-empty-text { font-size: 24rpx; color: var(--text-grey); }
+
+/* 本月活动：主色进度条，让首页有数据脉动 */
+.month-bar { margin-top: 24rpx; background: var(--bg-card); border-radius: 20rpx; padding: 24rpx; box-shadow: var(--shadow-card); }
+.mb-text { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
+.mb-label { font-size: 24rpx; color: var(--text-sub); }
+.mb-count { font-size: 26rpx; color: var(--primary); font-weight: 600; }
+.mb-track { width: 100%; height: 16rpx; background: var(--bg-muted); border-radius: 8rpx; overflow: hidden; }
+.mb-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--primary-dark)); border-radius: 8rpx; transition: width .4s; }
+
 /* 分区：左侧主色竖条 + 标题，更有节奏感 */
 .section { margin-top: 40rpx; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
@@ -281,8 +353,9 @@ export default {
 .section-title { font-size: 32rpx; font-weight: 700; color: var(--text-main); }
 .section-add { color: var(--primary); font-size: 26rpx; padding: 8rpx 0 8rpx 24rpx; }
 
-/* 主线卡：主色淡描边 + 右箭头 */
-.main-card { display: flex; align-items: center; background: var(--bg-card); border-radius: 20rpx; padding: 32rpx; box-shadow: var(--shadow-card); border: 2rpx solid var(--primary-soft); }
+/* 主线卡：顶部主色渐变封面条 + 主色淡描边 + 右箭头 */
+.main-card { position: relative; display: flex; align-items: center; background: var(--bg-card); border-radius: 20rpx; padding: 32rpx; box-shadow: var(--shadow-card); border: 2rpx solid var(--primary-soft); overflow: hidden; }
+.main-cover { position: absolute; top: 0; left: 0; right: 0; height: 16rpx; background: linear-gradient(90deg, var(--primary), var(--primary-dark)); }
 .main-info { flex: 1; }
 .main-name { font-size: 34rpx; font-weight: 700; }
 .main-badge { display: inline-block; background: var(--primary); color: var(--primary-contrast); font-size: 20rpx; padding: 2rpx 16rpx; border-radius: 12rpx; margin-left: 12rpx; vertical-align: middle; }

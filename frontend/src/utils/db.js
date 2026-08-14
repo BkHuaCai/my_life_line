@@ -170,12 +170,63 @@ export function createDb(adapter) {
       return rows.filter((r) => r.event_id === eventId).sort((a, b) => a.sort_order - b.sort_order)
     },
 
+    // ---------- 前后事件：同时间线按日期排序，返回给定事件的上一条/下一条 ----------
+    async getAdjacentEvents(eventId) {
+      const ev = await this.getEvent(eventId)
+      if (!ev) return { prev: null, next: null }
+      const all = await this.getEventsByTimeline(ev.timeline_id)
+      const idx = all.findIndex((e) => e.id === eventId)
+      return { prev: idx > 0 ? all[idx - 1] : null, next: idx < all.length - 1 ? all[idx + 1] : null }
+    },
+
     // ---------- search ----------
     async searchEvents(keyword) {
       const k = (keyword || '').trim().toLowerCase()
       if (!k) return []
       const rows = await adapter.all('event')
       return rows.filter((r) => ((r.title || '') + ' ' + (r.description || '')).toLowerCase().includes(k))
+    },
+
+    // ---------- 时光机：查「历史上同月同日」的事件，按年份远近排序 ----------
+    // 取事件生效日期（时间点取 date_point，时间段取 date_start）的 MM-DD 与今天相同的事件
+    async getTodayEvents(personId) {
+      const now = new Date()
+      const mm = String(now.getMonth() + 1).padStart(2, '0')
+      const dd = String(now.getDate()).padStart(2, '0')
+      const target = `${mm}-${dd}`
+      const tls = await this.getTimelinesByPerson(personId)
+      const tlIds = new Set(tls.map((t) => t.id))
+      const rows = await adapter.all('event')
+      return rows
+        .filter((r) => tlIds.has(r.timeline_id))
+        .map((r) => {
+          const d = r.date_type === 'range' ? (r.date_start || '') : (r.date_point || '')
+          return { ev: r, date: d }
+        })
+        .filter((x) => x.date.length >= 10 && x.date.slice(5, 10) === target)
+        .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+        .map((x) => ({ ...x.ev, _year: x.date.slice(0, 4) }))
+    },
+
+    // ---------- 本月概览：当前用户本月新增事件数 + 最活跃时间线 ----------
+    async getMonthOverview(personId) {
+      const now = new Date()
+      const prefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-`
+      const tls = await this.getTimelinesByPerson(personId)
+      const rows = await adapter.all('event')
+      const own = rows.filter((r) => tls.some((t) => t.id === r.timeline_id))
+      const monthCount = own.filter((r) => {
+        const d = r.date_type === 'range' ? (r.date_start || '') : (r.date_point || '')
+        return d.startsWith(prefix)
+      }).length
+      // 最活跃时间线：当前用户各时间线事件数最多者
+      let active = null
+      let max = -1
+      for (const tl of tls) {
+        const n = own.filter((r) => r.timeline_id === tl.id).length
+        if (n > max) { max = n; active = tl }
+      }
+      return { monthCount, activeTimeline: active, activeCount: max < 0 ? 0 : max }
     }
   }
 }
