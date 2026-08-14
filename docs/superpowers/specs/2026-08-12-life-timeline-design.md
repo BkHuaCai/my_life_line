@@ -119,6 +119,106 @@ event_image (id UUID PK, event_id FK, thumb_path, image_path, sort_order)
 - 账号系统、分享链接、社区浏览：后期再说，本期不写相关代码
 - 冲突合并、双向同步：等真正需要时再设计
 
+## 6.1 社区共享时间线设计（后期，本期不实现）
+
+后期社区功能分两种"对外"时间线，概念必须区分：
+
+| 类型 | 本地时间线（私有） | 分享时间线（发布） | 共享时间线（多人写） |
+| --- | --- | --- | --- |
+| 谁能写 | 本人 | 只有本人 | 社区任何登录用户 |
+| 谁能读 | 本人 | 社区任何人 | 社区任何人 |
+| 是否可改 | 是 | 本人改后重发新版本快照 | 创建者审核他人提交 |
+| 存哪 | 本地 SQLite | 后端 DB（只读快照） | 后端 DB（含待审事件表） |
+
+**本地时间线**=本地私有；**分享时间线**=把本地时间线发布一份只读快照到后端，本人更新就重发新版本；**共享时间线**=后端新建或由本地时间线复制一份转为共享，他人可往里提交事件，创建者审核是否展示。
+
+### 后端数据模型（新增表）
+
+```
+account                        用户账号
+  id (UUID)          PK
+  username           唯一
+  password_hash
+  created_at
+
+shared_timeline               共享时间线（社区多人写）
+  id (UUID)          PK        新建或由本地 timeline 复制而来
+  creator_account_id          创建者（唯一审核权）
+  title / category / desc
+  source_timeline_id          若由本地复制：原 UUID（仅记录，不作关联）
+  created_at / updated_at
+
+shared_event                  共享时间线上的事件
+  id (UUID)          PK
+  shared_timeline_id          所属
+  author_account_id           提交者（不一定等于创建者）
+  title / description / date_*
+  images                      URL 数组（后端对象存储）
+  status                      pending / approved / rejected
+  reviewed_by                 审核者 account_id（创建者）
+  reviewed_at
+  created_at
+
+share_snapshot                分享时间线（只读快照）的版本
+  id (UUID)          PK
+  account_id                  发布者
+  local_timeline_id           本地时间线 UUID
+  version                     递增
+  payload                     serialize() 产物（data.json + images）
+  created_at
+```
+
+### 流程
+
+**A. 分享时间线（只读发布）**
+1. 本地选一条时间线 → "发布到社区"
+2. 前端复用 `serialize()`（已有的导出逻辑）生成 `data.json + images`
+3. 后端存为 `share_snapshot`（绑定 account，含版本号）
+4. 其他人浏览/查看快照，**不能往里写**
+5. 本人本地改了 → 重新发布 = 上传新版本快照
+
+**B. 共享时间线（多人写 + 审核）**
+1. 入口二选一：
+   - "新建共享时间线" → 后端建一条空 `shared_timeline`
+   - "把本地时间线复制为共享" → 本地 `serialize()` 上传，后端插入 `shared_timeline` + 初始 `shared_event`（全部 approved，author=creator）
+2. 其他用户打开该共享时间线 → "添加事件" → 提交一条 `shared_event`（status=pending）
+3. 创建者收到待审通知 → 进入审核页 → 三选一：
+   - **通过**：status=approved，对所有人可见
+   - **拒绝**：status=rejected，附理由，提交者收到通知
+   - **删除**：彻底删（提交者收到"已删"通知）
+4. 审核前事件**只对创建者 + 提交者本人**可见；审核后对所有人可见
+
+**C. 与本地的关系**
+- 共享时间线**不在本地 SQLite 落库**，纯后端
+- 用户可在共享时间线浏览页"收藏到本地" → 在本地建一条私有 timeline，**一次性快照拷贝**（不再同步，标 `source=shared:<uuid>` 备溯）
+
+### 后端接口草案（FastAPI）
+
+```
+POST   /account/register          注册
+POST   /account/login             登录，返 token
+
+# 分享时间线（只读快照）
+POST   /share/snapshot            上传/重发本地时间线快照
+GET    /share/snapshots           列出社区快照
+GET    /share/snapshot/{id}       查看某快照详情
+
+# 共享时间线（多人写 + 审核）
+POST   /shared-timeline           新建（空）或由本地复制创建
+GET    /shared-timeline           列出社区共享时间线
+GET    /shared-timeline/{id}      查看共享时间线（仅 approved 事件对外）
+POST   /shared-timeline/{id}/event           他人提交事件（status=pending）
+GET    /shared-timeline/{id}/event/pending   创建者查看待审事件
+POST   /shared-timeline/{id}/event/{eid}/review  创建者审核（approve/reject/delete）
+POST   /shared-timeline/{id}/fav  收藏到本地（一次性快照拷贝）
+```
+
+### 前期不动但要记的 4 件事（接上文"前期必须做对"）
+1. `is_private` 已有；后期再加 `local_origin`（`mine` / `copied_from_shared`）便于"收藏到本地"溯源，**本期不写**
+2. 前期 `serialize()` 的产物就是发布/复制共享的载体——已满足，不动
+3. 后端 `shared_event` 也用 UUID——和本地 event 不冲突，"收藏到本地"可直接复用原 UUID
+4. 前期数据层隔离不动，后期加 `communityAdapter`（后端 HTTP）与现有 `sqliteAdapter`/`memoryAdapter` 并列
+
 ## 7. 工程与 Git
 
 - 代码上传 GitHub
