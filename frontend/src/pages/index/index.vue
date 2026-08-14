@@ -205,8 +205,8 @@ export default {
 <style scoped>
 .page { padding: 24rpx; padding-bottom: 48rpx; }
 
-/* 顶部：左侧标题，右侧用户切换下拉框 */
-.page-header { display: flex; justify-content: space-between; align-items: center; padding: 8rpx 0 24rpx; }
+/* 顶部：右侧用户切换下拉框 */
+.page-header { display: flex; justify-content: flex-end; align-items: center; padding: 8rpx 0 24rpx; }
 .page-title { font-size: 40rpx; font-weight: 700; }
 .dropdown-label { display: flex; align-items: center; background: var(--primary-soft); color: var(--primary-dark); border-radius: 32rpx; padding: 10rpx 24rpx; font-size: 26rpx; }
 .dropdown-arrow { margin-left: 8rpx; font-size: 22rpx; }
