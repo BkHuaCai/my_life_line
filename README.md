@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="frontend/src/static/app-icon-1024.png" width="120" alt="时光档案" />
-
 # 时光档案 · my_life_line
 
 **本地优先 · 离线可用 · 隐私自掌** 的时光档案安卓 App
