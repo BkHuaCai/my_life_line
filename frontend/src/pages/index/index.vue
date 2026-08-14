@@ -293,7 +293,7 @@ export default {
 </script>
 
 <style scoped>
-.page { padding: 24rpx; padding-bottom: 140rpx; }
+.page { padding: 24rpx; padding-bottom: 140rpx; padding-top: var(--status-bar-height); }
 
 /* 顶部 hero：问候语 + 用户切换，参考主流首页个人区 */
 .hero { display: flex; justify-content: space-between; align-items: center; padding: 8rpx 4rpx 24rpx; }
