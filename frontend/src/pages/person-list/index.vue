@@ -38,24 +38,8 @@
       </view>
     </view>
 
-    <!-- 搜索栏 -->
-    <view class="search-bar">
-      <input class="search-input" v-model="keyword" placeholder="搜索事件标题/描述" @confirm="doSearch" @input="doSearch" />
-    </view>
-
-    <template v-if="searching">
-      <view class="result-list">
-        <view v-for="r in results" :key="r.id" class="result-item" @click="openEvent(r.id)">
-          <view class="r-title">{{ r.title }}</view>
-          <view class="r-sub">{{ personName(r.person_id) }} · {{ timelineName(r.timeline_id) }}</view>
-          <view class="r-desc" v-if="r.description">{{ r.description }}</view>
-        </view>
-        <view v-if="!results.length" class="empty">没有匹配的事件</view>
-      </view>
-    </template>
-
     <!-- 主题配色 -->
-    <view class="section" v-if="!searching">
+    <view class="section">
       <view class="section-header">
         <text class="section-title">主题配色</text>
       </view>
@@ -86,7 +70,7 @@
 <script>
 import { db } from '../../utils/db'
 import { serialize, importData } from '../../utils/export'
-import { PRESET_COLORS, getThemePrimary, saveThemePrimary } from '../../utils/theme'
+import { PRESET_COLORS, getThemePrimary, saveThemePrimary, applyTheme } from '../../utils/theme'
 import ColorPicker from '../../components/color-picker.vue'
 
 export default {
@@ -96,11 +80,6 @@ export default {
       currentPerson: {},
       persons: [],
       timelineCounts: {},
-      keyword: '',
-      searching: false,
-      results: [],
-      nameMap: {},
-      tlMap: {},
       presetColors: PRESET_COLORS,
       customSelected: false,
       themePrimary: getThemePrimary()
@@ -113,6 +92,7 @@ export default {
     }
   },
   async onShow() {
+    applyTheme(getThemePrimary())
     await this.load()
   },
   methods: {
@@ -125,17 +105,11 @@ export default {
 
       // 获取每个用户的时间线数量
       const counts = {}
-      const nameMap = {}
-      const tlMap = {}
       for (const p of this.persons) {
-        nameMap[p.id] = p.name
         const tls = await db.getTimelinesByPerson(p.id)
         counts[p.id] = tls.length
-        for (const tl of tls) tlMap[tl.id] = tl.name
       }
       this.timelineCounts = counts
-      this.nameMap = nameMap
-      this.tlMap = tlMap
       this.themePrimary = getThemePrimary()
       this.customSelected = !this.presetColors.includes(this.themePrimary)
     },
@@ -157,24 +131,6 @@ export default {
     selectTheme(primary) {
       this.themePrimary = primary
       saveThemePrimary(primary)
-    },
-    personName(id) {
-      return this.nameMap[id] || ''
-    },
-    timelineName(id) {
-      return this.tlMap[id] || ''
-    },
-    async doSearch() {
-      const k = (this.keyword || '').trim()
-      if (!k) {
-        this.searching = false
-        return
-      }
-      this.searching = true
-      this.results = await db.searchEvents(k)
-    },
-    openEvent(id) {
-      uni.navigateTo({ url: `/pages/event-detail/index?eventId=${id}` })
     },
     showMoreMenu() {
       uni.showActionSheet({
@@ -299,18 +255,6 @@ export default {
 .user-meta { font-size: 22rpx; color: var(--text-grey); }
 .check-icon { color: var(--primary); font-weight: 600; font-size: 28rpx; }
 .empty-tip { text-align: center; color: var(--text-light); padding: 24rpx; }
-
-/* 搜索 */
-.search-bar { margin-top: 32rpx; }
-.search-input { background: var(--bg-card); border-radius: 12rpx; padding: 14rpx 20rpx; font-size: 28rpx; height: 76rpx; min-height: 76rpx; }
-
-/* 搜索结果 */
-.result-list { margin-top: 16rpx; display: flex; flex-direction: column; gap: 16rpx; }
-.result-item { background: var(--bg-card); border-radius: 16rpx; padding: 20rpx; }
-.r-title { font-size: 30rpx; font-weight: 600; }
-.r-sub { font-size: 24rpx; color: var(--text-grey); margin-top: 6rpx; }
-.r-desc { font-size: 26rpx; color: var(--text-sub); margin-top: 8rpx; }
-.empty { text-align: center; color: var(--text-light); padding: 60rpx 0; }
 
 /* 主题配色 */
 .theme-section { background: var(--bg-card); border-radius: 16rpx; padding: 24rpx; }

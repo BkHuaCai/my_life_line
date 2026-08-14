@@ -72,6 +72,7 @@
 <script>
 import { db } from '../../utils/db'
 import { buildEventDate } from '../../utils/date'
+import { applyTheme, getThemePrimary } from '../../utils/theme'
 import timelineAxis from '../../components/timeline-axis.vue'
 import timelineGrid from '../../components/timeline-grid.vue'
 import timelineCards from '../../components/timeline-cards.vue'
@@ -102,6 +103,7 @@ export default {
     this.viewMode = uni.getStorageSync('timeline_view_mode') || 'axis'
   },
   async onShow() {
+    applyTheme(getThemePrimary())
     await this.load()
   },
   methods: {

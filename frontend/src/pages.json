@@ -1,6 +1,6 @@
 {
   "pages": [
-    { "path": "pages/index/index", "style": { "navigationBarTitleText": "时光档案" } },
+    { "path": "pages/index/index", "style": { "navigationBarTitleText": "" } },
     { "path": "pages/person-list/index", "style": { "navigationBarTitleText": "档案" } },
     { "path": "pages/person-detail/index", "style": { "navigationBarTitleText": "档案" } },
     { "path": "pages/timeline/index", "style": { "navigationBarTitleText": "时间线" } },
@@ -9,7 +9,7 @@
   ],
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "时光档案",
+    "navigationBarTitleText": "",
     "navigationBarBackgroundColor": "#FFFFFF",
     "backgroundColor": "#F6F7FB"
   },
@@ -22,14 +22,14 @@
       {
         "pagePath": "pages/index/index",
         "text": "主页",
-        "iconPath": "static/tab-home.svg",
-        "selectedIconPath": "static/tab-home-active.svg"
+        "iconPath": "static/tab-home.png",
+        "selectedIconPath": "static/tab-home-active.png"
       },
       {
         "pagePath": "pages/person-list/index",
         "text": "我的",
-        "iconPath": "static/tab-my.svg",
-        "selectedIconPath": "static/tab-my-active.svg"
+        "iconPath": "static/tab-my.png",
+        "selectedIconPath": "static/tab-my-active.png"
       }
     ]
   }

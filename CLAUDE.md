@@ -33,7 +33,7 @@ No lint or format tooling is configured (no ESLint/Prettier config anywhere) —
 - **Storage adapter**: `src/utils/storage.js` — `createSqliteAdapter()` wraps `plus.sqlite` (App only; DB `my_life_line` at path `_doc`), `createMemoryAdapter()` backs tests/H5. `resolveAdapter()` detects the environment via the global `plus`; code touching `plus.*` crashes outside a real App runtime.
 - **Images**: `image.js` writes compressed + thumbnail copies into the App private dir via `plus.io`.
 - **Schema**: `schema.js` defines tables `person`, `timeline`, `event`, `event_image`. All entities use UUID PKs (`id.js`). Events are `date_type = 'point'` or `'range'` (`date_end = null` means "ongoing").
-- **Pages**: every page must be registered in `src/pages.json` (including tabBar entries, whose icons are SVGs). Pages live at `src/pages/<name>/index.vue`; shared views in `src/components/`.
+- **Pages**: every page must be registered in `src/pages.json` (including tabBar entries). tabBar icons live at `src/static/tab-*.png` — must be PNG (81×81), because the App 原生 tabBar 不支持 SVG；如要改图标，替换 PNG 并在 pages.json 更新路径即可。Pages live at `src/pages/<name>/index.vue`; shared views in `src/components/`.
 
 ## Tests
 

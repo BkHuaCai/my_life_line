@@ -1,8 +1,7 @@
 <template>
   <view class="page">
-    <!-- 顶部：左侧标题，右侧用户切换下拉框 -->
+    <!-- 顶部：右侧用户切换下拉框 -->
     <view class="page-header">
-      <view class="page-title">时光档案</view>
       <picker class="user-dropdown" mode="selector" :range="userOptions" :value="userIndex" @change="onSwitchUser">
         <view class="dropdown-label">
           <text class="dropdown-name">{{ currentPerson.name || '选择档案' }}</text>
@@ -91,6 +90,7 @@
 
 <script>
 import { db } from '../../utils/db'
+import { applyTheme, getThemePrimary } from '../../utils/theme'
 
 export default {
   data() {
@@ -120,6 +120,7 @@ export default {
     }
   },
   async onShow() {
+    applyTheme(getThemePrimary())
     await this.load()
   },
   methods: {

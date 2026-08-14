@@ -193,6 +193,7 @@
 import { db } from '../../utils/db'
 import { chooseAndStoreImages, chooseAvatar } from '../../utils/image'
 import { parseEventDate, buildEventDate } from '../../utils/date'
+import { applyTheme, getThemePrimary } from '../../utils/theme'
 
 export default {
   data() {
@@ -246,6 +247,9 @@ export default {
     const titles = { person: '编辑档案', timeline: '编辑时间线', event: '编辑事件' }
     uni.setNavigationBarTitle({ title: this.id ? titles[this.entityType] : `新建${this.entityType === 'person' ? '档案' : this.entityType === 'timeline' ? '时间线' : '事件'}` })
     if (this.id) await this.loadForm()
+  },
+  onShow() {
+    applyTheme(getThemePrimary())
   },
   methods: {
     async loadForm() {

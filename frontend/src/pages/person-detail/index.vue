@@ -36,6 +36,7 @@
 
 <script>
 import { db } from '../../utils/db'
+import { applyTheme, getThemePrimary } from '../../utils/theme'
 
 export default {
   data() {
@@ -46,6 +47,7 @@ export default {
     uni.setNavigationBarTitle({ title: '档案' })
   },
   async onShow() {
+    applyTheme(getThemePrimary())
     await this.load()
   },
   methods: {

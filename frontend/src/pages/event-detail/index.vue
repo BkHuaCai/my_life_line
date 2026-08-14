@@ -25,6 +25,7 @@
 <script>
 import { db } from '../../utils/db'
 import { formatEventDate } from '../../utils/date'
+import { applyTheme, getThemePrimary } from '../../utils/theme'
 
 export default {
   data() {
@@ -34,6 +35,7 @@ export default {
     this.eventId = options.eventId
   },
   async onShow() {
+    applyTheme(getThemePrimary())
     await this.load()
   },
   methods: {
