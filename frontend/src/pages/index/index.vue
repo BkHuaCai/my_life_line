@@ -121,7 +121,8 @@ export default {
       searching: false,
       results: [],
       nameMap: {},
-      tlMap: {}
+      tlMap: {},
+      _searchTimer: null
     }
   },
   computed: {
@@ -203,11 +204,17 @@ export default {
     async doSearch() {
       const k = (this.keyword || '').trim()
       if (!k) {
+        if (this._searchTimer) { clearTimeout(this._searchTimer); this._searchTimer = null }
         this.searching = false
         return
       }
-      this.searching = true
-      this.results = await db.searchEvents(k)
+      // debounce 300ms，避免每输一个字就查一次数据库
+      if (this._searchTimer) clearTimeout(this._searchTimer)
+      this._searchTimer = setTimeout(async () => {
+        this.searching = true
+        this.results = await db.searchEvents(k)
+        this._searchTimer = null
+      }, 300)
     },
     personName(id) {
       return this.nameMap[id] || ''

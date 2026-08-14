@@ -228,37 +228,39 @@ export default {
 <style scoped>
 .page { padding: 24rpx; padding-bottom: 140rpx; }
 .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24rpx; }
-.header-title { font-size: 40rpx; font-weight: 700; }
+.header-title { font-size: 44rpx; font-weight: 800; }
 .settings-btn { font-size: 40rpx; color: var(--text-sub); padding: 8rpx 16rpx; }
 
-/* 当前用户 */
-.current-user { display: flex; align-items: center; background: var(--bg-card); border-radius: 16rpx; padding: 32rpx; box-shadow: var(--shadow-card); }
+/* 当前用户：主色淡描边大卡 */
+.current-user { display: flex; align-items: center; background: var(--bg-card); border-radius: 20rpx; padding: 36rpx; box-shadow: var(--shadow-card); border: 2rpx solid var(--primary-soft); }
 .avatar { width: 100rpx; height: 100rpx; border-radius: 50%; }
-.avatar.placeholder { background: var(--primary); color: var(--primary-contrast); display: flex; align-items: center; justify-content: center; font-size: 40rpx; }
+.avatar.placeholder { background: var(--primary); color: var(--primary-contrast); display: flex; align-items: center; justify-content: center; font-size: 40rpx; font-weight: 700; }
 .info { flex: 1; margin-left: 24rpx; }
 .name { font-size: 36rpx; font-weight: 700; }
 .sub { font-size: 24rpx; color: var(--text-grey); margin-top: 6rpx; }
 .arrow { font-size: 40rpx; color: var(--text-light); }
 
-/* 用户列表 */
-.section { margin-top: 32rpx; }
-.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
-.section-title { font-size: 28rpx; font-weight: 600; color: var(--text-sub); }
-.add-user { color: var(--primary); font-size: 26rpx; }
-.user-list { display: flex; flex-direction: column; gap: 12rpx; }
-.user-card { display: flex; align-items: center; background: var(--bg-card); border-radius: 12rpx; padding: 20rpx; }
+/* 分区：主色竖条标题统一 */
+.section { margin-top: 40rpx; }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
+.title-wrap { display: flex; align-items: center; gap: 16rpx; }
+.title-bar { width: 8rpx; height: 28rpx; border-radius: 4rpx; background: var(--primary); }
+.section-title { font-size: 30rpx; font-weight: 700; color: var(--text-main); }
+.add-user { color: var(--primary); font-size: 26rpx; padding: 8rpx 0 8rpx 24rpx; }
+.user-list { display: flex; flex-direction: column; gap: 16rpx; }
+.user-card { display: flex; align-items: center; background: var(--bg-card); border-radius: 20rpx; padding: 24rpx; box-shadow: var(--shadow-card); }
 .user-card.active { border: 2rpx solid var(--primary); }
-.avatar-sm { width: 64rpx; height: 64rpx; border-radius: 50%; }
-.avatar-sm.placeholder { background: var(--primary); color: var(--primary-contrast); display: flex; align-items: center; justify-content: center; font-size: 28rpx; }
-.user-info { flex: 1; margin-left: 16rpx; }
-.user-name { font-size: 28rpx; font-weight: 600; }
-.me-badge { display: inline-block; background: var(--primary); color: var(--primary-contrast); font-size: 20rpx; padding: 2rpx 10rpx; border-radius: 10rpx; margin-left: 10rpx; }
-.user-meta { font-size: 22rpx; color: var(--text-grey); }
+.avatar-sm { width: 72rpx; height: 72rpx; border-radius: 50%; }
+.avatar-sm.placeholder { background: var(--primary); color: var(--primary-contrast); display: flex; align-items: center; justify-content: center; font-size: 30rpx; font-weight: 700; }
+.user-info { flex: 1; margin-left: 20rpx; }
+.user-name { font-size: 30rpx; font-weight: 600; }
+.me-badge { display: inline-block; background: var(--primary); color: var(--primary-contrast); font-size: 20rpx; padding: 2rpx 16rpx; border-radius: 12rpx; margin-left: 10rpx; }
+.user-meta { font-size: 22rpx; color: var(--text-grey); margin-top: 6rpx; }
 .check-icon { color: var(--primary); font-weight: 600; font-size: 28rpx; }
 .empty-tip { text-align: center; color: var(--text-light); padding: 24rpx; }
 
 /* 主题配色 */
-.theme-section { background: var(--bg-card); border-radius: 16rpx; padding: 24rpx; }
+.theme-section { background: var(--bg-card); border-radius: 20rpx; padding: 28rpx 24rpx; box-shadow: var(--shadow-card); }
 .theme-label { font-size: 24rpx; color: var(--text-sub); margin: 24rpx 0 16rpx; }
 .theme-label:first-child { margin-top: 0; }
 .theme-row { display: grid; grid-template-columns: repeat(6, 1fr); row-gap: 24rpx; column-gap: 20rpx; }

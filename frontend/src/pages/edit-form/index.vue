@@ -2,132 +2,111 @@
   <view class="page">
     <!-- 人物表单 -->
     <template v-if="entityType === 'person'">
-      <view class="field">
-        <text class="label">头像</text>
-        <view class="avatar-picker">
-          <view class="avatar-wrap" @click="chooseAvatar">
-            <image v-if="form.avatar_path" class="avatar-img" :src="form.avatar_path" mode="aspectFill" />
-            <view v-else class="avatar-placeholder">＋</view>
+      <view class="group">
+        <view class="group-title">基本信息</view>
+        <view class="field">
+          <text class="label">头像</text>
+          <view class="avatar-picker">
+            <view class="avatar-wrap" @click="chooseAvatar">
+              <image v-if="form.avatar_path" class="avatar-img" :src="form.avatar_path" mode="aspectFill" />
+              <view v-else class="avatar-placeholder">＋</view>
+            </view>
+            <text class="avatar-tip">点击更换头像</text>
           </view>
-          <text class="avatar-tip">点击更换头像</text>
+        </view>
+        <view class="field">
+          <text class="label">名称 *</text>
+          <input class="input" v-model="form.name" placeholder="如：小明、布丁、我的电脑" />
+        </view>
+        <view class="field">
+          <text class="label">备注</text>
+          <textarea class="input textarea" v-model="form.note" placeholder="一句话介绍" />
         </view>
       </view>
-      <view class="field">
-        <text class="label">名称 *</text>
-        <input class="input" v-model="form.name" placeholder="如：小明、布丁、我的电脑" />
-      </view>
-      <view class="field">
-        <text class="label">起始日期</text>
-        <picker mode="date" :value="form.birth_date" @change="(e) => (form.birth_date = e.detail.value)">
-          <view class="picker">{{ form.birth_date || '选择日期' }}</view>
-        </picker>
-      </view>
-      <view class="field">
-        <text class="label">起始时间精度（可选）</text>
-        <view class="seg">
-          <view :class="['seg-item', form.birth_precision === 'none' ? 'active' : '']" @click="setBirthPrecision('none')">仅日期</view>
-          <view :class="['seg-item', form.birth_precision === 'hour' ? 'active' : '']" @click="setBirthPrecision('hour')">到时</view>
-          <view :class="['seg-item', form.birth_precision === 'minute' ? 'active' : '']" @click="setBirthPrecision('minute')">到分</view>
-          <view :class="['seg-item', form.birth_precision === 'second' ? 'active' : '']" @click="setBirthPrecision('second')">到秒</view>
-        </view>
-      </view>
-      <view class="field" v-if="form.birth_precision !== 'none'">
-        <text class="label">起始时间</text>
-        <view class="time-row">
-          <picker class="time-picker" mode="selector" :range="hourRange" :value="form.birth_hour" @change="(e) => (form.birth_hour = Number(e.detail.value))">
-            <view class="picker">{{ pad(form.birth_hour) }} 时</view>
-          </picker>
-          <picker v-if="form.birth_precision === 'minute' || form.birth_precision === 'second'" class="time-picker" mode="selector" :range="minuteRange" :value="form.birth_minute" @change="(e) => (form.birth_minute = Number(e.detail.value))">
-            <view class="picker">{{ pad(form.birth_minute) }} 分</view>
-          </picker>
-          <picker v-if="form.birth_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="form.birth_second" @change="(e) => (form.birth_second = Number(e.detail.value))">
-            <view class="picker">{{ pad(form.birth_second) }} 秒</view>
+      <view class="group">
+        <view class="group-title">起始时间</view>
+        <view class="field">
+          <text class="label">起始日期</text>
+          <picker mode="date" :value="form.birth_date" @change="(e) => (form.birth_date = e.detail.value)">
+            <view class="picker">{{ form.birth_date || '选择日期' }}</view>
           </picker>
         </view>
-      </view>
-      <view class="field">
-        <text class="label">备注</text>
-        <textarea class="input textarea" v-model="form.note" placeholder="一句话介绍" />
+        <view class="field">
+          <text class="label">起始时间精度（可选）</text>
+          <view class="seg">
+            <view :class="['seg-item', form.birth_precision === 'none' ? 'active' : '']" @click="setBirthPrecision('none')">仅日期</view>
+            <view :class="['seg-item', form.birth_precision === 'hour' ? 'active' : '']" @click="setBirthPrecision('hour')">到时</view>
+            <view :class="['seg-item', form.birth_precision === 'minute' ? 'active' : '']" @click="setBirthPrecision('minute')">到分</view>
+            <view :class="['seg-item', form.birth_precision === 'second' ? 'active' : '']" @click="setBirthPrecision('second')">到秒</view>
+          </view>
+        </view>
+        <view class="field" v-if="form.birth_precision !== 'none'">
+          <text class="label">起始时间</text>
+          <view class="time-row">
+            <picker class="time-picker" mode="selector" :range="hourRange" :value="form.birth_hour" @change="(e) => (form.birth_hour = Number(e.detail.value))">
+              <view class="picker">{{ pad(form.birth_hour) }} 时</view>
+            </picker>
+            <picker v-if="form.birth_precision === 'minute' || form.birth_precision === 'second'" class="time-picker" mode="selector" :range="minuteRange" :value="form.birth_minute" @change="(e) => (form.birth_minute = Number(e.detail.value))">
+              <view class="picker">{{ pad(form.birth_minute) }} 分</view>
+            </picker>
+            <picker v-if="form.birth_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="form.birth_second" @change="(e) => (form.birth_second = Number(e.detail.value))">
+              <view class="picker">{{ pad(form.birth_second) }} 秒</view>
+            </picker>
+          </view>
+        </view>
       </view>
       <button class="save-btn" @click="save">保存</button>
     </template>
 
     <!-- 时间线表单 -->
     <template v-else-if="entityType === 'timeline'">
-      <view class="field">
-        <text class="label">名称 *</text>
-        <input class="input" v-model="form.name" placeholder="如：成长记录" />
-      </view>
-      <view class="field">
-        <text class="label">分类</text>
-        <input class="input" v-model="form.category" placeholder="如：教育 / 旅行 / 健康" />
+      <view class="group">
+        <view class="group-title">基本信息</view>
+        <view class="field">
+          <text class="label">名称 *</text>
+          <input class="input" v-model="form.name" placeholder="如：成长记录" />
+        </view>
+        <view class="field">
+          <text class="label">分类</text>
+          <input class="input" v-model="form.category" placeholder="如：教育 / 旅行 / 健康" />
+        </view>
       </view>
       <button class="save-btn" @click="save">保存</button>
     </template>
 
     <!-- 事件表单 -->
     <template v-else-if="entityType === 'event'">
-      <view class="field">
-        <text class="label">标题 *</text>
-        <input class="input" v-model="form.title" placeholder="如：本科毕业典礼" />
-      </view>
-
-      <view class="field">
-        <text class="label">时间类型</text>
-        <view class="seg">
-          <view :class="['seg-item', form.date_type === 'point' ? 'active' : '']" @click="form.date_type = 'point'">时间点</view>
-          <view :class="['seg-item', form.date_type === 'range' ? 'active' : '']" @click="form.date_type = 'range'">时间段</view>
-        </view>
-      </view>
-
-      <view class="field" v-if="form.date_type === 'point'">
-        <text class="label">日期</text>
-        <picker mode="date" :value="form.date_point" @change="(e) => (form.date_point = e.detail.value)">
-          <view class="picker">{{ form.date_point || '选择日期' }}</view>
-        </picker>
-      </view>
-
-      <view class="field" v-if="form.date_type === 'point'">
-        <text class="label">时间精度（可选）</text>
-        <view class="seg">
-          <view :class="['seg-item', form.time_precision === 'none' ? 'active' : '']" @click="setPrecision('none')">仅日期</view>
-          <view :class="['seg-item', form.time_precision === 'hour' ? 'active' : '']" @click="setPrecision('hour')">到时</view>
-          <view :class="['seg-item', form.time_precision === 'minute' ? 'active' : '']" @click="setPrecision('minute')">到分</view>
-          <view :class="['seg-item', form.time_precision === 'second' ? 'active' : '']" @click="setPrecision('second')">到秒</view>
-        </view>
-      </view>
-
-      <view class="field" v-if="form.date_type === 'point' && form.time_precision !== 'none'">
-        <text class="label">时间</text>
-        <view class="time-row">
-          <picker class="time-picker" mode="selector" :range="hourRange" :value="form.hour" @change="(e) => (form.hour = Number(e.detail.value))">
-            <view class="picker">{{ pad(form.hour) }} 时</view>
-          </picker>
-          <picker v-if="form.time_precision === 'minute' || form.time_precision === 'second'" class="time-picker" mode="selector" :range="minuteRange" :value="form.minute" @change="(e) => (form.minute = Number(e.detail.value))">
-            <view class="picker">{{ pad(form.minute) }} 分</view>
-          </picker>
-          <picker v-if="form.time_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="form.second" @change="(e) => (form.second = Number(e.detail.value))">
-            <view class="picker">{{ pad(form.second) }} 秒</view>
-          </picker>
-        </view>
-      </view>
-
-      <template v-else-if="form.date_type === 'range'">
+      <view class="group">
+        <view class="group-title">基本信息</view>
         <view class="field">
-          <text class="label">开始日期</text>
-          <picker mode="date" :value="form.date_start" @change="(e) => (form.date_start = e.detail.value)">
-            <view class="picker">{{ form.date_start || '选择日期' }}</view>
-          </picker>
+          <text class="label">标题 *</text>
+          <input class="input" v-model="form.title" placeholder="如：本科毕业典礼" />
         </view>
         <view class="field">
-          <text class="label">结束日期（空 = 至今）</text>
-          <picker mode="date" :value="form.date_end" @change="(e) => (form.date_end = e.detail.value)">
-            <view class="picker">{{ form.date_end || '至今' }}</view>
+          <text class="label">描述</text>
+          <textarea class="input textarea" v-model="form.description" placeholder="记录当时的感受…" />
+        </view>
+      </view>
+
+      <view class="group">
+        <view class="group-title">时间信息</view>
+        <view class="field">
+          <text class="label">时间类型</text>
+          <view class="seg">
+            <view :class="['seg-item', form.date_type === 'point' ? 'active' : '']" @click="form.date_type = 'point'">时间点</view>
+            <view :class="['seg-item', form.date_type === 'range' ? 'active' : '']" @click="form.date_type = 'range'">时间段</view>
+          </view>
+        </view>
+
+        <view class="field" v-if="form.date_type === 'point'">
+          <text class="label">日期</text>
+          <picker mode="date" :value="form.date_point" @change="(e) => (form.date_point = e.detail.value)">
+            <view class="picker">{{ form.date_point || '选择日期' }}</view>
           </picker>
         </view>
 
-        <view class="field">
-          <text class="label">时间精度（可选，开始与结束共用）</text>
+        <view class="field" v-if="form.date_type === 'point'">
+          <text class="label">时间精度（可选）</text>
           <view class="seg">
             <view :class="['seg-item', form.time_precision === 'none' ? 'active' : '']" @click="setPrecision('none')">仅日期</view>
             <view :class="['seg-item', form.time_precision === 'hour' ? 'active' : '']" @click="setPrecision('hour')">到时</view>
@@ -136,51 +115,89 @@
           </view>
         </view>
 
-        <template v-if="form.time_precision !== 'none'">
-          <view class="field">
-            <text class="label">开始时间</text>
-            <view class="time-row">
-              <picker class="time-picker" mode="selector" :range="hourRange" :value="form.start_hour" @change="(e) => (form.start_hour = Number(e.detail.value))">
-                <view class="picker">{{ pad(form.start_hour) }} 时</view>
-              </picker>
-              <picker v-if="form.time_precision === 'minute' || form.time_precision === 'second'" class="time-picker" mode="selector" :range="minuteRange" :value="form.start_minute" @change="(e) => (form.start_minute = Number(e.detail.value))">
-                <view class="picker">{{ pad(form.start_minute) }} 分</view>
-              </picker>
-              <picker v-if="form.time_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="form.start_second" @change="(e) => (form.start_second = Number(e.detail.value))">
-                <view class="picker">{{ pad(form.start_second) }} 秒</view>
-              </picker>
-            </view>
+        <view class="field" v-if="form.date_type === 'point' && form.time_precision !== 'none'">
+          <text class="label">时间</text>
+          <view class="time-row">
+            <picker class="time-picker" mode="selector" :range="hourRange" :value="form.hour" @change="(e) => (form.hour = Number(e.detail.value))">
+              <view class="picker">{{ pad(form.hour) }} 时</view>
+            </picker>
+            <picker v-if="form.time_precision === 'minute' || form.time_precision === 'second'" class="time-picker" mode="selector" :range="minuteRange" :value="form.minute" @change="(e) => (form.minute = Number(e.detail.value))">
+              <view class="picker">{{ pad(form.minute) }} 分</view>
+            </picker>
+            <picker v-if="form.time_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="form.second" @change="(e) => (form.second = Number(e.detail.value))">
+              <view class="picker">{{ pad(form.second) }} 秒</view>
+            </picker>
           </view>
-          <view class="field" v-if="form.date_end">
-            <text class="label">结束时间</text>
-            <view class="time-row">
-              <picker class="time-picker" mode="selector" :range="hourRange" :value="form.end_hour" @change="(e) => (form.end_hour = Number(e.detail.value))">
-                <view class="picker">{{ pad(form.end_hour) }} 时</view>
-              </picker>
-              <picker v-if="form.time_precision === 'minute' || form.time_precision === 'second'" class="time-picker" mode="selector" :range="minuteRange" :value="form.end_minute" @change="(e) => (form.end_minute = Number(e.detail.value))">
-                <view class="picker">{{ pad(form.end_minute) }} 分</view>
-              </picker>
-              <picker v-if="form.time_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="form.end_second" @change="(e) => (form.end_second = Number(e.detail.value))">
-                <view class="picker">{{ pad(form.end_second) }} 秒</view>
-              </picker>
-            </view>
-          </view>
-        </template>
-      </template>
+        </view>
 
-      <view class="field">
-        <text class="label">描述</text>
-        <textarea class="input textarea" v-model="form.description" placeholder="记录当时的感受…" />
+        <template v-else-if="form.date_type === 'range'">
+          <view class="field">
+            <text class="label">开始日期</text>
+            <picker mode="date" :value="form.date_start" @change="(e) => (form.date_start = e.detail.value)">
+              <view class="picker">{{ form.date_start || '选择日期' }}</view>
+            </picker>
+          </view>
+          <view class="field">
+            <text class="label">结束日期（空 = 至今）</text>
+            <picker mode="date" :value="form.date_end" @change="(e) => (form.date_end = e.detail.value)">
+              <view class="picker">{{ form.date_end || '至今' }}</view>
+            </picker>
+          </view>
+
+          <view class="field">
+            <text class="label">时间精度（可选，开始与结束共用）</text>
+            <view class="seg">
+              <view :class="['seg-item', form.time_precision === 'none' ? 'active' : '']" @click="setPrecision('none')">仅日期</view>
+              <view :class="['seg-item', form.time_precision === 'hour' ? 'active' : '']" @click="setPrecision('hour')">到时</view>
+              <view :class="['seg-item', form.time_precision === 'minute' ? 'active' : '']" @click="setPrecision('minute')">到分</view>
+              <view :class="['seg-item', form.time_precision === 'second' ? 'active' : '']" @click="setPrecision('second')">到秒</view>
+            </view>
+          </view>
+
+          <template v-if="form.time_precision !== 'none'">
+            <view class="field">
+              <text class="label">开始时间</text>
+              <view class="time-row">
+                <picker class="time-picker" mode="selector" :range="hourRange" :value="form.start_hour" @change="(e) => (form.start_hour = Number(e.detail.value))">
+                  <view class="picker">{{ pad(form.start_hour) }} 时</view>
+                </picker>
+                <picker v-if="form.time_precision === 'minute' || form.time_precision === 'second'" class="time-picker" mode="selector" :range="minuteRange" :value="form.start_minute" @change="(e) => (form.start_minute = Number(e.detail.value))">
+                  <view class="picker">{{ pad(form.start_minute) }} 分</view>
+                </picker>
+                <picker v-if="form.time_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="form.start_second" @change="(e) => (form.start_second = Number(e.detail.value))">
+                  <view class="picker">{{ pad(form.start_second) }} 秒</view>
+                </picker>
+              </view>
+            </view>
+            <view class="field" v-if="form.date_end">
+              <text class="label">结束时间</text>
+              <view class="time-row">
+                <picker class="time-picker" mode="selector" :range="hourRange" :value="form.end_hour" @change="(e) => (form.end_hour = Number(e.detail.value))">
+                  <view class="picker">{{ pad(form.end_hour) }} 时</view>
+                </picker>
+                <picker v-if="form.time_precision === 'minute' || form.time_precision === 'second'" class="time-picker" mode="selector" :range="minuteRange" :value="form.end_minute" @change="(e) => (form.end_minute = Number(e.detail.value))">
+                  <view class="picker">{{ pad(form.end_minute) }} 分</view>
+                </picker>
+                <picker v-if="form.time_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="form.end_second" @change="(e) => (form.end_second = Number(e.detail.value))">
+                  <view class="picker">{{ pad(form.end_second) }} 秒</view>
+                </picker>
+              </view>
+            </view>
+          </template>
+        </template>
       </view>
 
-      <view class="field">
-        <text class="label">图片（最多 9 张）</text>
-        <view class="img-grid">
-          <view v-for="(img, i) in form.images" :key="i" class="img-wrap">
-            <image class="img" :src="img.preview" mode="aspectFill" @click="preview(i)" />
-            <view class="img-del" @click="removeImage(i)">×</view>
+      <view class="group">
+        <view class="group-title">图片</view>
+        <view class="field">
+          <text class="label">图片（最多 9 张）</text>
+          <view class="img-grid">
+            <view v-for="(img, i) in form.images" :key="i" class="img-wrap">
+              <image class="img" :src="img.preview" mode="aspectFill" @click="preview(i)" />
+              <view class="img-del" @click="removeImage(i)">×</view>
+            </view>
+            <view v-if="form.images.length < 9" class="img-add" @click="addImages">＋</view>
           </view>
-          <view v-if="form.images.length < 9" class="img-add" @click="addImages">＋</view>
         </view>
       </view>
 
@@ -358,24 +375,30 @@ export default {
 </script>
 
 <style scoped>
-.page { padding: 24rpx; }
-.field { margin-bottom: 32rpx; }
+.page { padding: 24rpx; padding-bottom: 140rpx; }
+/* 分组卡片：把字段按"基本信息/时间信息/图片"分组，参考主流表单分段 */
+.group { background: var(--bg-card); border-radius: 20rpx; padding: 28rpx 24rpx; margin-bottom: 24rpx; box-shadow: var(--shadow-card); }
+.group-title { display: flex; align-items: center; gap: 16rpx; font-size: 28rpx; font-weight: 700; color: var(--text-main); margin-bottom: 24rpx; }
+.group-title::before { content: ''; width: 8rpx; height: 28rpx; border-radius: 4rpx; background: var(--primary); }
+.field { margin-bottom: 28rpx; }
+.field:last-child { margin-bottom: 0; }
 .label { font-size: 26rpx; color: var(--text-sub); display: block; margin-bottom: 12rpx; }
-.input { background: var(--bg-card); border-radius: 12rpx; padding: 20rpx; font-size: 30rpx; width: 100%; box-sizing: border-box; height: 84rpx; min-height: 84rpx; }
+.input { background: var(--bg-muted); border-radius: 16rpx; padding: 20rpx; font-size: 30rpx; width: 100%; box-sizing: border-box; height: 84rpx; min-height: 84rpx; }
 .textarea { min-height: 160rpx; }
-.picker { background: var(--bg-card); border-radius: 12rpx; padding: 20rpx; font-size: 30rpx; color: var(--text-main); }
+.picker { background: var(--bg-muted); border-radius: 16rpx; padding: 20rpx; font-size: 30rpx; color: var(--text-main); }
 .seg { display: flex; gap: 16rpx; }
-.seg-item { flex: 1; text-align: center; padding: 18rpx; border-radius: 12rpx; background: var(--bg-card); color: var(--text-sub); }
+.seg-item { flex: 1; text-align: center; padding: 18rpx; border-radius: 16rpx; background: var(--bg-muted); color: var(--text-sub); }
 .seg-item.active { background: var(--primary); color: var(--primary-contrast); }
 .time-row { display: flex; gap: 16rpx; }
 .time-picker { flex: 1; }
 .time-picker .picker { text-align: center; }
 .img-grid { display: flex; flex-wrap: wrap; gap: 16rpx; }
 .img-wrap { position: relative; width: 180rpx; height: 180rpx; }
-.img { width: 180rpx; height: 180rpx; border-radius: 12rpx; }
+.img { width: 180rpx; height: 180rpx; border-radius: 16rpx; }
 .img-del { position: absolute; top: -12rpx; right: -12rpx; width: 40rpx; height: 40rpx; border-radius: 50%; background: rgba(0,0,0,.6); color: var(--primary-contrast); display: flex; align-items: center; justify-content: center; font-size: 28rpx; }
-.img-add { width: 180rpx; height: 180rpx; border: 2rpx dashed var(--text-light); border-radius: 12rpx; display: flex; align-items: center; justify-content: center; color: var(--text-light); font-size: 48rpx; }
-.save-btn { margin-top: 40rpx; background: var(--primary); color: var(--primary-contrast); font-size: 32rpx; border-radius: 48rpx; }
+.img-add { width: 180rpx; height: 180rpx; border: 2rpx dashed var(--text-light); border-radius: 16rpx; display: flex; align-items: center; justify-content: center; color: var(--text-light); font-size: 48rpx; }
+.save-btn { margin-top: 16rpx; background: var(--primary); color: var(--primary-contrast); font-size: 32rpx; border-radius: 48rpx; }
+.save-btn::after { border: none; }
 
 /* 头像选择 */
 .avatar-picker { display: flex; align-items: center; gap: 24rpx; }
