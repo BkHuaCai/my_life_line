@@ -83,30 +83,6 @@
 
 ---
 
-## 📱 页面预览
-
-<div align="center">
-
-<table>
-  <tr>
-    <td width="33%" align="center"><b>主页</b><br><br>
-      <img src="https://placeholder.placeholder/240x425.png?text=时光机+本月概览+主线+其他时间线" alt="主页" width="240" />
-    </td>
-    <td width="33%" align="center"><b>时间线 · 时间轴</b><br><br>
-      <img src="https://placeholder.placeholder/240x425.png?text=主色节点+交错卡片+左右浏览" alt="时间轴" width="240" />
-    </td>
-    <td width="33%" align="center"><b>我的 · 主题</b><br><br>
-      <img src="https://placeholder.placeholder/240x425.png?text=本月概览+档案列表+主题色盘" alt="我的" width="240" />
-    </td>
-  </tr>
-</table>
-
-<i>占位图——真机截图后替换为 `docs/screenshots/*.png` 即可</i>
-
-</div>
-
----
-
 ## 🛠 技术栈
 
 | 层 | 技术 | 说明 |
