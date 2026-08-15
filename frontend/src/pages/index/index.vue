@@ -195,11 +195,13 @@ export default {
   methods: {
     async load() {
       const persons = await db.getPersons()
-      this.persons = persons
-      // 下拉框选项：全部用户 + 末尾追加「＋ 添加用户」
-      this.userOptions = [...persons.map((p) => p.name), '＋ 添加档案']
-      this.currentPerson = (await db.getDefaultPerson()) || persons[0] || {}
-      this.userIndex = persons.findIndex((p) => p.id === this.currentPerson.id)
+      // 主用户永远置顶：is_default=1 排最前，其余保持原有 created_at 倒序
+      const def = persons.find((p) => p.is_default === 1)
+      this.persons = def ? [def, ...persons.filter((p) => p.id !== def.id)] : persons
+      // 下拉框选项：主用户在最顶部 + 末尾追加「＋ 添加档案」
+      this.userOptions = [...this.persons.map((p) => p.name), '＋ 添加档案']
+      this.currentPerson = (await db.getDefaultPerson()) || this.persons[0] || {}
+      this.userIndex = this.persons.findIndex((p) => p.id === this.currentPerson.id)
       if (this.userIndex < 0) this.userIndex = 0
       // 构建搜索结果所需的名称映射
       const nameMap = {}
