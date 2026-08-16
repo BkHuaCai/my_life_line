@@ -37,6 +37,22 @@ export function chooseAndStoreImages(eventId, count = 9) {
   })
 }
 
+// App 端把临时文件持久化到应用私有目录（uni.saveFile → _doc）。
+// H5 无 saveFile，返回原临时路径（仅本次会话有效，开发用）。
+function saveTempFile(tempFilePath) {
+  return new Promise((resolve, reject) => {
+    if (typeof uni.saveFile !== 'function') {
+      resolve(tempFilePath)
+      return
+    }
+    uni.saveFile({
+      tempFilePath,
+      success: (r) => resolve(r.savedFilePath),
+      fail: reject
+    })
+  })
+}
+
 // 生成头像存储路径
 export function makeAvatarPath(ext = 'jpg') {
   const stamp = uniqueStamp()
@@ -90,13 +106,21 @@ function compressAndCopy(src, eventId) {
       return
     }
     const paths = makeImagePaths(eventId)
-    const next = (step) => {
-      if (step === 0) {
-        // 压缩图
-        uni.compressImage({ src, quality: 80, success: (r) => { paths.image_path = r.tempFilePath; next(1) }, fail: reject })
-      } else if (step === 1) {
-        // 缩略图（宽 240）
-        uni.compressImage({ src, compressedWidth: 240, success: (r) => { paths.thumb_path = r.tempFilePath; resolve(paths) }, fail: reject })
+    const next = async (step) => {
+      try {
+        if (step === 0) {
+          // 压缩图
+          const r = await new Promise((res, rej) => uni.compressImage({ src, quality: 80, success: res, fail: rej }))
+          paths.image_path = await saveTempFile(r.tempFilePath)
+          next(1)
+        } else {
+          // 缩略图（宽 240）
+          const r = await new Promise((res, rej) => uni.compressImage({ src, compressedWidth: 240, success: res, fail: rej }))
+          paths.thumb_path = await saveTempFile(r.tempFilePath)
+          resolve(paths)
+        }
+      } catch (e) {
+        reject(e)
       }
     }
     next(0)

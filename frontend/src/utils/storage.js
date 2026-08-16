@@ -43,13 +43,29 @@ function esc(v) {
 export function createSqliteAdapter() {
   const DB_NAME = 'my_life_line'
   const DB_PATH = '_doc'
+  // plus.sqlite.openDatabase 是异步的：首次打开时若不等 success 回调就执行
+  // executeSql/selectSql，真机上会报「数据库未打开」。这里把 open 包成 Promise
+  // 并缓存，保证后续所有 SQL 都等数据库真正打开后再执行。
+  let opening = null
   const open = () => {
-    if (!plus.sqlite.isOpenDatabase({ name: DB_NAME, path: DB_PATH })) {
-      plus.sqlite.openDatabase({ name: DB_NAME, path: DB_PATH, success: () => {}, fail: (e) => console.error('open db fail', e) })
+    if (plus.sqlite.isOpenDatabase({ name: DB_NAME, path: DB_PATH })) return Promise.resolve()
+    if (!opening) {
+      opening = new Promise((resolve, reject) => {
+        plus.sqlite.openDatabase({
+          name: DB_NAME,
+          path: DB_PATH,
+          success: resolve,
+          fail: (e) => {
+            opening = null // 允许失败后重试
+            reject(e)
+          }
+        })
+      })
     }
+    return opening
   }
-  const exec = (sql) => {
-    open()
+  const exec = async (sql) => {
+    await open()
     return new Promise((resolve, reject) => {
       plus.sqlite.executeSql({ name: DB_NAME, sql, success: () => resolve(), fail: reject })
     })
@@ -74,7 +90,7 @@ export function createSqliteAdapter() {
       await exec(`DELETE FROM "${table}" WHERE "${field}"=${esc(value)}`)
     },
     async all(table) {
-      open()
+      await open()
       return new Promise((resolve, reject) => {
         plus.sqlite.selectSql({ name: DB_NAME, sql: `SELECT * FROM "${table}"`, success: (data) => resolve(data), fail: reject })
       })

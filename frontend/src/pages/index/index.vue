@@ -247,6 +247,10 @@ export default {
       if (idx < this.persons.length) {
         const target = this.persons[idx]
         if (target.id !== this.currentPerson.id) {
+          // 切换用户时清空搜索状态，避免残留上一个用户的结果
+          this.searching = false
+          this.keyword = ''
+          this.results = []
           db.setDefaultPerson(target.id).then(() => this.load())
         }
       } else {
@@ -295,7 +299,7 @@ export default {
 </script>
 
 <style scoped>
-.page { padding: 24rpx; padding-bottom: 140rpx; padding-top: calc(var(--status-bar-height) + 16rpx); }
+.page { padding: 24rpx; padding-bottom: 140rpx; padding-top: calc(var(--status-bar-height) + 40rpx); }
 
 /* 顶部 hero：问候语 + 用户切换，参考主流首页个人区 */
 .hero { display: flex; justify-content: space-between; align-items: center; padding: 8rpx 4rpx 24rpx; }

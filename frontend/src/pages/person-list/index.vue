@@ -1,11 +1,5 @@
 <template>
   <view class="page">
-    <view class="header">
-      <view class="header-actions">
-        <view class="settings-btn" @click="showMoreMenu">⋮</view>
-      </view>
-    </view>
-
     <!-- 当前用户信息 -->
     <view class="current-user" @click="openCurrentPerson">
       <image v-if="currentPerson.avatar_path" class="avatar" :src="currentPerson.avatar_path" mode="aspectFill" />
@@ -80,7 +74,6 @@
 
 <script>
 import { db } from '../../utils/db'
-import { serialize, importData } from '../../utils/export'
 import { PRESET_COLORS, getThemePrimary, saveThemePrimary, applyTheme } from '../../utils/theme'
 import ColorPicker from '../../components/color-picker.vue'
 
@@ -151,104 +144,13 @@ export default {
     selectTheme(primary) {
       this.themePrimary = primary
       saveThemePrimary(primary)
-    },
-    showMoreMenu() {
-      uni.showActionSheet({
-        itemList: ['导出数据', '导入数据'],
-        success: (res) => {
-          if (res.tapIndex === 0) {
-            this.doExport()
-          } else if (res.tapIndex === 1) {
-            this.doImport()
-          }
-        }
-      })
-    },
-    async doExport() {
-      try {
-        const data = await serialize(db)
-        const jsonStr = JSON.stringify(data, null, 2)
-        const fileName = `export_${Date.now()}.json`
-        // #ifdef H5
-        // H5 无原生文件系统，触发浏览器下载
-        const blob = new Blob([jsonStr], { type: 'application/json' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = fileName
-        a.click()
-        URL.revokeObjectURL(url)
-        uni.showModal({
-          title: '导出成功',
-          content: `数据已导出：${fileName}\n\n请到浏览器下载目录中查找该文件。`,
-          showCancel: false
-        })
-        // #endif
-        // #ifndef H5
-        // App 使用 uni.writeFile（基于 plus.io），不能用小程序专属的 getFileSystemManager
-        const filePath = `_doc/${fileName}`
-        await new Promise((resolve, reject) => {
-          uni.writeFile({
-            filePath,
-            data: jsonStr,
-            encoding: 'utf8',
-            success: () => resolve(),
-            fail: (err) => reject(err)
-          })
-        })
-        uni.showModal({
-          title: '导出成功',
-          content: `数据已导出到：${filePath}\n\n请在文件管理中找到该文件并备份。`,
-          showCancel: false
-        })
-        // #endif
-      } catch (e) {
-        console.error('export fail', e)
-        uni.showToast({ title: '导出失败', icon: 'none' })
-      }
-    },
-    doImport() {
-      uni.chooseFile({
-        count: 1,
-        extension: ['json'],
-        success: (res) => {
-          const file = res.tempFiles && res.tempFiles[0]
-          if (!file || !file.path) return
-          uni.showLoading({ title: '导入中' })
-          const fs = uni.getFileSystemManager()
-          fs.readFile({
-            filePath: file.path,
-            encoding: 'utf8',
-            success: async (r) => {
-              try {
-                const data = JSON.parse(r.data)
-                await importData(db, data)
-                uni.hideLoading()
-                uni.showToast({ title: '导入成功', icon: 'success' })
-                this.load()
-              } catch (e) {
-                console.error('import fail', e)
-                uni.hideLoading()
-                uni.showToast({ title: '导入失败，文件格式不正确', icon: 'none' })
-              }
-            },
-            fail: () => {
-              uni.hideLoading()
-              uni.showToast({ title: '读取文件失败', icon: 'none' })
-            }
-          })
-        }
-      })
     }
   }
 }
 </script>
 
 <style scoped>
-.page { padding: 24rpx; padding-bottom: 140rpx; padding-top: var(--status-bar-height); }
-.header { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 24rpx; }
-.header-title { font-size: 44rpx; font-weight: 800; }
-.settings-btn { font-size: 40rpx; color: var(--text-sub); padding: 8rpx 16rpx; }
+.page { padding: 24rpx; padding-bottom: 140rpx; padding-top: calc(var(--status-bar-height) + 40rpx); }
 
 /* 当前用户：主色淡描边大卡 */
 .current-user { display: flex; align-items: center; background: var(--bg-card); border-radius: 20rpx; padding: 36rpx; box-shadow: var(--shadow-card); border: 2rpx solid var(--primary-soft); }
