@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :style="themeVars">
     <nav-bar :title="navTitle" />
     <!-- 人物表单 -->
     <template v-if="entityType === 'person'">
@@ -227,7 +227,10 @@ import { parseEventDate, buildEventDate, nowParts } from '../../utils/date'
 import { applyTheme, getThemePrimary } from '../../utils/theme'
 import NavBar from '../../components/nav-bar.vue'
 
+import themeMixin from '../../utils/theme-mixin'
+
 export default {
+  mixins: [themeMixin],
   components: { NavBar },
   data() {
     return {

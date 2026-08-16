@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :style="themeVars">
     <nav-bar :title="event.title || '动态'" />
     <!-- 有图才展示图片区：无图动态不渲染图片位，直接展示内容 -->
     <view class="swiper-wrap" v-if="images.length">
@@ -44,7 +44,10 @@ import { formatEventDate } from '../../utils/date'
 import { applyTheme, getThemePrimary } from '../../utils/theme'
 import NavBar from '../../components/nav-bar.vue'
 
+import themeMixin from '../../utils/theme-mixin'
+
 export default {
+  mixins: [themeMixin],
   components: { NavBar },
   data() {
     return { eventId: '', event: {}, images: [], dateText: '', prev: null, next: null }

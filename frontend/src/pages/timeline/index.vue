@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :style="themeVars">
     <nav-bar :title="timeline.name || '时间线'" />
     <view class="toolbar">
       <view class="seg">
@@ -100,7 +100,10 @@ import timelineGrid from '../../components/timeline-grid.vue'
 import timelineCards from '../../components/timeline-cards.vue'
 import NavBar from '../../components/nav-bar.vue'
 
+import themeMixin from '../../utils/theme-mixin'
+
 export default {
+  mixins: [themeMixin],
   components: { timelineAxis, timelineGrid, timelineCards, NavBar },
   data() {
     return {

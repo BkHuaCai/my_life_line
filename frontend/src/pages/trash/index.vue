@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :style="themeVars">
     <nav-bar title="回收站" />
     <view class="tip">
       <text class="tip-text">已删除的时间线和动态保留 5 天，到期自动彻底清除</text>
@@ -82,7 +82,10 @@ import { formatEventDate } from '../../utils/date'
 import { applyTheme, getThemePrimary } from '../../utils/theme'
 import NavBar from '../../components/nav-bar.vue'
 
+import themeMixin from '../../utils/theme-mixin'
+
 export default {
+  mixins: [themeMixin],
   components: { NavBar },
   data() {
     return {

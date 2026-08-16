@@ -8,6 +8,8 @@
  */
 
 export const STORAGE_KEY = 'app_theme'
+// 主题变量兜底 <style> 标签 id（内联变量不级联时的备用写入目标）
+const THEME_STYLE_ID = '__theme_vars__'
 
 // 预设固定颜色（软件主流配色），共 11 色；自定义颜色由[我的]页调色盘选择
 export const PRESET_COLORS = [
@@ -91,36 +93,61 @@ export function buildTheme(primary) {
   }
 }
 
-export function getThemePrimary() {
-  if (typeof uni === 'undefined') return DEFAULT_PRIMARY
+// 存储读写：uni.* 在部分 App 运行时缺失（如特定 webview/修补包），退用 plus.storage 兜底
+function storageGet(key) {
   try {
-    const v = uni.getStorageSync(STORAGE_KEY)
-    return typeof v === 'string' && v ? v : DEFAULT_PRIMARY
-  } catch (e) {
-    return DEFAULT_PRIMARY
-  }
+    if (typeof uni !== 'undefined' && typeof uni.getStorageSync === 'function') return uni.getStorageSync(key)
+  } catch (e) {}
+  try {
+    if (typeof plus !== 'undefined' && plus.storage && plus.storage.getItem) return plus.storage.getItem(key)
+  } catch (e) {}
+  return ''
+}
+function storageSet(key, value) {
+  try {
+    if (typeof uni !== 'undefined' && typeof uni.setStorageSync === 'function') return uni.setStorageSync(key, value)
+  } catch (e) {}
+  try {
+    if (typeof plus !== 'undefined' && plus.storage && plus.storage.setItem) return plus.storage.setItem(key, value)
+  } catch (e) {}
+}
+
+export function getThemePrimary() {
+  const v = storageGet(STORAGE_KEY)
+  return typeof v === 'string' && v ? v : DEFAULT_PRIMARY
 }
 
 export function saveThemePrimary(primary) {
-  if (typeof uni !== 'undefined') {
-    try {
-      uni.setStorageSync(STORAGE_KEY, primary)
-    } catch (e) {
-      // 存储失败不阻塞界面应用
-    }
-  }
+  storageSet(STORAGE_KEY, primary)
   applyTheme(primary)
 }
 
 export function applyTheme(primary) {
   const theme = buildTheme(primary)
-  // App(webview)/H5：写根元素 CSS 变量，覆盖 page 上的默认值
-  if (typeof document !== 'undefined' && document.documentElement) {
-    const root = document.documentElement
-    root.style.setProperty('--primary', theme.primary)
-    root.style.setProperty('--primary-dark', theme.primaryDark)
-    root.style.setProperty('--primary-soft', theme.primarySoft)
-    root.style.setProperty('--primary-contrast', theme.primaryContrast)
+  // App(webview)/H5：CSS 变量写到多个候选根元素。uni-app App 端 page 编译为 body，
+  // 只写 documentElement 时部分环境内联变量不级联（主题切换不实时生效），
+  // 因此同时写 html / body / uni-page 包装元素，保证任意环境都能生效。
+  if (typeof document !== 'undefined') {
+    const setVars = (el) => {
+      if (!el) return
+      el.style.setProperty('--primary', theme.primary)
+      el.style.setProperty('--primary-dark', theme.primaryDark)
+      el.style.setProperty('--primary-soft', theme.primarySoft)
+      el.style.setProperty('--primary-contrast', theme.primaryContrast)
+    }
+    setVars(document.documentElement)
+    setVars(document.body)
+    document.querySelectorAll('uni-page, uni-app').forEach(setVars)
+    // 兜底：注入 <style> 重新定义 :root 变量（部分环境内联变量不级联时仍可生效）
+    try {
+      let styleEl = document.getElementById(THEME_STYLE_ID)
+      if (!styleEl) {
+        styleEl = document.createElement('style')
+        styleEl.id = THEME_STYLE_ID
+        document.head.appendChild(styleEl)
+      }
+      styleEl.textContent = `:root{--primary:${theme.primary};--primary-dark:${theme.primaryDark};--primary-soft:${theme.primarySoft};--primary-contrast:${theme.primaryContrast}}`
+    } catch (e) {}
   }
   // 原生层 tabBar 选中色：H5/异步环境用 fail 回调吞错，避免未在 tabBar 页时报错冒泡
   if (typeof uni !== 'undefined' && uni.setTabBarStyle) {

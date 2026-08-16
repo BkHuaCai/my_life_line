@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :style="themeVars">
     <!-- 当前用户信息 -->
     <view class="current-user" @click="openCurrentPerson">
       <image v-if="currentPerson.avatar_path" class="avatar" :src="currentPerson.avatar_path" mode="aspectFill" />
@@ -119,7 +119,7 @@
 <script>
 import { db } from '../../utils/db'
 import { effectiveDate, formatEventDate } from '../../utils/date'
-import { PRESET_COLORS, getThemePrimary, saveThemePrimary, applyTheme } from '../../utils/theme'
+import { PRESET_COLORS, getThemePrimary, saveThemePrimary, applyTheme, buildTheme } from '../../utils/theme'
 import ColorPicker from '../../components/color-picker.vue'
 
 export default {
@@ -142,6 +142,17 @@ export default {
     // 调色盘仅在选中「自定义」或当前主色不在预设内时展示
     showPalette() {
       return this.customSelected || !this.presetColors.includes(this.themePrimary)
+    },
+    // 主题 CSS 变量：通过 Vue 响应式绑定到页面根节点（uni-app App 部分运行时
+    // 直接写 document 变量不生效，Vue 渲染器更新可靠）
+    themeVars() {
+      const t = buildTheme(this.themePrimary)
+      return {
+        '--primary': t.primary,
+        '--primary-dark': t.primaryDark,
+        '--primary-soft': t.primarySoft,
+        '--primary-contrast': t.primaryContrast
+      }
     }
   },
   async onShow() {

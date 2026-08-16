@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :style="themeVars">
     <!-- 顶部：问候语 + 用户切换下拉框，右侧右对齐主线标题 -->
     <view class="hero">
       <view class="greet">
@@ -163,7 +163,10 @@
 import { db } from '../../utils/db'
 import { applyTheme, getThemePrimary } from '../../utils/theme'
 
+import themeMixin from '../../utils/theme-mixin'
+
 export default {
+  mixins: [themeMixin],
   data() {
     return {
       currentPerson: {},

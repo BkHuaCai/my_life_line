@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :style="themeVars">
     <nav-bar title="档案" />
     <view class="header">
       <image v-if="person.avatar_path" class="avatar" :src="person.avatar_path" mode="aspectFill" />
@@ -43,7 +43,10 @@ import { applyTheme, getThemePrimary } from '../../utils/theme'
 import NavBar from '../../components/nav-bar.vue'
 import UndoToast from '../../components/undo-toast.vue'
 
+import themeMixin from '../../utils/theme-mixin'
+
 export default {
+  mixins: [themeMixin],
   components: { NavBar, UndoToast },
   data() {
     return { personId: '', person: {}, timelines: [], counts: {} }
