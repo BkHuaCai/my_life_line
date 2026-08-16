@@ -336,7 +336,7 @@ export default {
 .sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
 .sheet-title { font-size: 32rpx; font-weight: 700; color: var(--text-main); }
 .sheet-close { font-size: 40rpx; color: var(--text-light); padding: 0 8rpx; line-height: 1; }
-.sheet-list { max-height: 50vh; }
+.sheet-list { min-height: 33vh; max-height: 60vh; }
 .sheet-item { display: flex; justify-content: space-between; align-items: center; padding: 28rpx 8rpx; border-bottom: 2rpx solid var(--border); }
 .sheet-item:last-child { border-bottom: none; }
 .sheet-name { font-size: 30rpx; color: var(--text-main); }
