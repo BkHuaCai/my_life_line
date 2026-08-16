@@ -63,7 +63,8 @@ export function createDb(adapter) {
         // 老库升级：补充软删列（新库建表已含，ALTER 报错属预期，由 migrate 吞掉）
         await adapter.migrate([
           'ALTER TABLE "timeline" ADD COLUMN deleted_at TEXT',
-          'ALTER TABLE "event" ADD COLUMN deleted_at TEXT'
+          'ALTER TABLE "event" ADD COLUMN deleted_at TEXT',
+          'ALTER TABLE "event" ADD COLUMN trash_tl_name TEXT'
         ])
         await ensureDefaultPerson()
         const def = await this.getDefaultPerson()
@@ -154,12 +155,13 @@ export function createDb(adapter) {
         await adapter.delete('timeline', id)
         return
       }
-      // 软删除：时间线与它的动态一起进回收站，保留 5 天后自动清除
+      // 软删除：时间线与它的动态一起进回收站，保留 5 天后自动清除；
+      // 同时快照时间线名到动态，供回收站恢复时提示「已不存在/已改名」
       const deleted = new Date().toISOString()
       await adapter.update('timeline', id, { deleted_at: deleted })
       const all = await adapter.all('event')
       for (const ev of all.filter((r) => r.timeline_id === id && !r.deleted_at)) {
-        await adapter.update('event', ev.id, { deleted_at: deleted })
+        await adapter.update('event', ev.id, { deleted_at: deleted, trash_tl_name: tl ? tl.name : null })
       }
     },
 
@@ -189,8 +191,12 @@ export function createDb(adapter) {
         await adapter.delete('event', id)
         return
       }
-      // 软删除：动态进回收站，保留 5 天后自动清除
-      await adapter.update('event', id, { deleted_at: new Date().toISOString() })
+      // 软删除：动态进回收站，保留 5 天后自动清除；快照所属时间线名供恢复时提示
+      const all = await adapter.all('event')
+      const ev = all.find((r) => r.id === id) || {}
+      const tls = await adapter.all('timeline')
+      const tl = tls.find((t) => t.id === ev.timeline_id)
+      await adapter.update('event', id, { deleted_at: new Date().toISOString(), trash_tl_name: tl ? tl.name : null })
     },
     async getImagesByEvent(eventId) {
       const rows = await adapter.all('event_image')
@@ -266,7 +272,7 @@ export function createDb(adapter) {
       const tlName = (id) => (tls.find((t) => t.id === id) || {}).name || '已删除时间线'
       const desc = (a, b) => ((a.deleted_at || '') < (b.deleted_at || '') ? 1 : -1)
       return {
-        timelines: tls.filter((t) => t.deleted_at).map((t) => ({ ...t, _person: pName(t.person_id) })).sort(desc),
+        timelines: tls.filter((t) => t.deleted_at).map((t) => ({ ...t, _person: pName(t.person_id), _count: evs.filter((e) => e.timeline_id === t.id).length })).sort(desc),
         events: evs.filter((e) => e.deleted_at).map((e) => ({ ...e, _timeline: tlName(e.timeline_id) })).sort(desc)
       }
     },
@@ -275,11 +281,11 @@ export function createDb(adapter) {
       // 一并恢复随时间线删除的动态
       const all = await adapter.all('event')
       for (const ev of all.filter((r) => r.timeline_id === id && r.deleted_at)) {
-        await adapter.update('event', ev.id, { deleted_at: null })
+        await adapter.update('event', ev.id, { deleted_at: null, trash_tl_name: null })
       }
     },
     async restoreEvent(id) {
-      await adapter.update('event', id, { deleted_at: null })
+      await adapter.update('event', id, { deleted_at: null, trash_tl_name: null })
     },
     async purgeTimeline(id) {
       const all = await adapter.all('event')

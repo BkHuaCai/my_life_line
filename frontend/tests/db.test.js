@@ -302,4 +302,25 @@ describe('db.trash 回收站', () => {
     expect(trash.events.some((e) => e.id === fresh)).toBe(true)
     expect((await adapter.all('event')).length).toBe(1) // 旧事件已物理删除
   })
+  it('软删时快照时间线名，改名/删时间线后 getTrash 给出新旧名，恢复后清除', async () => {
+    const pid = await db.savePerson({ name: '小明' })
+    const tid = await db.saveTimeline({ person_id: pid, name: '成长' })
+    const eid = await db.saveEvent({ timeline_id: tid, title: '入学', date_type: 'point', date_point: '2015-09-01' })
+    await db.deleteEvent(eid)
+    // 时间线改名：快照保留删除时的旧名，_timeline 显示当前名
+    await db.saveTimeline({ id: tid, person_id: pid, name: '人生大事' })
+    const trash = await db.getTrash()
+    const ev = trash.events.find((e) => e.id === eid)
+    expect(ev.trash_tl_name).toBe('成长')
+    expect(ev._timeline).toBe('人生大事')
+    // 时间线整体删除时，其动态同样记录快照（当前名）
+    await db.restoreEvent(eid)
+    await db.deleteTimeline(tid)
+    const trash2 = await db.getTrash()
+    const ev2 = trash2.events.find((e) => e.id === eid)
+    expect(ev2.trash_tl_name).toBe('人生大事')
+    expect(trash2.timelines.find((t) => t.id === tid)._count).toBe(1)
+    await db.restoreTimeline(tid)
+    expect((await db.getEvent(eid)).trash_tl_name).toBeNull()
+  })
 })

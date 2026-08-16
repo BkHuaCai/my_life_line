@@ -38,7 +38,8 @@ export const TABLES = {
       date_end: 'TEXT',
       cover_image_path: 'TEXT',
       created_at: 'TEXT',
-      deleted_at: 'TEXT'
+      deleted_at: 'TEXT',
+      trash_tl_name: 'TEXT'
     }
   },
   event_image: {

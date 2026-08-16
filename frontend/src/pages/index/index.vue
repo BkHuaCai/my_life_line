@@ -199,10 +199,11 @@ export default {
       const def = persons.find((p) => p.is_default === 1)
       this.persons = def ? [def, ...persons.filter((p) => p.id !== def.id)] : persons
       // 下拉框选项：主用户在最顶部 + 末尾追加「＋ 添加档案」
-      this.userOptions = [...this.persons.map((p) => p.name), '＋ 添加档案']
+      // 选择列表首项「选择档案」作为标题提示，不参与切换
+      this.userOptions = ['选择档案', ...this.persons.map((p) => p.name), '＋ 添加档案']
       this.currentPerson = (await db.getDefaultPerson()) || this.persons[0] || {}
-      this.userIndex = this.persons.findIndex((p) => p.id === this.currentPerson.id)
-      if (this.userIndex < 0) this.userIndex = 0
+      const idx = this.persons.findIndex((p) => p.id === this.currentPerson.id)
+      this.userIndex = idx < 0 ? 0 : idx + 1
       // 构建搜索结果所需的名称映射
       const nameMap = {}
       const tlMap = {}
@@ -244,8 +245,13 @@ export default {
     },
     onSwitchUser(e) {
       const idx = Number(e.detail.value)
-      if (idx < this.persons.length) {
-        const target = this.persons[idx]
+      if (idx === 0) {
+        // 首项「选择档案」仅为标题提示，选择后不做切换
+        return
+      }
+      const personIdx = idx - 1
+      if (personIdx < this.persons.length) {
+        const target = this.persons[personIdx]
         if (target.id !== this.currentPerson.id) {
           // 切换用户时清空搜索状态，避免残留上一个用户的结果
           this.searching = false
@@ -254,7 +260,7 @@ export default {
           db.setDefaultPerson(target.id).then(() => this.load())
         }
       } else {
-        // 最后一个选项：添加用户
+        // 最后一个选项：添加档案
         uni.navigateTo({ url: '/pages/edit-form/index?entityType=person' })
       }
     },
