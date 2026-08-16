@@ -70,9 +70,6 @@
           </swiper-item>
         </swiper>
       </view>
-      <view class="time-machine tm-empty" v-else-if="currentPerson.id && eventTotal > 0">
-        <text class="tm-empty-text">今天还没有历史动态，去打个新动态吧</text>
-      </view>
 
       <!-- 本月活动：主色进度条，让首页有动的数据脉动 -->
       <view class="month-bar" v-if="currentPerson.id">
@@ -347,8 +344,6 @@ export default {
 .tm-year { font-size: 24rpx; color: var(--primary); font-weight: 600; }
 .tm-event { font-size: 32rpx; font-weight: 700; color: var(--text-main); margin-top: 8rpx; }
 .tm-tl { font-size: 22rpx; color: var(--text-grey); margin-top: 6rpx; }
-.time-machine.tm-empty { padding: 28rpx 24rpx; display: flex; justify-content: center; }
-.tm-empty-text { font-size: 24rpx; color: var(--text-grey); }
 
 /* 本月活动：主色进度条，让首页有数据脉动 */
 .month-bar { margin-top: 24rpx; background: var(--bg-card); border-radius: 20rpx; padding: 24rpx; box-shadow: var(--shadow-card); }
