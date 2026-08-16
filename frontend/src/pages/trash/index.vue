@@ -5,7 +5,7 @@
       <text class="tip-text">已删除的时间线和动态保留 5 天，到期自动彻底清除</text>
       <view class="tip-actions" v-if="hasTrash">
         <text class="tip-link" @click="toggleSelectAll">{{ allSelected ? '取消全选' : '全选' }}</text>
-        <text class="tip-clear" @click="clearAll">删除全部</text>
+        <text class="tip-clear" :class="{ disabled: !allSelected }" @click="clearAll">删除全部</text>
       </view>
     </view>
 
@@ -227,15 +227,19 @@ export default {
         }
       })
     },
-    // 删除全部
+    // 删除全部：必须先全选（勾选全部数据），点击后删除的是勾选的数据
     clearAll() {
+      if (!this.allSelected) {
+        uni.showToast({ title: '请先全选', icon: 'none' })
+        return
+      }
       uni.showModal({
         title: '删除全部',
-        content: '将彻底删除回收站中的全部内容，无法恢复！',
+        content: `将彻底删除勾选的全部 ${this.selectedCount} 项数据，无法恢复！`,
         success: async (res) => {
           if (!res.confirm) return
-          for (const tl of this.trash.timelines) await db.purgeTimeline(tl.id)
-          for (const ev of this.trash.events) await db.purgeEvent(ev.id)
+          for (const id of this.selectedTl) await db.purgeTimeline(id)
+          for (const id of this.selectedEv) await db.purgeEvent(id)
           this.clearSelected()
           await this.load()
         }
@@ -252,6 +256,7 @@ export default {
 .tip-actions { display: flex; align-items: center; gap: 24rpx; }
 .tip-link { font-size: 26rpx; color: var(--primary); padding: 8rpx 0 8rpx 16rpx; }
 .tip-clear { font-size: 26rpx; color: var(--danger); padding: 8rpx 0 8rpx 16rpx; }
+.tip-clear.disabled { color: var(--text-light); }
 .section { margin-top: 24rpx; }
 .section-header { margin-bottom: 16rpx; }
 .section-title { font-size: 30rpx; font-weight: 700; color: var(--text-main); }
