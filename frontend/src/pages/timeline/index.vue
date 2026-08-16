@@ -19,7 +19,7 @@
     <view class="empty-tl" v-else-if="!events.length">
       <view class="empty-tl-icon">📝</view>
       <view class="empty-tl-title">这里还什么都没有</view>
-      <view class="empty-tl-desc">点右下角「＋ 动态」记录这条时间线的第一个时刻</view>
+      <view class="empty-tl-desc">点右下角「＋ 动态」填写这条时间线的初始点（第一个动态）</view>
     </view>
     <template v-else>
       <timeline-axis v-if="viewMode === 'axis'" :events="events" />
@@ -153,6 +153,11 @@ export default {
       this.needInitialPoint = true
     },
     addEvent() {
+      // 第一个动态即为初始点：空时间线点「＋ 动态」进入初始点填写，而非普通动态表单
+      if (this.events.length === 0) {
+        this.needInitialPoint = true
+        return
+      }
       uni.navigateTo({ url: `/pages/edit-form/index?entityType=event&timelineId=${this.timelineId}` })
     },
     addInitImages() {
