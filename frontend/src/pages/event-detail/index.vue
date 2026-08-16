@@ -35,8 +35,6 @@
         <text class="pager-arrow">→</text>
       </view>
     </view>
-
-    <undo-toast ref="undoToast" />
   </view>
 </template>
 
@@ -45,19 +43,14 @@ import { db } from '../../utils/db'
 import { formatEventDate } from '../../utils/date'
 import { applyTheme, getThemePrimary } from '../../utils/theme'
 import NavBar from '../../components/nav-bar.vue'
-import UndoToast from '../../components/undo-toast.vue'
 
 export default {
-  components: { NavBar, UndoToast },
+  components: { NavBar },
   data() {
     return { eventId: '', event: {}, images: [], dateText: '', prev: null, next: null }
   },
   async onLoad(options) {
     this.eventId = options.eventId
-  },
-  onHide() {
-    // 切走时收起撤回提示条，避免残留到下一页
-    if (this.$refs.undoToast) this.$refs.undoToast.hide()
   },
   async onShow() {
     applyTheme(getThemePrimary())
@@ -91,14 +84,8 @@ export default {
         content: '确定删除这条动态吗？删除后可在回收站中恢复（保留 5 天）。',
         success: async (res) => {
           if (!res.confirm) return
-          const id = this.eventId
-          const title = this.event.title || ''
-          await db.deleteEvent(id)
-          // 留在本页展示「已删除 + 撤回」：点撤回恢复，5 秒未操作自动返回
-          this.$refs.undoToast.show(`已删除「${title}」`, async () => {
-            await db.restoreEvent(id)
-            await this.load()
-          }, () => uni.navigateBack())
+          await db.deleteEvent(this.eventId)
+          uni.navigateBack()
         }
       })
     }
