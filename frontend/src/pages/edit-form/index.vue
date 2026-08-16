@@ -91,12 +91,16 @@
 
       <view class="group">
         <view class="group-title">时间信息</view>
-        <view class="field">
+        <view class="field" v-if="!isInitPoint">
           <text class="label">时间类型</text>
           <view class="seg">
             <view :class="['seg-item', form.date_type === 'point' ? 'active' : '']" @click="form.date_type = 'point'">时间点</view>
             <view :class="['seg-item', form.date_type === 'range' ? 'active' : '']" @click="form.date_type = 'range'">时间段</view>
           </view>
+        </view>
+        <view class="field" v-if="isInitPoint">
+          <text class="label">时间类型</text>
+          <view class="picker">时间点（初始点仅支持时间点）</view>
         </view>
 
         <view class="field" v-if="form.date_type === 'point'">
@@ -228,6 +232,7 @@ export default {
   data() {
     return {
       navTitle: '编辑',
+      isInitPoint: false,
       entityType: 'person',
       id: '',
       personId: '',
@@ -303,6 +308,10 @@ export default {
         this.form = { name: tl.name, category: tl.category || '', is_main: tl.is_main || 0 }
       } else {
         const ev = await db.getEvent(this.id)
+        // 初始点（时间线第一条动态）仅支持时间点：编辑时锁定，不提供时间段选项
+        const tlEvents = ev.timeline_id ? await db.getEventsByTimeline(ev.timeline_id) : []
+        this.isInitPoint = tlEvents.length > 0 && tlEvents[0].id === ev.id
+        const dt = this.isInitPoint ? 'point' : ev.date_type
         // 时间点取 date_point，时间段取 date_start（回退 date_end）解析精度，开始/结束共用同一精度
         const p = parseEventDate(ev.date_point)
         const s = parseEventDate(ev.date_start)
@@ -316,7 +325,7 @@ export default {
         this.form = {
           title: ev.title,
           description: ev.description || '',
-          date_type: ev.date_type,
+          date_type: dt,
           date_point: p.date || '',
           date_start: s.date || '',
           date_end: e.date || '',
@@ -390,15 +399,17 @@ export default {
         await db.saveTimeline({ id: this.id || undefined, person_id: this.personId, name: form.name, category: form.category || null, is_private: 1, is_main: form.is_main || 0 })
       } else {
         if (!form.title) return uni.showToast({ title: '请填写标题', icon: 'none' })
+        // 初始点编辑时强制时间点（防御：即使表单状态被改动也不落时间段）
+        const dt = this.isInitPoint ? 'point' : form.date_type
         const row = {
           id: this.id || undefined,
           timeline_id: this.timelineId,
           title: form.title,
           description: form.description || null,
-          date_type: form.date_type,
-          date_point: form.date_type === 'point' ? buildEventDate(form.date_point, form.time_precision, form.hour, form.minute, form.second) || null : null,
-          date_start: form.date_type === 'range' ? buildEventDate(form.date_start, form.time_precision, form.start_hour, form.start_minute, form.start_second) || null : null,
-          date_end: form.date_type === 'range' ? buildEventDate(form.date_end, form.time_precision, form.end_hour, form.end_minute, form.end_second) || null : null
+          date_type: dt,
+          date_point: dt === 'point' ? buildEventDate(form.date_point, form.time_precision, form.hour, form.minute, form.second) || null : null,
+          date_start: dt === 'range' ? buildEventDate(form.date_start, form.time_precision, form.start_hour, form.start_minute, form.start_second) || null : null,
+          date_end: dt === 'range' ? buildEventDate(form.date_end, form.time_precision, form.end_hour, form.end_minute, form.end_second) || null : null
         }
         await db.saveEvent({ ...row, images: form.images.map((im) => im._path) })
       }
