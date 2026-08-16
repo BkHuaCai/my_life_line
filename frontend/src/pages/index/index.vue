@@ -54,7 +54,10 @@
       <!-- 时光机：历史上同月同日发生的事件，每日有新内容 -->
       <view class="time-machine" v-if="currentPerson.id && todayEvents.length">
         <view class="tm-head">
-          <text class="tm-title">🕯️ 时光机</text>
+          <view class="tm-title">
+            <view class="clock-icon"></view>
+            <text>时光机</text>
+          </view>
           <text class="tm-date">历史上的今天 · {{ todayLabel }}</text>
         </view>
         <swiper class="tm-swiper" indicator-dots indicator-active-color="var(--primary)" circular>
@@ -333,7 +336,11 @@ export default {
 /* 时光机：历史上同月同日的事件轮播，每日有新内容 */
 .time-machine { margin-top: 24rpx; background: var(--bg-card); border-radius: 20rpx; padding: 24rpx; box-shadow: var(--shadow-card); }
 .tm-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
-.tm-title { font-size: 30rpx; font-weight: 700; color: var(--text-main); }
+.tm-title { display: flex; align-items: center; gap: 10rpx; font-size: 30rpx; font-weight: 700; color: var(--text-main); }
+/* 时光机图标：主色圆形时钟（表盘 + 时针分针） */
+.clock-icon { display: inline-block; width: 28rpx; height: 28rpx; border-radius: 50%; border: 4rpx solid var(--primary); position: relative; box-sizing: border-box; }
+.clock-icon::before { content: ''; position: absolute; left: 50%; top: 50%; width: 3rpx; height: 8rpx; background: var(--primary); border-radius: 2rpx; transform: translate(-50%, -100%); transform-origin: 50% 100%; }
+.clock-icon::after { content: ''; position: absolute; left: 50%; top: 50%; width: 3rpx; height: 5rpx; background: var(--primary); border-radius: 2rpx; transform: translate(-50%, -100%) rotate(60deg); transform-origin: 50% 100%; }
 .tm-date { font-size: 22rpx; color: var(--text-grey); }
 .tm-swiper { height: 180rpx; }
 .tm-card { display: flex; flex-direction: column; justify-content: center; height: 100%; padding: 0 8rpx; }

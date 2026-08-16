@@ -100,7 +100,10 @@
         </view>
 
         <view class="field" v-if="form.date_type === 'point'">
-          <text class="label">日期</text>
+          <view class="label-row">
+            <text class="label">日期</text>
+            <view class="now-btn" @click="setNow">当前时间</view>
+          </view>
           <picker mode="date" :value="form.date_point" @change="(e) => (form.date_point = e.detail.value)">
             <view class="picker">{{ form.date_point || '选择日期' }}</view>
           </picker>
@@ -128,19 +131,24 @@
             <picker v-if="form.time_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="form.second" @change="(e) => (form.second = Number(e.detail.value))">
               <view class="picker">{{ pad(form.second) }} 秒</view>
             </picker>
-            <view class="now-btn" @click="setNow">设为当前时间</view>
           </view>
         </view>
 
         <template v-else-if="form.date_type === 'range'">
           <view class="field">
-            <text class="label">开始日期</text>
+            <view class="label-row">
+              <text class="label">开始日期</text>
+              <view class="now-btn" @click="setStartNow">当前时间</view>
+            </view>
             <picker mode="date" :value="form.date_start" @change="(e) => (form.date_start = e.detail.value)">
               <view class="picker">{{ form.date_start || '选择日期' }}</view>
             </picker>
           </view>
           <view class="field">
-            <text class="label">结束日期（空 = 至今）</text>
+            <view class="label-row">
+              <text class="label">结束日期（空 = 至今）</text>
+              <view class="now-btn" @click="setEndNow">当前时间</view>
+            </view>
             <picker mode="date" :value="form.date_end" @change="(e) => (form.date_end = e.detail.value)">
               <view class="picker">{{ form.date_end || '至今' }}</view>
             </picker>
@@ -169,7 +177,6 @@
                 <picker v-if="form.time_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="form.start_second" @change="(e) => (form.start_second = Number(e.detail.value))">
                   <view class="picker">{{ pad(form.start_second) }} 秒</view>
                 </picker>
-                <view class="now-btn" @click="setStartNow">设为当前时间</view>
               </view>
             </view>
             <view class="field" v-if="form.date_end">
@@ -184,7 +191,6 @@
                 <picker v-if="form.time_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="form.end_second" @change="(e) => (form.end_second = Number(e.detail.value))">
                   <view class="picker">{{ pad(form.end_second) }} 秒</view>
                 </picker>
-                <view class="now-btn" @click="setEndNow">设为当前时间</view>
               </view>
             </view>
           </template>
@@ -213,7 +219,7 @@
 <script>
 import { db } from '../../utils/db'
 import { chooseAndStoreImages, chooseAvatar } from '../../utils/image'
-import { parseEventDate, buildEventDate } from '../../utils/date'
+import { parseEventDate, buildEventDate, nowParts } from '../../utils/date'
 import { applyTheme, getThemePrimary } from '../../utils/theme'
 import NavBar from '../../components/nav-bar.vue'
 
@@ -342,22 +348,25 @@ export default {
       this.form.time_precision = p
     },
     setNow() {
-      const now = new Date()
-      this.form.hour = now.getHours()
-      this.form.minute = now.getMinutes()
-      this.form.second = now.getSeconds()
+      const { date, hour, minute, second } = nowParts()
+      this.form.date_point = date
+      this.form.hour = hour
+      this.form.minute = minute
+      this.form.second = second
     },
     setStartNow() {
-      const now = new Date()
-      this.form.start_hour = now.getHours()
-      this.form.start_minute = now.getMinutes()
-      this.form.start_second = now.getSeconds()
+      const { date, hour, minute, second } = nowParts()
+      this.form.date_start = date
+      this.form.start_hour = hour
+      this.form.start_minute = minute
+      this.form.start_second = second
     },
     setEndNow() {
-      const now = new Date()
-      this.form.end_hour = now.getHours()
-      this.form.end_minute = now.getMinutes()
-      this.form.end_second = now.getSeconds()
+      const { date, hour, minute, second } = nowParts()
+      this.form.date_end = date
+      this.form.end_hour = hour
+      this.form.end_minute = minute
+      this.form.end_second = second
     },
     setBirthPrecision(p) {
       this.form.birth_precision = p
@@ -408,6 +417,8 @@ export default {
 .field { margin-bottom: 28rpx; }
 .field:last-child { margin-bottom: 0; }
 .label { font-size: 26rpx; color: var(--text-sub); display: block; margin-bottom: 12rpx; }
+.label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12rpx; }
+.label-row .label { margin-bottom: 0; }
 .input { background: var(--bg-muted); border-radius: 16rpx; padding: 20rpx; font-size: 30rpx; width: 100%; box-sizing: border-box; height: 84rpx; min-height: 84rpx; }
 .textarea { min-height: 160rpx; }
 .picker { background: var(--bg-muted); border-radius: 16rpx; padding: 20rpx; font-size: 30rpx; color: var(--text-main); }

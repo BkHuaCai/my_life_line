@@ -42,7 +42,10 @@
           <input class="input" v-model="initForm.title" placeholder="如：出生、购入" />
         </view>
         <view class="field">
-          <text class="label">日期 *</text>
+          <view class="label-row">
+            <text class="label">日期 *</text>
+            <view class="now-btn" @click="setInitNow">当前时间</view>
+          </view>
           <picker mode="date" :value="initForm.date" @change="(e) => (initForm.date = e.detail.value)">
             <view class="picker">{{ initForm.date || '选择日期' }}</view>
           </picker>
@@ -68,7 +71,6 @@
             <picker v-if="initForm.time_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="initForm.second" @change="(e) => (initForm.second = Number(e.detail.value))">
               <view class="picker">{{ pad(initForm.second) }} 秒</view>
             </picker>
-            <view class="now-btn" @click="setInitNow">设为当前时间</view>
           </view>
         </view>
         <view class="field">
@@ -89,7 +91,7 @@
 
 <script>
 import { db } from '../../utils/db'
-import { buildEventDate } from '../../utils/date'
+import { buildEventDate, nowParts } from '../../utils/date'
 import { applyTheme, getThemePrimary } from '../../utils/theme'
 import { chooseAndStoreImages } from '../../utils/image'
 import timelineAxis from '../../components/timeline-axis.vue'
@@ -164,10 +166,11 @@ export default {
       uni.previewImage({ urls: this.initForm.images.map((im) => im.preview), current: i })
     },
     setInitNow() {
-      const now = new Date()
-      this.initForm.hour = now.getHours()
-      this.initForm.minute = now.getMinutes()
-      this.initForm.second = now.getSeconds()
+      const { date, hour, minute, second } = nowParts()
+      this.initForm.date = date
+      this.initForm.hour = hour
+      this.initForm.minute = minute
+      this.initForm.second = second
     },
     async saveInitialPoint() {
       if (!this.initForm.date) {
@@ -214,6 +217,8 @@ export default {
 .init-desc { font-size: 26rpx; color: var(--text-sub); margin-bottom: 32rpx; line-height: 1.6; }
 .field { margin-bottom: 28rpx; }
 .label { font-size: 26rpx; color: var(--text-sub); display: block; margin-bottom: 12rpx; }
+.label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12rpx; }
+.label-row .label { margin-bottom: 0; }
 .input { background: var(--bg-muted); border-radius: 12rpx; padding: 20rpx; font-size: 30rpx; width: 100%; box-sizing: border-box; height: 84rpx; min-height: 84rpx; }
 .picker { background: var(--bg-muted); border-radius: 12rpx; padding: 20rpx; font-size: 30rpx; color: var(--text-main); }
 .save-btn { margin-top: 16rpx; background: var(--primary); color: var(--primary-contrast); font-size: 32rpx; border-radius: 48rpx; }

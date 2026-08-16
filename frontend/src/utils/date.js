@@ -36,6 +36,18 @@ export function buildEventDate(date, precision, hour, minute, second) {
   return date
 }
 
+// 当前时刻（用于「当前时间」按钮回填日期与时间）；时分秒始终给出，
+// 展示时由时间精度控制渲染哪些，存储时 buildEventDate 按精度取舍。
+export function nowParts() {
+  const d = new Date()
+  return {
+    date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+    hour: d.getHours(),
+    minute: d.getMinutes(),
+    second: d.getSeconds()
+  }
+}
+
 export function formatEventDate(event) {
   if (event.date_type === 'range') {
     const start = formatFullDate(event.date_start)

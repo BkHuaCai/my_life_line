@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatEventDate, effectiveDate, formatDate, formatFullDate, parseEventDate, buildEventDate } from '../src/utils/date'
+import { formatEventDate, effectiveDate, formatDate, formatFullDate, parseEventDate, buildEventDate, nowParts } from '../src/utils/date'
 
 describe('formatDate', () => {
   it('按年月格式化用于照片墙分组', () => {
@@ -89,5 +89,17 @@ describe('effectiveDate', () => {
   })
   it('缺失日期时返回空串（排最前）', () => {
     expect(effectiveDate({ date_type: 'point' })).toBe('')
+  })
+})
+
+describe('nowParts', () => {
+  it('返回今天的日期串与当前时分秒（供「当前时间」按钮回填）', () => {
+    const p = nowParts()
+    const now = new Date()
+    expect(p.date).toBe(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`)
+    expect(p.hour).toBe(now.getHours())
+    expect(p.minute).toBe(now.getMinutes())
+    expect(p.second).toBe(now.getSeconds())
+    expect(p.date).toMatch(/^\d{4}-\d{2}-\d{2}$/)
   })
 })
