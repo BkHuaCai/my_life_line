@@ -4,7 +4,6 @@
       <view class="dot"></view>
       <view class="card">
         <image v-if="cover(ev)" class="thumb" :src="cover(ev)" mode="aspectFill" />
-        <view v-else class="thumb placeholder">📷</view>
         <view class="t">{{ ev.title }}</view>
         <view class="d">{{ dateText(ev) }}</view>
       </view>
@@ -47,7 +46,6 @@ export default {
 .node.right .dot { left: -58%; }
 .card { background: var(--bg-card); border-radius: 16rpx; padding: 16rpx; box-shadow: var(--shadow-card); }
 .thumb { width: 100%; height: 180rpx; border-radius: 12rpx; }
-.thumb.placeholder { display: flex; align-items: center; justify-content: center; background: var(--bg-muted); color: var(--text-light); }
 .t { font-size: 28rpx; font-weight: 600; margin-top: 10rpx; }
 .d { font-size: 24rpx; color: var(--primary); margin-top: 4rpx; }
 .empty { text-align: center; color: var(--text-light); padding: 120rpx 0; }

@@ -1,5 +1,6 @@
 <template>
   <view class="page">
+    <nav-bar title="档案" />
     <view class="header">
       <image v-if="person.avatar_path" class="avatar" :src="person.avatar_path" mode="aspectFill" />
       <view v-else class="avatar placeholder">{{ person.name ? person.name[0] : '?' }}</view>
@@ -37,14 +38,15 @@
 <script>
 import { db } from '../../utils/db'
 import { applyTheme, getThemePrimary } from '../../utils/theme'
+import NavBar from '../../components/nav-bar.vue'
 
 export default {
+  components: { NavBar },
   data() {
     return { personId: '', person: {}, timelines: [], counts: {} }
   },
   async onLoad(options) {
     this.personId = options.personId
-    uni.setNavigationBarTitle({ title: '档案' })
   },
   async onShow() {
     applyTheme(getThemePrimary())

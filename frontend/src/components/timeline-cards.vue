@@ -2,7 +2,6 @@
   <view class="cards">
     <view v-for="ev in events" :key="ev.id" class="card" @click="open(ev.id)">
       <image v-if="cover(ev)" class="big" :src="cover(ev)" mode="aspectFill" />
-      <view v-else class="big placeholder">📷</view>
       <view class="body">
         <view class="d">{{ dateText(ev) }}</view>
         <view class="t">{{ ev.title }}</view>
@@ -38,7 +37,6 @@ export default {
 .cards { padding: 16rpx; display: flex; flex-direction: column; gap: 24rpx; }
 .card { background: var(--bg-card); border-radius: 16rpx; overflow: hidden; box-shadow: var(--shadow-card); }
 .big { width: 100%; height: 360rpx; }
-.big.placeholder { display: flex; align-items: center; justify-content: center; background: var(--bg-muted); color: var(--text-light); font-size: 64rpx; }
 .body { padding: 20rpx; }
 .d { font-size: 24rpx; color: var(--primary); font-weight: 600; }
 .t { font-size: 32rpx; font-weight: 700; margin-top: 8rpx; }

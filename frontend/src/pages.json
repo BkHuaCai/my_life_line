@@ -2,10 +2,11 @@
   "pages": [
     { "path": "pages/index/index", "style": { "navigationBarTitleText": "", "enablePullDownRefresh": true, "navigationStyle": "custom" } },
     { "path": "pages/person-list/index", "style": { "navigationBarTitleText": "档案", "navigationStyle": "custom" } },
-    { "path": "pages/person-detail/index", "style": { "navigationBarTitleText": "档案" } },
-    { "path": "pages/timeline/index", "style": { "navigationBarTitleText": "时间线" } },
-    { "path": "pages/event-detail/index", "style": { "navigationBarTitleText": "事件" } },
-    { "path": "pages/edit-form/index", "style": { "navigationBarTitleText": "编辑" } }
+    { "path": "pages/person-detail/index", "style": { "navigationStyle": "custom" } },
+    { "path": "pages/timeline/index", "style": { "navigationStyle": "custom" } },
+    { "path": "pages/event-detail/index", "style": { "navigationStyle": "custom" } },
+    { "path": "pages/edit-form/index", "style": { "navigationStyle": "custom" } },
+    { "path": "pages/trash/index", "style": { "navigationStyle": "custom" } }
   ],
   "globalStyle": {
     "navigationBarTextStyle": "black",

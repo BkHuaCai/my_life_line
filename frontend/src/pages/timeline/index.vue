@@ -1,5 +1,6 @@
 <template>
   <view class="page">
+    <nav-bar :title="timeline.name || '时间线'" />
     <view class="toolbar">
       <view class="seg">
         <view :class="['seg-item', viewMode === 'axis' ? 'active' : '']" @click="switchView('axis')">时间轴</view>
@@ -67,6 +68,17 @@
             <picker v-if="initForm.time_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="initForm.second" @change="(e) => (initForm.second = Number(e.detail.value))">
               <view class="picker">{{ pad(initForm.second) }} 秒</view>
             </picker>
+            <view class="now-btn" @click="setInitNow">设为当前时间</view>
+          </view>
+        </view>
+        <view class="field">
+          <text class="label">图片（可选）</text>
+          <view class="img-grid">
+            <view v-for="(img, i) in initForm.images" :key="i" class="img-wrap">
+              <image class="img" :src="img.preview" mode="aspectFill" @click="previewInitImage(i)" />
+              <view class="img-del" @click="removeInitImage(i)">×</view>
+            </view>
+            <view v-if="initForm.images.length < 9" class="img-add" @click="addInitImages">＋</view>
           </view>
         </view>
         <button class="save-btn" @click="saveInitialPoint">保存初始点</button>
@@ -79,12 +91,14 @@
 import { db } from '../../utils/db'
 import { buildEventDate } from '../../utils/date'
 import { applyTheme, getThemePrimary } from '../../utils/theme'
+import { chooseAndStoreImages } from '../../utils/image'
 import timelineAxis from '../../components/timeline-axis.vue'
 import timelineGrid from '../../components/timeline-grid.vue'
 import timelineCards from '../../components/timeline-cards.vue'
+import NavBar from '../../components/nav-bar.vue'
 
 export default {
-  components: { timelineAxis, timelineGrid, timelineCards },
+  components: { timelineAxis, timelineGrid, timelineCards, NavBar },
   data() {
     return {
       timelineId: '',
@@ -92,7 +106,7 @@ export default {
       events: [],
       viewMode: 'axis',
       needInitialPoint: false,
-      initForm: { title: '', date: '', time_precision: 'none', hour: 0, minute: 0, second: 0 },
+      initForm: { title: '', date: '', time_precision: 'none', hour: 0, minute: 0, second: 0, images: [] },
       hourRange: Array.from({ length: 24 }, (_, i) => i),
       minuteRange: Array.from({ length: 60 }, (_, i) => i),
       secondRange: Array.from({ length: 60 }, (_, i) => i)
@@ -116,7 +130,6 @@ export default {
   methods: {
     async load() {
       this.timeline = (await db.getTimeline(this.timelineId)) || {}
-      if (this.timeline.name) uni.setNavigationBarTitle({ title: this.timeline.name })
       this.events = []
       const evs = await db.getEventsByTimeline(this.timelineId)
       for (const ev of evs) this.events.push({ ...ev, images: await db.getImagesByEvent(ev.id) })
@@ -139,6 +152,23 @@ export default {
     addEvent() {
       uni.navigateTo({ url: `/pages/edit-form/index?entityType=event&timelineId=${this.timelineId}` })
     },
+    addInitImages() {
+      chooseAndStoreImages(this.timelineId || 'init').then((stored) => {
+        for (const s of stored) this.initForm.images.push({ preview: s.thumb_path || s.image_path, _path: s })
+      }).catch(() => uni.showToast({ title: '选择图片失败', icon: 'none' }))
+    },
+    removeInitImage(i) {
+      this.initForm.images.splice(i, 1)
+    },
+    previewInitImage(i) {
+      uni.previewImage({ urls: this.initForm.images.map((im) => im.preview), current: i })
+    },
+    setInitNow() {
+      const now = new Date()
+      this.initForm.hour = now.getHours()
+      this.initForm.minute = now.getMinutes()
+      this.initForm.second = now.getSeconds()
+    },
     async saveInitialPoint() {
       if (!this.initForm.date) {
         uni.showToast({ title: '请选择日期', icon: 'none' })
@@ -151,9 +181,10 @@ export default {
           title,
           description: null,
           date_type: 'point',
-          date_point: buildEventDate(this.initForm.date, this.initForm.time_precision, this.initForm.hour, this.initForm.minute, this.initForm.second)
+          date_point: buildEventDate(this.initForm.date, this.initForm.time_precision, this.initForm.hour, this.initForm.minute, this.initForm.second),
+          images: this.initForm.images.map((im) => im._path)
         })
-        this.initForm = { title: '', date: '', time_precision: 'none', hour: 0, minute: 0, second: 0 }
+        this.initForm = { title: '', date: '', time_precision: 'none', hour: 0, minute: 0, second: 0, images: [] }
         // 保存成功后直接关闭弹窗，避免依赖重新查询结果
         this.needInitialPoint = false
         await this.load()
@@ -168,7 +199,7 @@ export default {
 
 <style scoped>
 .page { padding-bottom: 140rpx; }
-.toolbar { position: sticky; top: 0; background: var(--bg-page); padding: 16rpx 24rpx; z-index: 10; }
+.toolbar { position: sticky; top: calc(var(--status-bar-height) + 88rpx); background: var(--bg-page); padding: 16rpx 24rpx; z-index: 10; }
 .seg { display: flex; background: var(--bg-muted); border-radius: 12rpx; overflow: hidden; }
 .seg-item { flex: 1; text-align: center; padding: 16rpx; font-size: 28rpx; color: var(--text-sub); }
 .seg-item.active { background: var(--bg-card); color: var(--primary); font-weight: 600; }
@@ -192,6 +223,14 @@ export default {
 .time-row { display: flex; gap: 16rpx; }
 .time-picker { flex: 1; }
 .time-picker .picker { text-align: center; }
+.now-btn { flex-shrink: 0; background: var(--primary-soft); color: var(--primary-dark); font-size: 24rpx; border-radius: 24rpx; padding: 0 20rpx; display: flex; align-items: center; }
+
+/* 图片选择：与事件编辑表单样式一致 */
+.img-grid { display: flex; flex-wrap: wrap; gap: 16rpx; }
+.img-wrap { position: relative; width: 180rpx; height: 180rpx; }
+.img { width: 180rpx; height: 180rpx; border-radius: 16rpx; }
+.img-del { position: absolute; top: -12rpx; right: -12rpx; width: 40rpx; height: 40rpx; border-radius: 50%; background: rgba(0,0,0,.6); color: var(--primary-contrast); display: flex; align-items: center; justify-content: center; font-size: 28rpx; }
+.img-add { width: 180rpx; height: 180rpx; border: 2rpx dashed var(--text-light); border-radius: 16rpx; display: flex; align-items: center; justify-content: center; color: var(--text-light); font-size: 48rpx; }
 
 /* 未填写初始点提示 */
 .no-init-tip { margin-top: 120rpx; display: flex; flex-direction: column; align-items: center; padding: 0 60rpx; }

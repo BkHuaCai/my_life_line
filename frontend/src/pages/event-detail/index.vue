@@ -1,5 +1,6 @@
 <template>
   <view class="page">
+    <nav-bar :title="event.title || '事件'" />
     <view class="swiper-wrap" v-if="images.length">
       <swiper class="swiper" indicator-dots indicator-active-color="var(--primary)" indicator-color="rgba(0,0,0,.2)" circular>
         <swiper-item v-for="(img, i) in images" :key="i">
@@ -44,8 +45,10 @@
 import { db } from '../../utils/db'
 import { formatEventDate } from '../../utils/date'
 import { applyTheme, getThemePrimary } from '../../utils/theme'
+import NavBar from '../../components/nav-bar.vue'
 
 export default {
+  components: { NavBar },
   data() {
     return { eventId: '', event: {}, images: [], dateText: '', prev: null, next: null }
   },
@@ -62,7 +65,6 @@ export default {
       this.event = (await db.getEvent(this.eventId)) || {}
       this.images = await db.getImagesByEvent(this.eventId)
       this.dateText = formatEventDate(this.event)
-      if (this.event.title) uni.setNavigationBarTitle({ title: this.event.title })
       // 前后事件：同时间线按日期排序的上一条/下一条
       const adj = await db.getAdjacentEvents(this.eventId)
       this.prev = adj.prev

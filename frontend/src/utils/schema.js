@@ -21,7 +21,8 @@ export const TABLES = {
       category: 'TEXT',
       is_private: 'INTEGER DEFAULT 1',
       is_main: 'INTEGER DEFAULT 0',
-      created_at: 'TEXT'
+      created_at: 'TEXT',
+      deleted_at: 'TEXT'
     }
   },
   event: {
@@ -36,7 +37,8 @@ export const TABLES = {
       date_start: 'TEXT',
       date_end: 'TEXT',
       cover_image_path: 'TEXT',
-      created_at: 'TEXT'
+      created_at: 'TEXT',
+      deleted_at: 'TEXT'
     }
   },
   event_image: {

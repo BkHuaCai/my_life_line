@@ -12,16 +12,26 @@
       <view class="arrow">›</view>
     </view>
 
-    <!-- 本月概览：本月新增事件数 + 最活跃时间线，让我的页有数据脉动 -->
-    <view class="month-overview" v-if="currentPerson.id">
-      <view class="mo-cell">
-        <view class="mo-num">{{ monthOverview.monthCount }}</view>
-        <view class="mo-label">本月新增</view>
+    <!-- 数据概览：时间线/事件/图片统计带 -->
+    <view class="stats-band" v-if="currentPerson.id">
+      <view class="stat-cell">
+        <view class="stat-num">{{ timelineCounts[currentPerson.id] || 0 }}</view>
+        <view class="stat-label">时间线</view>
       </view>
-      <view class="mo-cell mo-active" v-if="monthOverview.activeTimeline" @click="openTimeline(monthOverview.activeTimeline.id)">
-        <view class="mo-name">{{ monthOverview.activeTimeline.name }}</view>
-        <view class="mo-label">最活跃 · {{ monthOverview.activeCount }} 个事件</view>
+      <view class="stat-cell">
+        <view class="stat-num">{{ totalEvents }}</view>
+        <view class="stat-label">事件</view>
       </view>
+      <view class="stat-cell">
+        <view class="stat-num">{{ totalImages }}</view>
+        <view class="stat-label">图片</view>
+      </view>
+    </view>
+
+    <!-- 最活跃时间线 -->
+    <view class="active-tl" v-if="currentPerson.id && monthOverview.activeTimeline" @click="openTimeline(monthOverview.activeTimeline.id)">
+      <view class="active-tl-name">🔥 {{ monthOverview.activeTimeline.name }}</view>
+      <view class="active-tl-label">最活跃时间线 · {{ monthOverview.activeCount }} 个事件</view>
     </view>
 
     <!-- 我的档案（点击进入详情，不再切换） -->
@@ -40,6 +50,37 @@
           </view>
         </view>
         <view v-if="!persons.length" class="empty-tip">还没有档案，点击添加</view>
+      </view>
+    </view>
+
+    <!-- 最近动态：当前档案最新 5 条事件 -->
+    <view class="section" v-if="currentPerson.id">
+      <view class="section-header">
+        <text class="section-title">最近动态</text>
+      </view>
+      <view class="recent-list" v-if="recentEvents.length">
+        <view v-for="ev in recentEvents" :key="ev.id" class="recent-item" @click="openEvent(ev.id)">
+          <image v-if="ev._thumb" class="recent-thumb" :src="ev._thumb" mode="aspectFill" />
+          <view v-else class="recent-thumb placeholder">{{ ev.title ? ev.title[0] : '?' }}</view>
+          <view class="recent-body">
+            <view class="recent-title">{{ ev.title }}</view>
+            <view class="recent-meta">{{ ev._tlName }} · {{ ev._date }}</view>
+          </view>
+          <view class="recent-arrow">›</view>
+        </view>
+      </view>
+      <view v-else class="empty-tip">还没有事件，去主页添加第一个吧</view>
+    </view>
+
+    <!-- 回收站入口 -->
+    <view class="section">
+      <view class="trash-entry" @click="openTrash">
+        <text class="trash-icon">🗑️</text>
+        <view class="trash-body">
+          <view class="trash-name">回收站</view>
+          <view class="trash-meta">已删除的时间线和事件保留 5 天</view>
+        </view>
+        <view class="trash-arrow">›</view>
       </view>
     </view>
 
@@ -74,6 +115,7 @@
 
 <script>
 import { db } from '../../utils/db'
+import { effectiveDate, formatEventDate } from '../../utils/date'
 import { PRESET_COLORS, getThemePrimary, saveThemePrimary, applyTheme } from '../../utils/theme'
 import ColorPicker from '../../components/color-picker.vue'
 
@@ -85,6 +127,9 @@ export default {
       persons: [],
       timelineCounts: {},
       monthOverview: { monthCount: 0, activeTimeline: null, activeCount: 0 },
+      totalEvents: 0,
+      totalImages: 0,
+      recentEvents: [],
       presetColors: PRESET_COLORS,
       customSelected: false,
       themePrimary: getThemePrimary()
@@ -116,12 +161,38 @@ export default {
         counts[p.id] = tls.length
       }
       this.timelineCounts = counts
-      // 本月概览：本月新增事件数 + 最活跃时间线
+      // 最活跃时间线（本月概览沿用）
       if (this.currentPerson.id) {
         this.monthOverview = await db.getMonthOverview(this.currentPerson.id)
+        await this.loadStats()
       }
       this.themePrimary = getThemePrimary()
       this.customSelected = !this.presetColors.includes(this.themePrimary)
+    },
+    // 统计带 + 最近动态：当前档案各时间线事件/图片数，按生效日期倒序取最新 5 条
+    async loadStats() {
+      const tls = await db.getTimelinesByPerson(this.currentPerson.id)
+      let totalEvents = 0
+      let totalImages = 0
+      const all = []
+      for (const tl of tls) {
+        const evs = await db.getEventsByTimeline(tl.id)
+        totalEvents += evs.length
+        for (const ev of evs) {
+          const imgs = await db.getImagesByEvent(ev.id)
+          totalImages += imgs.length
+          all.push({ ...ev, _tlName: tl.name, _thumb: imgs[0] ? (imgs[0].thumb_path || imgs[0].image_path) : '', _date: formatEventDate(ev) })
+        }
+      }
+      this.totalEvents = totalEvents
+      this.totalImages = totalImages
+      this.recentEvents = all.sort((a, b) => (effectiveDate(a) < effectiveDate(b) ? 1 : -1)).slice(0, 5)
+    },
+    openEvent(id) {
+      uni.navigateTo({ url: `/pages/event-detail/index?eventId=${id}` })
+    },
+    openTrash() {
+      uni.navigateTo({ url: '/pages/trash/index' })
     },
     openPerson(id) {
       uni.navigateTo({ url: `/pages/person-detail/index?personId=${id}` })
@@ -180,13 +251,35 @@ export default {
 .check-icon { color: var(--primary); font-weight: 600; font-size: 28rpx; }
 .empty-tip { text-align: center; color: var(--text-light); padding: 24rpx; }
 
-/* 本月概览：双栏小卡，本月新增数 + 最活跃时间线 */
-.month-overview { display: flex; gap: 16rpx; margin-top: 20rpx; }
-.mo-cell { flex: 1; background: var(--bg-card); border-radius: 20rpx; padding: 28rpx 24rpx; box-shadow: var(--shadow-card); display: flex; flex-direction: column; }
-.mo-cell.mo-active { justify-content: center; }
-.mo-num { font-size: 44rpx; font-weight: 800; color: var(--primary); }
-.mo-name { font-size: 30rpx; font-weight: 700; color: var(--text-main); }
-.mo-label { font-size: 22rpx; color: var(--text-grey); margin-top: 6rpx; }
+/* 数据概览：三栏统计带 */
+.stats-band { display: flex; margin-top: 20rpx; background: var(--bg-card); border-radius: 20rpx; box-shadow: var(--shadow-card); overflow: hidden; }
+.stat-cell { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 28rpx 0; }
+.stat-cell:not(:last-child) { border-right: 2rpx solid var(--border); }
+.stat-num { font-size: 44rpx; font-weight: 800; color: var(--primary); }
+.stat-label { font-size: 24rpx; color: var(--text-grey); margin-top: 6rpx; }
+
+/* 最活跃时间线 */
+.active-tl { margin-top: 20rpx; background: var(--bg-card); border-radius: 20rpx; padding: 28rpx 24rpx; box-shadow: var(--shadow-card); display: flex; flex-direction: column; }
+.active-tl-name { font-size: 30rpx; font-weight: 700; color: var(--text-main); }
+.active-tl-label { font-size: 22rpx; color: var(--text-grey); margin-top: 6rpx; }
+
+/* 最近动态 */
+.recent-list { display: flex; flex-direction: column; gap: 16rpx; }
+.recent-item { display: flex; align-items: center; background: var(--bg-card); border-radius: 20rpx; padding: 20rpx 24rpx; box-shadow: var(--shadow-card); }
+.recent-thumb { width: 88rpx; height: 88rpx; border-radius: 12rpx; }
+.recent-thumb.placeholder { background: var(--primary-soft); color: var(--primary-dark); display: flex; align-items: center; justify-content: center; font-size: 32rpx; font-weight: 700; }
+.recent-body { flex: 1; margin-left: 20rpx; overflow: hidden; }
+.recent-title { font-size: 30rpx; font-weight: 600; }
+.recent-meta { font-size: 22rpx; color: var(--text-grey); margin-top: 6rpx; }
+.recent-arrow { font-size: 40rpx; color: var(--text-light); margin-left: 12rpx; }
+
+/* 回收站入口 */
+.trash-entry { display: flex; align-items: center; background: var(--bg-card); border-radius: 20rpx; padding: 24rpx; box-shadow: var(--shadow-card); }
+.trash-icon { font-size: 40rpx; }
+.trash-body { flex: 1; margin-left: 20rpx; }
+.trash-name { font-size: 30rpx; font-weight: 600; }
+.trash-meta { font-size: 22rpx; color: var(--text-grey); margin-top: 6rpx; }
+.trash-arrow { font-size: 40rpx; color: var(--text-light); }
 
 /* 主题配色 */
 .theme-section { background: var(--bg-card); border-radius: 20rpx; padding: 28rpx 24rpx; box-shadow: var(--shadow-card); }

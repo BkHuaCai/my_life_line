@@ -8,6 +8,9 @@ export function createMemoryAdapter() {
     async init() {
       // memory 模式无需建表，懒创建即可
     },
+    async migrate() {
+      // memory 无固定 schema，无需迁移
+    },
     async insert(table, row) {
       ensure(table)
       tables.get(table).push({ ...row })
@@ -73,6 +76,16 @@ export function createSqliteAdapter() {
   return {
     async init(createStatements) {
       for (const sql of createStatements) await exec(sql)
+    },
+    // 迁移语句逐个执行并忽略失败：老库 ALTER 加列成功，新库列已存在时报错属预期
+    async migrate(statements) {
+      for (const sql of statements) {
+        try {
+          await exec(sql)
+        } catch (e) {
+          console.warn('migrate skip:', e && e.message ? e.message : e)
+        }
+      }
     },
     async insert(table, row) {
       const cols = Object.keys(row)

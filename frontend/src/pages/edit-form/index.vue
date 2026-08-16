@@ -1,5 +1,6 @@
 <template>
   <view class="page">
+    <nav-bar :title="navTitle" />
     <!-- 人物表单 -->
     <template v-if="entityType === 'person'">
       <view class="group">
@@ -127,6 +128,7 @@
             <picker v-if="form.time_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="form.second" @change="(e) => (form.second = Number(e.detail.value))">
               <view class="picker">{{ pad(form.second) }} 秒</view>
             </picker>
+            <view class="now-btn" @click="setNow">设为当前时间</view>
           </view>
         </view>
 
@@ -167,6 +169,7 @@
                 <picker v-if="form.time_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="form.start_second" @change="(e) => (form.start_second = Number(e.detail.value))">
                   <view class="picker">{{ pad(form.start_second) }} 秒</view>
                 </picker>
+                <view class="now-btn" @click="setStartNow">设为当前时间</view>
               </view>
             </view>
             <view class="field" v-if="form.date_end">
@@ -181,6 +184,7 @@
                 <picker v-if="form.time_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="form.end_second" @change="(e) => (form.end_second = Number(e.detail.value))">
                   <view class="picker">{{ pad(form.end_second) }} 秒</view>
                 </picker>
+                <view class="now-btn" @click="setEndNow">设为当前时间</view>
               </view>
             </view>
           </template>
@@ -211,10 +215,13 @@ import { db } from '../../utils/db'
 import { chooseAndStoreImages, chooseAvatar } from '../../utils/image'
 import { parseEventDate, buildEventDate } from '../../utils/date'
 import { applyTheme, getThemePrimary } from '../../utils/theme'
+import NavBar from '../../components/nav-bar.vue'
 
 export default {
+  components: { NavBar },
   data() {
     return {
+      navTitle: '编辑',
       entityType: 'person',
       id: '',
       personId: '',
@@ -262,7 +269,7 @@ export default {
     this.personId = options.personId || ''
     this.timelineId = options.timelineId || ''
     const titles = { person: '编辑档案', timeline: '编辑时间线', event: '编辑事件' }
-    uni.setNavigationBarTitle({ title: this.id ? titles[this.entityType] : `新建${this.entityType === 'person' ? '档案' : this.entityType === 'timeline' ? '时间线' : '事件'}` })
+    this.navTitle = this.id ? titles[this.entityType] : `新建${this.entityType === 'person' ? '档案' : this.entityType === 'timeline' ? '时间线' : '事件'}`
     if (this.id) await this.loadForm()
   },
   onShow() {
@@ -334,6 +341,24 @@ export default {
     setPrecision(p) {
       this.form.time_precision = p
     },
+    setNow() {
+      const now = new Date()
+      this.form.hour = now.getHours()
+      this.form.minute = now.getMinutes()
+      this.form.second = now.getSeconds()
+    },
+    setStartNow() {
+      const now = new Date()
+      this.form.start_hour = now.getHours()
+      this.form.start_minute = now.getMinutes()
+      this.form.start_second = now.getSeconds()
+    },
+    setEndNow() {
+      const now = new Date()
+      this.form.end_hour = now.getHours()
+      this.form.end_minute = now.getMinutes()
+      this.form.end_second = now.getSeconds()
+    },
     setBirthPrecision(p) {
       this.form.birth_precision = p
     },
@@ -392,6 +417,7 @@ export default {
 .time-row { display: flex; gap: 16rpx; }
 .time-picker { flex: 1; }
 .time-picker .picker { text-align: center; }
+.now-btn { flex-shrink: 0; background: var(--primary-soft); color: var(--primary-dark); font-size: 24rpx; border-radius: 24rpx; padding: 0 20rpx; display: flex; align-items: center; }
 .img-grid { display: flex; flex-wrap: wrap; gap: 16rpx; }
 .img-wrap { position: relative; width: 180rpx; height: 180rpx; }
 .img { width: 180rpx; height: 180rpx; border-radius: 16rpx; }
