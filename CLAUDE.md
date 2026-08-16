@@ -21,7 +21,7 @@ npm run build:app  # build Android resources → dist/
 npm test           # vitest unit tests (Node env, no DOM)
 ```
 
-No lint or format tooling is configured (no ESLint/Prettier config anywhere) — `npm test` is the only automated check.
+No lint or format tooling is configured (no ESLint/Prettier config anywhere) — `npm test` is the only automated check. `npm run test:coverage` prints a coverage summary; `npm run test:watch` reruns on changes.
 
 **Node requirement**: use Node ≥ 22.12 (nvm has `v22.23.2`). vitest 4.1.10 loads its config via CJS `require('std-env')`, but std-env 4.x is ESM-only, so Node 20 fails with `ERR_REQUIRE_ESM`.
 
@@ -33,11 +33,15 @@ No lint or format tooling is configured (no ESLint/Prettier config anywhere) —
 - **Storage adapter**: `src/utils/storage.js` — `createSqliteAdapter()` wraps `plus.sqlite` (App only; DB `my_life_line` at path `_doc`), `createMemoryAdapter()` backs tests/H5. `resolveAdapter()` detects the environment via the global `plus`; code touching `plus.*` crashes outside a real App runtime.
 - **Images**: `image.js` writes compressed + thumbnail copies into the App private dir via `plus.io`.
 - **Schema**: `schema.js` defines tables `person`, `timeline`, `event`, `event_image`. All entities use UUID PKs (`id.js`). Events are `date_type = 'point'` or `'range'` (`date_end = null` means "ongoing").
+- **Theme**: `theme.js` — `applyTheme(primary)` writes CSS vars to the current page's `documentElement` and calls `uni.setTabBarStyle` (with a `fail` callback to swallow the async "not TabBar page" reject on H5/non-tabBar pages). App 端每个 vue 页面是独立 webview，所以每页 `onShow` 都要 `applyTheme(getThemePrimary())` 重应用主题，否则切页后仍是默认色。`PRESET_COLORS` 是 11 个预设色，`saveThemePrimary/getThemePrimary` 持久化到 `uni.setStorageSync`。
 - **Pages**: every page must be registered in `src/pages.json` (including tabBar entries). tabBar icons live at `src/static/tab-*.png` — must be PNG (81×81), because the App 原生 tabBar 不支持 SVG；如要改图标，替换 PNG 并在 pages.json 更新路径即可。Pages live at `src/pages/<name>/index.vue`; shared views in `src/components/`.
+- **Init race**: `db.init()` 是异步的（建表 + 插默认用户「我」+ 建主线），真机 SQLite 慢于首屏渲染。`db.ready` 暴露这个 Promise（单例，只跑一次）；每个页面 `onShow` 必须先 `if (db.ready) await db.ready.catch(() => {})` 再查询，否则首次启动会因竞态导致 `currentPerson.id` 为空、整块 `v-if` 消失。
+- **Home page extras**: 主页有「时光机」卡片（历史上同月同日事件轮播，`db.getTodayEvents`）、「本月活动」主色进度条 + 下拉刷新（`pages.json` 开了 `enablePullDownRefresh`，`onPullDownRefresh` 重查）、主线卡顶部主色渐变封面条、其他时间线卡左缩略图五色循环点缀。
+- **Event detail**: 事件详情页底部有「←上一个 / 下一个→」浏览，`db.getAdjacentEvents` 返回同时间线按日期排序的前后事件，`goAdjacent(id)` 不返回列表直接刷新本页内容。
 
 ## Tests
 
-`npm test` (vitest, `environment: 'node'`) covers only pure logic in `src/utils/` (date, db, export, id, image, schema, storage). No component/page tests exist; `passWithNoTests: true` means an empty run still exits 0.
+`npm test` (vitest, `environment: 'node'`) covers pure logic in `src/utils/` (date, db, export, id, image, schema, storage, sqlite-sql, theme). `db.test.js` 覆盖 db 层的 CRUD + 时光机/本月概览/前后事件等查询；`sqlite-sql.test.js` 桩 `plus.sqlite` 校验 App 端生成的 SQL 合法性。No component/page tests exist; `passWithNoTests: true` means an empty run still exits 0.
 
 ## Gotchas
 

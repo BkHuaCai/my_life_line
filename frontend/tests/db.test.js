@@ -147,3 +147,93 @@ describe('db.main timeline', () => {
     expect((await db.getTimelinesByPerson(pid)).length).toBe(0)
   })
 })
+
+describe('db.getTodayEvents', () => {
+  // 用真实今天的月日生成事件日期，避免 mock Date 原型（ESM 严格模式下只读、赋值静默失败）
+  const today = new Date()
+  const mm = String(today.getMonth() + 1).padStart(2, '0')
+  const dd = String(today.getDate()).padStart(2, '0')
+
+  it('返回历史上同月同日的事件，按年份远近排序', async () => {
+    const pid = await db.savePerson({ name: '小明' })
+    const tid = (await db.getMainTimeline(pid)).id
+    await db.saveEvent({ timeline_id: tid, title: '出生', date_type: 'point', date_point: `1990-${mm}-${dd}` })
+    await db.saveEvent({ timeline_id: tid, title: '毕业', date_type: 'point', date_point: `2010-${mm}-${dd}` })
+    // 同年同月但非同日的不应命中
+    const otherDay = dd === '15' ? '14' : '15'
+    await db.saveEvent({ timeline_id: tid, title: '入学', date_type: 'point', date_point: `2010-${mm}-${otherDay}` })
+    const list = await db.getTodayEvents(pid)
+    expect(list.map((e) => e.title)).toEqual(['出生', '毕业'])
+    expect(list[0]._year).toBe('1990')
+  })
+  it('时间段事件取 date_start 的 MM-DD 做命中判断', async () => {
+    const pid = await db.savePerson({ name: '小明' })
+    const tid = (await db.getMainTimeline(pid)).id
+    await db.saveEvent({ timeline_id: tid, title: '在职', date_type: 'range', date_start: `2020-${mm}-${dd}`, date_end: null })
+    const list = await db.getTodayEvents(pid)
+    expect(list.length).toBe(1)
+    expect(list[0].title).toBe('在职')
+  })
+  it('只查当前用户的时间线内事件，不含他人', async () => {
+    const me = await db.savePerson({ name: '我' })
+    const other = await db.savePerson({ name: '他' })
+    const myTl = (await db.getMainTimeline(me)).id
+    const otherTl = (await db.getMainTimeline(other)).id
+    await db.saveEvent({ timeline_id: myTl, title: '我的', date_type: 'point', date_point: `2010-${mm}-${dd}` })
+    await db.saveEvent({ timeline_id: otherTl, title: '他的', date_type: 'point', date_point: `2010-${mm}-${dd}` })
+    const list = await db.getTodayEvents(me)
+    expect(list.length).toBe(1)
+    expect(list[0].title).toBe('我的')
+  })
+})
+
+describe('db.getMonthOverview', () => {
+  it('本月新增事件数 + 最活跃时间线', async () => {
+    const pid = await db.savePerson({ name: '小明' })
+    const mainId = (await db.getMainTimeline(pid)).id
+    const otherId = await db.saveTimeline({ person_id: pid, name: '工作' })
+    const now = new Date()
+    const y = now.getFullYear()
+    const m = String(now.getMonth() + 1).padStart(2, '0')
+    // 上月日期：把月份数减 1 后再 padStart，避免 Number('08')-1=7 不补零
+    const lastMonth = String((now.getMonth() + 1 - 1 + 12) % 12).padStart(2, '0')
+    // 本月主线 1 + 工作 1，上月工作 1 → 工作 2 条最活跃
+    await db.saveEvent({ timeline_id: mainId, title: '本月A', date_type: 'point', date_point: `${y}-${m}-10` })
+    await db.saveEvent({ timeline_id: otherId, title: '本月B', date_type: 'point', date_point: `${y}-${m}-20` })
+    await db.saveEvent({ timeline_id: otherId, title: '上月', date_type: 'point', date_point: `${y}-${lastMonth}-05` })
+    const ov = await db.getMonthOverview(pid)
+    expect(ov.monthCount).toBe(2)
+    expect(ov.activeTimeline).not.toBeNull()
+    expect(ov.activeCount).toBe(2)
+  })
+  it('无事件时 activeTimeline 为 null、activeCount 为 0', async () => {
+    const ov = await db.getMonthOverview((await db.savePerson({ name: '空' })))
+    expect(ov.monthCount).toBe(0)
+    expect(ov.activeTimeline).toBeNull()
+    expect(ov.activeCount).toBe(0)
+  })
+})
+
+describe('db.getAdjacentEvents', () => {
+  it('同时间线按日期排序返回前后事件', async () => {
+    const pid = await db.savePerson({ name: '小明' })
+    const tid = (await db.getMainTimeline(pid)).id
+    const e1 = await db.saveEvent({ timeline_id: tid, title: '入学', date_type: 'point', date_point: '2015-09-01' })
+    const e2 = await db.saveEvent({ timeline_id: tid, title: '毕业', date_type: 'point', date_point: '2019-06-30' })
+    const e3 = await db.saveEvent({ timeline_id: tid, title: '读研', date_type: 'point', date_point: '2020-09-01' })
+    const mid = await db.getAdjacentEvents(e2)
+    expect(mid.prev.id).toBe(e1)
+    expect(mid.next.id).toBe(e3)
+    const head = await db.getAdjacentEvents(e1)
+    expect(head.prev).toBeNull()
+    expect(head.next.id).toBe(e2)
+    const tail = await db.getAdjacentEvents(e3)
+    expect(tail.prev.id).toBe(e2)
+    expect(tail.next).toBeNull()
+  })
+  it('事件不存在时返回 prev/next 皆 null', async () => {
+    const adj = await db.getAdjacentEvents('不存在的-id')
+    expect(adj.prev).toBeNull()
+    expect(adj.next).toBeNull()
+  })
+})

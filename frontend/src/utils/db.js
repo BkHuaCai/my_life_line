@@ -226,7 +226,7 @@ export function createDb(adapter) {
         const n = own.filter((r) => r.timeline_id === tl.id).length
         if (n > max) { max = n; active = tl }
       }
-      return { monthCount, activeTimeline: active, activeCount: max < 0 ? 0 : max }
+      return { monthCount, activeTimeline: max <= 0 ? null : active, activeCount: max < 0 ? 0 : max }
     }
   }
 }
