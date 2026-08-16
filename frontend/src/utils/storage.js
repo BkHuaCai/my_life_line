@@ -45,7 +45,9 @@ function esc(v) {
 
 export function createSqliteAdapter() {
   const DB_NAME = 'my_life_line'
-  const DB_PATH = '_doc'
+  // plus.sqlite 的 path 必须是含文件名的路径（如 "_doc/a.db"），不能只传目录 "_doc"，
+  // 否则 DCloud 5.x 运行时会报 "Path is a directory" / SQLITE_CANTOPEN
+  const DB_PATH = '_doc/my_life_line.db'
   // plus.sqlite.openDatabase 是异步的：首次打开时若不等 success 回调就执行
   // executeSql/selectSql，真机上会报「数据库未打开」。这里把 open 包成 Promise
   // 并缓存，保证后续所有 SQL 都等数据库真正打开后再执行。
