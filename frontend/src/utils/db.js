@@ -114,7 +114,7 @@ export function createDb(adapter) {
       if (person && person.is_default === 1) {
         throw new Error('默认用户不允许删除')
       }
-      // 物理级联：人物删除时其全部时间线/事件（含回收站内）一并清除
+      // 物理级联：人物删除时其全部时间线/动态（含回收站内）一并清除
       const all = await adapter.all('timeline')
       for (const tl of all.filter((r) => r.person_id === id)) await this.deleteTimeline(tl.id, true)
       await adapter.delete('person', id)
@@ -154,7 +154,7 @@ export function createDb(adapter) {
         await adapter.delete('timeline', id)
         return
       }
-      // 软删除：时间线与它的事件一起进回收站，保留 5 天后自动清除
+      // 软删除：时间线与它的动态一起进回收站，保留 5 天后自动清除
       const deleted = new Date().toISOString()
       await adapter.update('timeline', id, { deleted_at: deleted })
       const all = await adapter.all('event')
@@ -189,7 +189,7 @@ export function createDb(adapter) {
         await adapter.delete('event', id)
         return
       }
-      // 软删除：事件进回收站，保留 5 天后自动清除
+      // 软删除：动态进回收站，保留 5 天后自动清除
       await adapter.update('event', id, { deleted_at: new Date().toISOString() })
     },
     async getImagesByEvent(eventId) {
@@ -197,7 +197,7 @@ export function createDb(adapter) {
       return rows.filter((r) => r.event_id === eventId).sort((a, b) => a.sort_order - b.sort_order)
     },
 
-    // ---------- 前后事件：同时间线按日期排序，返回给定事件的上一条/下一条 ----------
+    // ---------- 前后动态：同时间线按日期排序，返回给定动态的上一条/下一条 ----------
     async getAdjacentEvents(eventId) {
       const ev = await this.getEvent(eventId)
       if (!ev) return { prev: null, next: null }
@@ -214,8 +214,8 @@ export function createDb(adapter) {
       return rows.filter((r) => !r.deleted_at && ((r.title || '') + ' ' + (r.description || '')).toLowerCase().includes(k))
     },
 
-    // ---------- 时光机：查「历史上同月同日」的事件，按年份远近排序 ----------
-    // 取事件生效日期（时间点取 date_point，时间段取 date_start）的 MM-DD 与今天相同的事件
+    // ---------- 时光机：查「历史上同月同日」（仅一年前及更早）的动态，按年份远近排序 ----------
+    // 取动态生效日期（时间点取 date_point，时间段取 date_start）的 MM-DD 与今天相同的动态
     async getTodayEvents(personId) {
       const now = new Date()
       const mm = String(now.getMonth() + 1).padStart(2, '0')
@@ -230,12 +230,13 @@ export function createDb(adapter) {
           const d = r.date_type === 'range' ? (r.date_start || '') : (r.date_point || '')
           return { ev: r, date: d }
         })
-        .filter((x) => x.date.length >= 10 && x.date.slice(5, 10) === target)
+        // 历史上的今天：仅一年前及更早的同月同日（当年今天的记录不算历史）
+        .filter((x) => x.date.length >= 10 && x.date.slice(5, 10) === target && Number(x.date.slice(0, 4)) < now.getFullYear())
         .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
         .map((x) => ({ ...x.ev, _year: x.date.slice(0, 4) }))
     },
 
-    // ---------- 本月概览：当前用户本月新增事件数 + 最活跃时间线 ----------
+    // ---------- 本月概览：当前用户本月新增动态数 + 最活跃时间线 ----------
     async getMonthOverview(personId) {
       const now = new Date()
       const prefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-`
@@ -246,7 +247,7 @@ export function createDb(adapter) {
         const d = r.date_type === 'range' ? (r.date_start || '') : (r.date_point || '')
         return d.startsWith(prefix)
       }).length
-      // 最活跃时间线：当前用户各时间线事件数最多者
+      // 最活跃时间线：当前用户各时间线动态数最多者
       let active = null
       let max = -1
       for (const tl of tls) {
@@ -256,7 +257,7 @@ export function createDb(adapter) {
       return { monthCount, activeTimeline: max <= 0 ? null : active, activeCount: max < 0 ? 0 : max }
     },
 
-    // ---------- 回收站：软删除的时间线/事件，默认保留 5 天，到期自动清除 ----------
+    // ---------- 回收站：软删除的时间线/动态，默认保留 5 天，到期自动清除 ----------
     async getTrash() {
       const tls = await adapter.all('timeline')
       const evs = await adapter.all('event')
@@ -271,7 +272,7 @@ export function createDb(adapter) {
     },
     async restoreTimeline(id) {
       await adapter.update('timeline', id, { deleted_at: null })
-      // 一并恢复随时间线删除的事件
+      // 一并恢复随时间线删除的动态
       const all = await adapter.all('event')
       for (const ev of all.filter((r) => r.timeline_id === id && r.deleted_at)) {
         await adapter.update('event', ev.id, { deleted_at: null })

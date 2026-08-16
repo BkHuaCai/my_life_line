@@ -8,7 +8,7 @@
         <view class="desc" v-if="ev.description">{{ ev.description }}</view>
       </view>
     </view>
-    <view v-if="!events.length" class="empty">还没有事件，点右下角 + 添加</view>
+    <view v-if="!events.length" class="empty">还没有动态，点右下角 + 添加</view>
   </view>
 </template>
 

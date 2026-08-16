@@ -2,7 +2,7 @@
   <view class="page">
     <nav-bar title="回收站" />
     <view class="tip">
-      <text class="tip-text">已删除的时间线和事件保留 5 天，到期自动彻底清除</text>
+      <text class="tip-text">已删除的时间线和动态保留 5 天，到期自动彻底清除</text>
       <text class="tip-clear" v-if="hasTrash" @click="clearAll">清空</text>
     </view>
 
@@ -23,10 +23,10 @@
       </view>
     </view>
 
-    <!-- 已删除事件 -->
+    <!-- 已删除动态 -->
     <view class="section" v-if="trash.events.length">
       <view class="section-header">
-        <text class="section-title">已删除事件</text>
+        <text class="section-title">已删除动态</text>
       </view>
       <view v-for="ev in trash.events" :key="ev.id" class="row">
         <view class="row-body">
@@ -101,7 +101,7 @@ export default {
     purgeEvent(id) {
       uni.showModal({
         title: '彻底删除',
-        content: '删除后无法恢复，确定彻底删除这条事件吗？',
+        content: '删除后无法恢复，确定彻底删除这条动态吗？',
         success: (res) => {
           if (res.confirm) db.purgeEvent(id).then(() => this.load())
         }

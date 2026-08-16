@@ -18,7 +18,7 @@ import { hexToHsv, hsvToHex } from '../utils/theme'
 
 /**
  * HSV 调色盘：上方为饱和度/亮度面板，下方为色相条。
- * 拖动即可选色，变化时通过 @change 事件向上抛出 #rrggbb 颜色值。
+ * 拖动即可选色，变化时通过 @change 动态向上抛出 #rrggbb 颜色值。
  */
 export default {
   name: 'ColorPicker',

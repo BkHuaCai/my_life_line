@@ -8,7 +8,7 @@
         <view class="d">{{ dateText(ev) }}</view>
       </view>
     </view>
-    <view v-if="!events.length" class="empty">还没有事件，点右下角 + 添加</view>
+    <view v-if="!events.length" class="empty">还没有动态，点右下角 + 添加</view>
   </view>
 </template>
 
@@ -36,15 +36,13 @@ export default {
 <style scoped>
 .axis { position: relative; padding: 20rpx 0 40rpx; }
 .axis::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 4rpx; background: linear-gradient(var(--primary), var(--primary-dark)); transform: translateX(-50%); }
-/* 节点：左/右交错卡 + 中线主色圆点锚 */
-.node { position: relative; width: 44%; margin-bottom: 40rpx; }
-.node.left { margin-right: 56%; }
-.node.right { margin-left: 56%; }
-/* 中线上的主色圆点：作为时间轴的视觉锚 */
-.dot { position: absolute; top: 24rpx; width: 20rpx; height: 20rpx; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 6rpx var(--primary-soft); }
-.node.left .dot { right: -58%; }
-.node.right .dot { left: -58%; }
-.card { background: var(--bg-card); border-radius: 16rpx; padding: 16rpx; box-shadow: var(--shadow-card); }
+/* 节点占满整行：卡片用 margin 让到左/右，圆点固定在轴线上 */
+.node { position: relative; width: 100%; margin-bottom: 40rpx; }
+.card { width: 44%; box-sizing: border-box; background: var(--bg-card); border-radius: 16rpx; padding: 16rpx; box-shadow: var(--shadow-card); }
+.node.left .card { margin-right: 56%; }
+.node.right .card { margin-left: 56%; }
+/* 中线上的主色圆点：作为时间轴的视觉锚，水平居中于轴线（left 50% 相对整行节点） */
+.dot { position: absolute; top: 24rpx; left: 50%; width: 20rpx; height: 20rpx; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 6rpx var(--primary-soft); transform: translateX(-50%); }
 .thumb { width: 100%; height: 180rpx; border-radius: 12rpx; }
 .t { font-size: 28rpx; font-weight: 600; margin-top: 10rpx; }
 .d { font-size: 24rpx; color: var(--primary); margin-top: 4rpx; }

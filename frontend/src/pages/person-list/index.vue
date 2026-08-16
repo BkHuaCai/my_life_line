@@ -12,7 +12,7 @@
       <view class="arrow">›</view>
     </view>
 
-    <!-- 数据概览：时间线/事件/图片统计带 -->
+    <!-- 数据概览：时间线/动态/图片统计带 -->
     <view class="stats-band" v-if="currentPerson.id">
       <view class="stat-cell">
         <view class="stat-num">{{ timelineCounts[currentPerson.id] || 0 }}</view>
@@ -20,7 +20,7 @@
       </view>
       <view class="stat-cell">
         <view class="stat-num">{{ totalEvents }}</view>
-        <view class="stat-label">事件</view>
+        <view class="stat-label">动态</view>
       </view>
       <view class="stat-cell">
         <view class="stat-num">{{ totalImages }}</view>
@@ -31,7 +31,7 @@
     <!-- 最活跃时间线 -->
     <view class="active-tl" v-if="currentPerson.id && monthOverview.activeTimeline" @click="openTimeline(monthOverview.activeTimeline.id)">
       <view class="active-tl-name">🔥 {{ monthOverview.activeTimeline.name }}</view>
-      <view class="active-tl-label">最活跃时间线 · {{ monthOverview.activeCount }} 个事件</view>
+      <view class="active-tl-label">最活跃时间线 · {{ monthOverview.activeCount }} 个动态</view>
     </view>
 
     <!-- 我的档案（点击进入详情，不再切换） -->
@@ -53,7 +53,7 @@
       </view>
     </view>
 
-    <!-- 最近动态：当前档案最新 5 条事件 -->
+    <!-- 最近动态：当前档案最新 5 条动态 -->
     <view class="section" v-if="currentPerson.id">
       <view class="section-header">
         <text class="section-title">最近动态</text>
@@ -69,19 +69,7 @@
           <view class="recent-arrow">›</view>
         </view>
       </view>
-      <view v-else class="empty-tip">还没有事件，去主页添加第一个吧</view>
-    </view>
-
-    <!-- 回收站入口 -->
-    <view class="section">
-      <view class="trash-entry" @click="openTrash">
-        <text class="trash-icon">🗑️</text>
-        <view class="trash-body">
-          <view class="trash-name">回收站</view>
-          <view class="trash-meta">已删除的时间线和事件保留 5 天</view>
-        </view>
-        <view class="trash-arrow">›</view>
-      </view>
+      <view v-else class="empty-tip">还没有动态，去主页添加第一个吧</view>
     </view>
 
     <!-- 主题配色 -->
@@ -108,6 +96,21 @@
           <view class="theme-label">自定义颜色（调色盘）</view>
           <color-picker :value="themePrimary" @change="selectTheme" />
         </template>
+      </view>
+    </view>
+
+    <!-- 回收站：独立分区展示（与最近动态区分，避免误认成同一板块） -->
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">回收站</text>
+      </view>
+      <view class="trash-entry" @click="openTrash">
+        <text class="trash-icon">🗑️</text>
+        <view class="trash-body">
+          <view class="trash-name">回收站</view>
+          <view class="trash-meta">已删除的时间线和动态保留 5 天</view>
+        </view>
+        <view class="trash-arrow">›</view>
       </view>
     </view>
   </view>
@@ -169,7 +172,7 @@ export default {
       this.themePrimary = getThemePrimary()
       this.customSelected = !this.presetColors.includes(this.themePrimary)
     },
-    // 统计带 + 最近动态：当前档案各时间线事件/图片数，按生效日期倒序取最新 5 条
+    // 统计带 + 最近动态：当前档案各时间线动态/图片数，按生效日期倒序取最新 5 条
     async loadStats() {
       const tls = await db.getTimelinesByPerson(this.currentPerson.id)
       let totalEvents = 0

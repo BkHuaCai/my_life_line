@@ -1,6 +1,7 @@
 <template>
   <view class="page">
-    <nav-bar :title="event.title || '事件'" />
+    <nav-bar :title="event.title || '动态'" />
+    <!-- 有图才展示图片区：无图动态不渲染图片位，直接展示内容 -->
     <view class="swiper-wrap" v-if="images.length">
       <swiper class="swiper" indicator-dots indicator-active-color="var(--primary)" indicator-color="rgba(0,0,0,.2)" circular>
         <swiper-item v-for="(img, i) in images" :key="i">
@@ -8,10 +9,6 @@
         </swiper-item>
       </swiper>
       <view class="img-count">{{ images.length }} 张</view>
-    </view>
-    <view v-else class="no-img">
-      <view class="no-img-icon">🖼️</view>
-      <view class="no-img-text">暂无图片</view>
     </view>
 
     <view class="meta">
@@ -25,7 +22,7 @@
       <button class="btn danger" @click="remove">删除</button>
     </view>
 
-    <!-- 前后事件：同时间线按日期排序的上一条/下一条，无需返回列表即可浏览 -->
+    <!-- 前后动态：同时间线按日期排序的上一条/下一条，无需返回列表即可浏览 -->
     <view class="pager" v-if="prev || next">
       <view class="pager-item" v-if="prev" @click="goAdjacent(prev.id)">
         <text class="pager-arrow">←</text>
@@ -38,6 +35,8 @@
         <text class="pager-arrow">→</text>
       </view>
     </view>
+
+    <undo-toast ref="undoToast" />
   </view>
 </template>
 
@@ -46,14 +45,19 @@ import { db } from '../../utils/db'
 import { formatEventDate } from '../../utils/date'
 import { applyTheme, getThemePrimary } from '../../utils/theme'
 import NavBar from '../../components/nav-bar.vue'
+import UndoToast from '../../components/undo-toast.vue'
 
 export default {
-  components: { NavBar },
+  components: { NavBar, UndoToast },
   data() {
     return { eventId: '', event: {}, images: [], dateText: '', prev: null, next: null }
   },
   async onLoad(options) {
     this.eventId = options.eventId
+  },
+  onHide() {
+    // 切走时收起撤回提示条，避免残留到下一页
+    if (this.$refs.undoToast) this.$refs.undoToast.hide()
   },
   async onShow() {
     applyTheme(getThemePrimary())
@@ -65,13 +69,13 @@ export default {
       this.event = (await db.getEvent(this.eventId)) || {}
       this.images = await db.getImagesByEvent(this.eventId)
       this.dateText = formatEventDate(this.event)
-      // 前后事件：同时间线按日期排序的上一条/下一条
+      // 前后动态：同时间线按日期排序的上一条/下一条
       const adj = await db.getAdjacentEvents(this.eventId)
       this.prev = adj.prev
       this.next = adj.next
     },
     goAdjacent(id) {
-      // 切换到前后事件后刷新本页内容（不 navigateBack，保持浏览连贯）
+      // 切换到前后动态后刷新本页内容（不 navigateBack，保持浏览连贯）
       this.eventId = id
       this.load()
     },
@@ -83,13 +87,18 @@ export default {
     },
     remove() {
       uni.showModal({
-        title: '删除事件',
-        content: '确定删除这条事件吗？',
+        title: '删除动态',
+        content: '确定删除这条动态吗？删除后可在回收站中恢复（保留 5 天）。',
         success: async (res) => {
-          if (res.confirm) {
-            await db.deleteEvent(this.eventId)
-            uni.navigateBack()
-          }
+          if (!res.confirm) return
+          const id = this.eventId
+          const title = this.event.title || ''
+          await db.deleteEvent(id)
+          // 留在本页展示「已删除 + 撤回」：点撤回恢复，5 秒未操作自动返回
+          this.$refs.undoToast.show(`已删除「${title}」`, async () => {
+            await db.restoreEvent(id)
+            await this.load()
+          }, () => uni.navigateBack())
         }
       })
     }
@@ -103,9 +112,6 @@ export default {
 .swiper { width: 100%; height: 640rpx; }
 .img { width: 100%; height: 640rpx; }
 .img-count { position: absolute; right: 24rpx; bottom: 24rpx; background: rgba(0,0,0,.5); color: #fff; font-size: 22rpx; padding: 6rpx 16rpx; border-radius: 20rpx; }
-.no-img { width: 100%; height: 400rpx; background: var(--bg-muted); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.no-img-icon { font-size: 80rpx; }
-.no-img-text { color: var(--text-light); font-size: 26rpx; margin-top: 16rpx; }
 .meta { padding: 32rpx 24rpx 24rpx; }
 .date { color: var(--primary); font-size: 26rpx; font-weight: 600; }
 .title { font-size: 42rpx; font-weight: 800; margin-top: 12rpx; }
@@ -115,7 +121,7 @@ export default {
 .btn.danger { background: var(--danger); }
 .btn::after { border: none; }
 
-/* 前后事件浏览：底部上一条/下一条入口 */
+/* 前后动态浏览：底部上一条/下一条入口 */
 .pager { display: flex; gap: 16rpx; padding: 24rpx; }
 .pager-item { flex: 1; display: flex; align-items: center; gap: 8rpx; background: var(--bg-card); border-radius: 16rpx; padding: 20rpx 24rpx; box-shadow: var(--shadow-card); overflow: hidden; }
 .pager-item.pager-right { justify-content: flex-end; }

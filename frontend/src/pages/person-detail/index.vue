@@ -19,7 +19,7 @@
       <view v-for="tl in timelines" :key="tl.id" class="card" @click="openTimeline(tl.id)">
         <view class="tl-body">
           <view class="tl-name">{{ tl.name }}</view>
-          <view class="tl-sub">{{ eventCount(tl.id) }} 个事件</view>
+          <view class="tl-sub">{{ eventCount(tl.id) }} 个动态</view>
         </view>
         <view class="tl-cat" v-if="tl.category">{{ tl.category }}</view>
         <view class="tl-cat main-badge" v-if="tl.is_main === 1">主线</view>
@@ -32,6 +32,8 @@
     </view>
 
     <view class="fab" @click="addTimeline">＋ 时间线</view>
+
+    <undo-toast ref="undoToast" />
   </view>
 </template>
 
@@ -39,14 +41,19 @@
 import { db } from '../../utils/db'
 import { applyTheme, getThemePrimary } from '../../utils/theme'
 import NavBar from '../../components/nav-bar.vue'
+import UndoToast from '../../components/undo-toast.vue'
 
 export default {
-  components: { NavBar },
+  components: { NavBar, UndoToast },
   data() {
     return { personId: '', person: {}, timelines: [], counts: {} }
   },
   async onLoad(options) {
     this.personId = options.personId
+  },
+  onHide() {
+    // 切走时收起撤回提示条，避免残留到下一页
+    if (this.$refs.undoToast) this.$refs.undoToast.hide()
   },
   async onShow() {
     applyTheme(getThemePrimary())
@@ -73,7 +80,7 @@ export default {
     deletePerson() {
       uni.showModal({
         title: '删除档案',
-        content: `确定删除「${this.person.name}」吗？此操作将同时删除该档案的所有时间线和事件，无法恢复！`,
+        content: `确定删除「${this.person.name}」吗？此操作将同时删除该档案的所有时间线和动态，无法恢复！`,
         success: async (res) => {
           if (res.confirm) {
             await db.deletePerson(this.personId)
@@ -91,12 +98,18 @@ export default {
     deleteTimeline(tl) {
       uni.showModal({
         title: '删除时间线',
-        content: `确定删除「${tl.name}」吗？此时间线内的所有事件也将被删除，无法恢复！`,
+        content: `确定删除「${tl.name}」吗？此时间线内的所有动态也将被删除，可在回收站中恢复（保留 5 天）。`,
         success: async (res) => {
-          if (res.confirm) {
-            await db.deleteTimeline(tl.id)
+          if (!res.confirm) return
+          const id = tl.id
+          const name = tl.name
+          await db.deleteTimeline(id)
+          await this.load()
+          // 展示「已删除 + 撤回」：点撤回恢复时间线及其动态
+          this.$refs.undoToast.show(`已删除「${name}」`, async () => {
+            await db.restoreTimeline(id)
             await this.load()
-          }
+          })
         }
       })
     }

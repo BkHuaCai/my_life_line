@@ -29,7 +29,7 @@
           <view class="r-sub">{{ personName(r.person_id) }} · {{ timelineName(r.timeline_id) }}</view>
           <view class="r-desc" v-if="r.description">{{ r.description }}</view>
         </view>
-        <view v-if="!results.length" class="empty">没有匹配的事件</view>
+        <view v-if="!results.length" class="empty">没有匹配的动态</view>
       </view>
     </template>
 
@@ -43,7 +43,7 @@
         </view>
         <view class="stat-cell">
           <view class="stat-num">{{ eventTotal }}</view>
-          <view class="stat-label">事件</view>
+          <view class="stat-label">动态</view>
         </view>
         <view class="stat-cell">
           <view class="stat-num">{{ persons.length }}</view>
@@ -51,7 +51,7 @@
         </view>
       </view>
 
-      <!-- 时光机：历史上同月同日发生的事件，每日有新内容 -->
+      <!-- 时光机：历史上同月同日发生的动态，每日有新内容 -->
       <view class="time-machine" v-if="currentPerson.id && todayEvents.length">
         <view class="tm-head">
           <view class="tm-title">
@@ -71,14 +71,14 @@
         </swiper>
       </view>
       <view class="time-machine tm-empty" v-else-if="currentPerson.id && eventTotal > 0">
-        <text class="tm-empty-text">今天还没有历史事件，去打个新事件吧</text>
+        <text class="tm-empty-text">今天还没有历史动态，去打个新动态吧</text>
       </view>
 
       <!-- 本月活动：主色进度条，让首页有动的数据脉动 -->
       <view class="month-bar" v-if="currentPerson.id">
         <view class="mb-text">
           <text class="mb-label">本月新增</text>
-          <text class="mb-count">{{ monthCount }} 个事件</text>
+          <text class="mb-count">{{ monthCount }} 个动态</text>
         </view>
         <view class="mb-track">
           <view class="mb-fill" :style="{ width: monthFillWidth }"></view>
@@ -97,7 +97,7 @@
           <view class="main-info">
             <view class="main-name">{{ mainTimeline.name }} <text class="main-badge">主线</text></view>
             <view class="main-meta">
-              {{ eventCounts[mainTimeline.id] || 0 }} 个事件
+              {{ eventCounts[mainTimeline.id] || 0 }} 个动态
               <text v-if="needInitPoint" class="main-warn"> · 待填写初始点</text>
             </view>
           </view>
@@ -120,7 +120,7 @@
               <view class="tl-name">{{ tl.name }}</view>
               <view class="tl-meta">
                 <text class="tl-cat" v-if="tl.category">{{ tl.category }}</text>
-                <text class="tl-count">{{ eventCounts[tl.id] || 0 }} 个事件</text>
+                <text class="tl-count">{{ eventCounts[tl.id] || 0 }} 个动态</text>
               </view>
             </view>
             <view class="tl-arrow">›</view>
@@ -165,19 +165,19 @@ export default {
     }
   },
   computed: {
-    // 数据概览：时间线总数（主线 + 其他）、事件总数
+    // 数据概览：时间线总数（主线 + 其他）、动态总数
     timelineTotal() {
       return this.otherTimelines.length + (this.mainTimeline.id ? 1 : 0)
     },
     eventTotal() {
       return Object.values(this.eventCounts).reduce((sum, n) => sum + n, 0)
     },
-    // 顶部问候语：按事件总数给一句话引导，避免首页空时单调
+    // 顶部问候语：按动态总数给一句话引导，避免首页空时单调
     heroSub() {
       if (!this.currentPerson.id) return '点击右侧切换或添加档案'
       if (this.needInitPoint) return '主线待填写初始点，先去打个点吧'
-      if (this.eventTotal === 0) return '还没有事件，点「主线」开始记录'
-      return `共 ${this.timelineTotal} 条时间线 · ${this.eventTotal} 个事件`
+      if (this.eventTotal === 0) return '还没有动态，点「主线」开始记录'
+      return `共 ${this.timelineTotal} 条时间线 · ${this.eventTotal} 个动态`
     },
     // 其他时间线卡片左缩略图按名称首字符循环分配点缀色，让列表更有层次
     thumbTheme() {
@@ -229,11 +229,11 @@ export default {
       for (const tl of tls) counts[tl.id] = (await db.getEventsByTimeline(tl.id)).length
       this.eventCounts = counts
       this.needInitPoint = !!this.mainTimeline.id && (counts[this.mainTimeline.id] || 0) === 0
-      // 时光机：历史上同月同日的事件
+      // 时光机：历史上同月同日的动态
       const now = new Date()
       this.todayLabel = `${now.getMonth() + 1}月${now.getDate()}日`
       this.todayEvents = await db.getTodayEvents(this.currentPerson.id)
-      // 本月活动：本月新增事件数 + 进度条（本月新增 / 全年事件总数，上限 100%）
+      // 本月活动：本月新增动态数 + 进度条（本月新增 / 全年动态总数，上限 100%）
       const overview = await db.getMonthOverview(this.currentPerson.id)
       this.monthCount = overview.monthCount
       const total = this.eventTotal || overview.activeCount || 0
@@ -333,7 +333,7 @@ export default {
 .stat-num { font-size: 44rpx; font-weight: 800; color: var(--primary); }
 .stat-label { font-size: 24rpx; color: var(--text-grey); margin-top: 6rpx; }
 
-/* 时光机：历史上同月同日的事件轮播，每日有新内容 */
+/* 时光机：历史上同月同日的动态轮播，每日有新内容 */
 .time-machine { margin-top: 24rpx; background: var(--bg-card); border-radius: 20rpx; padding: 24rpx; box-shadow: var(--shadow-card); }
 .tm-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
 .tm-title { display: flex; align-items: center; gap: 10rpx; font-size: 30rpx; font-weight: 700; color: var(--text-main); }

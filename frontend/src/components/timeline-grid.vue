@@ -5,7 +5,7 @@
       <view class="cells">
         <template v-for="ev in group.events" :key="ev.id">
           <image v-if="cover(ev)" class="cell" :src="cover(ev)" mode="aspectFill" @click="open(ev.id)" />
-          <!-- 无图事件不展示图片，改为文字格 -->
+          <!-- 无图动态不展示图片，改为文字格 -->
           <view v-else class="cell text-cell" @click="open(ev.id)">
             <text class="tc-title">{{ ev.title }}</text>
             <text class="tc-date">{{ dateText(ev) }}</text>
@@ -13,7 +13,7 @@
         </template>
       </view>
     </view>
-    <view v-if="!events.length" class="empty">还没有事件，点右下角 + 添加</view>
+    <view v-if="!events.length" class="empty">还没有动态，点右下角 + 添加</view>
   </view>
 </template>
 

@@ -185,6 +185,15 @@ describe('db.getTodayEvents', () => {
     expect(list.length).toBe(1)
     expect(list[0].title).toBe('我的')
   })
+  it('排除当年的同月同日（今天的记录不算历史）', async () => {
+    const pid = await db.savePerson({ name: '小明' })
+    const tid = (await db.getMainTimeline(pid)).id
+    await db.saveEvent({ timeline_id: tid, title: '今天的记录', date_type: 'point', date_point: `${today.getFullYear()}-${mm}-${dd}` })
+    await db.saveEvent({ timeline_id: tid, title: '去年的今天', date_type: 'point', date_point: `${today.getFullYear() - 1}-${mm}-${dd}` })
+    const list = await db.getTodayEvents(pid)
+    expect(list.some((e) => e.title === '今天的记录')).toBe(false)
+    expect(list.some((e) => e.title === '去年的今天')).toBe(true)
+  })
 })
 
 describe('db.getMonthOverview', () => {

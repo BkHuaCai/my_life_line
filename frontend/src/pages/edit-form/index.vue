@@ -75,7 +75,7 @@
       <button class="save-btn" @click="save">保存</button>
     </template>
 
-    <!-- 事件表单 -->
+    <!-- 动态表单 -->
     <template v-else-if="entityType === 'event'">
       <view class="group">
         <view class="group-title">基本信息</view>
@@ -274,8 +274,8 @@ export default {
     this.id = options.id || ''
     this.personId = options.personId || ''
     this.timelineId = options.timelineId || ''
-    const titles = { person: '编辑档案', timeline: '编辑时间线', event: '编辑事件' }
-    this.navTitle = this.id ? titles[this.entityType] : `新建${this.entityType === 'person' ? '档案' : this.entityType === 'timeline' ? '时间线' : '事件'}`
+    const titles = { person: '编辑档案', timeline: '编辑时间线', event: '编辑动态' }
+    this.navTitle = this.id ? titles[this.entityType] : `新建${this.entityType === 'person' ? '档案' : this.entityType === 'timeline' ? '时间线' : '动态'}`
     if (this.id) await this.loadForm()
   },
   onShow() {

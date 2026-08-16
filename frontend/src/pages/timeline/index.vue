@@ -15,11 +15,11 @@
       <view class="no-init-text">尚未填写初始点，时间线内容暂无法展示</view>
       <button class="no-init-btn" @click="reopenInitPoint">填写初始点</button>
     </view>
-    <!-- 非主线时间线无事件：引导用户添加第一个事件 -->
+    <!-- 非主线时间线无动态：引导用户添加第一个动态 -->
     <view class="empty-tl" v-else-if="!events.length">
       <view class="empty-tl-icon">📝</view>
       <view class="empty-tl-title">这里还什么都没有</view>
-      <view class="empty-tl-desc">点右下角「＋ 事件」记录这条时间线的第一个时刻</view>
+      <view class="empty-tl-desc">点右下角「＋ 动态」记录这条时间线的第一个时刻</view>
     </view>
     <template v-else>
       <timeline-axis v-if="viewMode === 'axis'" :events="events" />
@@ -27,52 +27,124 @@
       <timeline-cards v-else :events="events" />
     </template>
 
-    <view class="fab" v-if="!showNoInitHint" @click="addEvent">＋ 事件</view>
+    <view class="fab" v-if="!showNoInitHint" @click="addEvent">＋ 动态</view>
 
-    <!-- 主线初始点：主线还没有任何事件时，必须先填写初始点 -->
+    <!-- 主线初始点：主线还没有任何动态时，必须先填写初始点 -->
     <view class="mask" v-if="needInitialPoint">
       <view class="init-card">
         <view class="init-head">
           <view class="init-title">填写初始点</view>
           <view class="init-close" @click="closeInitPoint">×</view>
         </view>
-        <view class="init-desc">「{{ timeline.name }}」还没有任何事件，请先填写这条时间线的起点（如出生或开始日期），保存后才能继续使用。</view>
+        <view class="init-desc">「{{ timeline.name }}」还没有任何动态，请先填写这条时间线的起点（如出生或开始日期），保存后才能继续使用。</view>
         <view class="field">
           <text class="label">标题</text>
           <input class="input" v-model="initForm.title" placeholder="如：出生、购入" />
         </view>
         <view class="field">
-          <view class="label-row">
-            <text class="label">日期 *</text>
-            <view class="now-btn" @click="setInitNow">当前时间</view>
-          </view>
-          <picker mode="date" :value="initForm.date" @change="(e) => (initForm.date = e.detail.value)">
-            <view class="picker">{{ initForm.date || '选择日期' }}</view>
-          </picker>
-        </view>
-        <view class="field">
-          <text class="label">时间精度（可选）</text>
+          <text class="label">时间类型</text>
           <view class="pseg">
-            <view :class="['pseg-item', initForm.time_precision === 'none' ? 'active' : '']" @click="initForm.time_precision = 'none'">仅日期</view>
-            <view :class="['pseg-item', initForm.time_precision === 'hour' ? 'active' : '']" @click="initForm.time_precision = 'hour'">到时</view>
-            <view :class="['pseg-item', initForm.time_precision === 'minute' ? 'active' : '']" @click="initForm.time_precision = 'minute'">到分</view>
-            <view :class="['pseg-item', initForm.time_precision === 'second' ? 'active' : '']" @click="initForm.time_precision = 'second'">到秒</view>
+            <view :class="['pseg-item', initForm.date_type === 'point' ? 'active' : '']" @click="initForm.date_type = 'point'">时间点</view>
+            <view :class="['pseg-item', initForm.date_type === 'range' ? 'active' : '']" @click="initForm.date_type = 'range'">时间段</view>
           </view>
         </view>
-        <view class="field" v-if="initForm.time_precision !== 'none'">
-          <text class="label">时间</text>
-          <view class="time-row">
-            <picker class="time-picker" mode="selector" :range="hourRange" :value="initForm.hour" @change="(e) => (initForm.hour = Number(e.detail.value))">
-              <view class="picker">{{ pad(initForm.hour) }} 时</view>
-            </picker>
-            <picker v-if="initForm.time_precision === 'minute' || initForm.time_precision === 'second'" class="time-picker" mode="selector" :range="minuteRange" :value="initForm.minute" @change="(e) => (initForm.minute = Number(e.detail.value))">
-              <view class="picker">{{ pad(initForm.minute) }} 分</view>
-            </picker>
-            <picker v-if="initForm.time_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="initForm.second" @change="(e) => (initForm.second = Number(e.detail.value))">
-              <view class="picker">{{ pad(initForm.second) }} 秒</view>
+
+        <!-- 时间点：单个日期 + 可选时间 -->
+        <template v-if="initForm.date_type === 'point'">
+          <view class="field">
+            <view class="label-row">
+              <text class="label">日期 *</text>
+              <view class="now-btn" @click="setInitNow">当前时间</view>
+            </view>
+            <picker mode="date" :value="initForm.date" @change="(e) => (initForm.date = e.detail.value)">
+              <view class="picker">{{ initForm.date || '选择日期' }}</view>
             </picker>
           </view>
-        </view>
+          <view class="field">
+            <text class="label">时间精度（可选）</text>
+            <view class="pseg">
+              <view :class="['pseg-item', initForm.time_precision === 'none' ? 'active' : '']" @click="initForm.time_precision = 'none'">仅日期</view>
+              <view :class="['pseg-item', initForm.time_precision === 'hour' ? 'active' : '']" @click="initForm.time_precision = 'hour'">到时</view>
+              <view :class="['pseg-item', initForm.time_precision === 'minute' ? 'active' : '']" @click="initForm.time_precision = 'minute'">到分</view>
+              <view :class="['pseg-item', initForm.time_precision === 'second' ? 'active' : '']" @click="initForm.time_precision = 'second'">到秒</view>
+            </view>
+          </view>
+          <view class="field" v-if="initForm.time_precision !== 'none'">
+            <text class="label">时间</text>
+            <view class="time-row">
+              <picker class="time-picker" mode="selector" :range="hourRange" :value="initForm.hour" @change="(e) => (initForm.hour = Number(e.detail.value))">
+                <view class="picker">{{ pad(initForm.hour) }} 时</view>
+              </picker>
+              <picker v-if="initForm.time_precision === 'minute' || initForm.time_precision === 'second'" class="time-picker" mode="selector" :range="minuteRange" :value="initForm.minute" @change="(e) => (initForm.minute = Number(e.detail.value))">
+                <view class="picker">{{ pad(initForm.minute) }} 分</view>
+              </picker>
+              <picker v-if="initForm.time_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="initForm.second" @change="(e) => (initForm.second = Number(e.detail.value))">
+                <view class="picker">{{ pad(initForm.second) }} 秒</view>
+              </picker>
+            </view>
+          </view>
+        </template>
+
+        <!-- 时间段：起止日期 + 可选时间 -->
+        <template v-else>
+          <view class="field">
+            <view class="label-row">
+              <text class="label">开始日期 *</text>
+              <view class="now-btn" @click="setInitStartNow">当前时间</view>
+            </view>
+            <picker mode="date" :value="initForm.date_start" @change="(e) => (initForm.date_start = e.detail.value)">
+              <view class="picker">{{ initForm.date_start || '选择日期' }}</view>
+            </picker>
+          </view>
+          <view class="field">
+            <view class="label-row">
+              <text class="label">结束日期（空 = 至今）</text>
+              <view class="now-btn" @click="setInitEndNow">当前时间</view>
+            </view>
+            <picker mode="date" :value="initForm.date_end" @change="(e) => (initForm.date_end = e.detail.value)">
+              <view class="picker">{{ initForm.date_end || '至今' }}</view>
+            </picker>
+          </view>
+          <view class="field">
+            <text class="label">时间精度（可选，开始与结束共用）</text>
+            <view class="pseg">
+              <view :class="['pseg-item', initForm.time_precision === 'none' ? 'active' : '']" @click="initForm.time_precision = 'none'">仅日期</view>
+              <view :class="['pseg-item', initForm.time_precision === 'hour' ? 'active' : '']" @click="initForm.time_precision = 'hour'">到时</view>
+              <view :class="['pseg-item', initForm.time_precision === 'minute' ? 'active' : '']" @click="initForm.time_precision = 'minute'">到分</view>
+              <view :class="['pseg-item', initForm.time_precision === 'second' ? 'active' : '']" @click="initForm.time_precision = 'second'">到秒</view>
+            </view>
+          </view>
+          <template v-if="initForm.time_precision !== 'none'">
+            <view class="field">
+              <text class="label">开始时间</text>
+              <view class="time-row">
+                <picker class="time-picker" mode="selector" :range="hourRange" :value="initForm.start_hour" @change="(e) => (initForm.start_hour = Number(e.detail.value))">
+                  <view class="picker">{{ pad(initForm.start_hour) }} 时</view>
+                </picker>
+                <picker v-if="initForm.time_precision === 'minute' || initForm.time_precision === 'second'" class="time-picker" mode="selector" :range="minuteRange" :value="initForm.start_minute" @change="(e) => (initForm.start_minute = Number(e.detail.value))">
+                  <view class="picker">{{ pad(initForm.start_minute) }} 分</view>
+                </picker>
+                <picker v-if="initForm.time_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="initForm.start_second" @change="(e) => (initForm.start_second = Number(e.detail.value))">
+                  <view class="picker">{{ pad(initForm.start_second) }} 秒</view>
+                </picker>
+              </view>
+            </view>
+            <view class="field" v-if="initForm.date_end">
+              <text class="label">结束时间</text>
+              <view class="time-row">
+                <picker class="time-picker" mode="selector" :range="hourRange" :value="initForm.end_hour" @change="(e) => (initForm.end_hour = Number(e.detail.value))">
+                  <view class="picker">{{ pad(initForm.end_hour) }} 时</view>
+                </picker>
+                <picker v-if="initForm.time_precision === 'minute' || initForm.time_precision === 'second'" class="time-picker" mode="selector" :range="minuteRange" :value="initForm.end_minute" @change="(e) => (initForm.end_minute = Number(e.detail.value))">
+                  <view class="picker">{{ pad(initForm.end_minute) }} 分</view>
+                </picker>
+                <picker v-if="initForm.time_precision === 'second'" class="time-picker" mode="selector" :range="secondRange" :value="initForm.end_second" @change="(e) => (initForm.end_second = Number(e.detail.value))">
+                  <view class="picker">{{ pad(initForm.end_second) }} 秒</view>
+                </picker>
+              </view>
+            </view>
+          </template>
+        </template>
         <view class="field">
           <text class="label">图片（可选）</text>
           <view class="img-grid">
@@ -108,7 +180,7 @@ export default {
       events: [],
       viewMode: 'axis',
       needInitialPoint: false,
-      initForm: { title: '', date: '', time_precision: 'none', hour: 0, minute: 0, second: 0, images: [] },
+      initForm: { title: '', date_type: 'point', date: '', date_start: '', date_end: '', time_precision: 'none', hour: 0, minute: 0, second: 0, start_hour: 0, start_minute: 0, start_second: 0, end_hour: 0, end_minute: 0, end_second: 0, images: [] },
       hourRange: Array.from({ length: 24 }, (_, i) => i),
       minuteRange: Array.from({ length: 60 }, (_, i) => i),
       secondRange: Array.from({ length: 60 }, (_, i) => i)
@@ -135,7 +207,7 @@ export default {
       this.events = []
       const evs = await db.getEventsByTimeline(this.timelineId)
       for (const ev of evs) this.events.push({ ...ev, images: await db.getImagesByEvent(ev.id) })
-      // 主线没有任何事件时，必须填写初始点
+      // 主线没有任何动态时，必须填写初始点
       this.needInitialPoint = this.timeline.is_main === 1 && this.events.length === 0
     },
     switchView(m) {
@@ -172,9 +244,24 @@ export default {
       this.initForm.minute = minute
       this.initForm.second = second
     },
+    setInitStartNow() {
+      const { date, hour, minute, second } = nowParts()
+      this.initForm.date_start = date
+      this.initForm.start_hour = hour
+      this.initForm.start_minute = minute
+      this.initForm.start_second = second
+    },
+    setInitEndNow() {
+      const { date, hour, minute, second } = nowParts()
+      this.initForm.date_end = date
+      this.initForm.end_hour = hour
+      this.initForm.end_minute = minute
+      this.initForm.end_second = second
+    },
     async saveInitialPoint() {
-      if (!this.initForm.date) {
-        uni.showToast({ title: '请选择日期', icon: 'none' })
+      const { date_type } = this.initForm
+      if (date_type === 'range' ? !this.initForm.date_start : !this.initForm.date) {
+        uni.showToast({ title: date_type === 'range' ? '请选择开始日期' : '请选择日期', icon: 'none' })
         return
       }
       try {
@@ -183,11 +270,13 @@ export default {
           timeline_id: this.timelineId,
           title,
           description: null,
-          date_type: 'point',
-          date_point: buildEventDate(this.initForm.date, this.initForm.time_precision, this.initForm.hour, this.initForm.minute, this.initForm.second),
+          date_type,
+          date_point: date_type === 'point' ? buildEventDate(this.initForm.date, this.initForm.time_precision, this.initForm.hour, this.initForm.minute, this.initForm.second) || null : null,
+          date_start: date_type === 'range' ? buildEventDate(this.initForm.date_start, this.initForm.time_precision, this.initForm.start_hour, this.initForm.start_minute, this.initForm.start_second) || null : null,
+          date_end: date_type === 'range' ? buildEventDate(this.initForm.date_end, this.initForm.time_precision, this.initForm.end_hour, this.initForm.end_minute, this.initForm.end_second) || null : null,
           images: this.initForm.images.map((im) => im._path)
         })
-        this.initForm = { title: '', date: '', time_precision: 'none', hour: 0, minute: 0, second: 0, images: [] }
+        this.initForm = { title: '', date_type: 'point', date: '', date_start: '', date_end: '', time_precision: 'none', hour: 0, minute: 0, second: 0, start_hour: 0, start_minute: 0, start_second: 0, end_hour: 0, end_minute: 0, end_second: 0, images: [] }
         // 保存成功后直接关闭弹窗，避免依赖重新查询结果
         this.needInitialPoint = false
         await this.load()
@@ -210,7 +299,7 @@ export default {
 
 /* 初始点覆盖层 */
 .mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.45); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 40rpx; }
-.init-card { width: 100%; background: var(--bg-card); border-radius: 20rpx; padding: 40rpx; }
+.init-card { width: 100%; max-height: 82vh; overflow-y: auto; background: var(--bg-card); border-radius: 20rpx; padding: 40rpx; box-sizing: border-box; }
 .init-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12rpx; }
 .init-title { font-size: 36rpx; font-weight: 700; }
 .init-close { font-size: 44rpx; color: var(--text-light); line-height: 1; padding: 4rpx 8rpx; }
@@ -230,7 +319,7 @@ export default {
 .time-picker .picker { text-align: center; }
 .now-btn { flex-shrink: 0; background: var(--primary-soft); color: var(--primary-dark); font-size: 24rpx; border-radius: 24rpx; padding: 0 20rpx; display: flex; align-items: center; }
 
-/* 图片选择：与事件编辑表单样式一致 */
+/* 图片选择：与动态编辑表单样式一致 */
 .img-grid { display: flex; flex-wrap: wrap; gap: 16rpx; }
 .img-wrap { position: relative; width: 180rpx; height: 180rpx; }
 .img { width: 180rpx; height: 180rpx; border-radius: 16rpx; }
@@ -244,7 +333,7 @@ export default {
 .no-init-btn { margin-top: 40rpx; background: var(--primary); color: var(--primary-contrast); font-size: 30rpx; border-radius: 48rpx; border: none; padding: 0 48rpx; height: 80rpx; line-height: 80rpx; }
 .no-init-btn::after { border: none; }
 
-/* 非主线时间线无事件引导卡 */
+/* 非主线时间线无动态引导卡 */
 .empty-tl { margin-top: 160rpx; display: flex; flex-direction: column; align-items: center; padding: 0 60rpx; }
 .empty-tl-icon { font-size: 88rpx; }
 .empty-tl-title { font-size: 32rpx; font-weight: 700; color: var(--text-main); margin-top: 24rpx; }
