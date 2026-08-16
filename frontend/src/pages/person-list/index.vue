@@ -72,6 +72,21 @@
       <view v-else class="empty-tip">还没有动态，去主页添加第一个吧</view>
     </view>
 
+    <!-- 回收站：位于最近动态与主题配色之间 -->
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">回收站</text>
+      </view>
+      <view class="trash-entry" @click="openTrash">
+        <text class="trash-icon">🗑️</text>
+        <view class="trash-body">
+          <view class="trash-name">回收站</view>
+          <view class="trash-meta">已删除的时间线和动态保留 5 天</view>
+        </view>
+        <view class="trash-arrow">›</view>
+      </view>
+    </view>
+
     <!-- 主题配色 -->
     <view class="section">
       <view class="section-header">
@@ -96,21 +111,6 @@
           <view class="theme-label">自定义颜色（调色盘）</view>
           <color-picker :value="themePrimary" @change="selectTheme" />
         </template>
-      </view>
-    </view>
-
-    <!-- 回收站：独立分区展示（与最近动态区分，避免误认成同一板块） -->
-    <view class="section">
-      <view class="section-header">
-        <text class="section-title">回收站</text>
-      </view>
-      <view class="trash-entry" @click="openTrash">
-        <text class="trash-icon">🗑️</text>
-        <view class="trash-body">
-          <view class="trash-name">回收站</view>
-          <view class="trash-meta">已删除的时间线和动态保留 5 天</view>
-        </view>
-        <view class="trash-arrow">›</view>
       </view>
     </view>
   </view>
