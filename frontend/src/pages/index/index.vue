@@ -6,13 +6,38 @@
         <view class="greet-name">{{ currentPerson.name || '时光档案' }}</view>
         <view class="greet-sub">{{ heroSub }}</view>
       </view>
-      <picker class="user-dropdown" mode="selector" :range="userOptions" :value="userIndex" @change="onSwitchUser">
+      <view class="user-dropdown" @click="showUserPicker = true">
         <view class="dropdown-label">
           <view class="avatar-dot">{{ (currentPerson.name || '?')[0] }}</view>
           <text class="dropdown-name">{{ currentPerson.name || '选择档案' }}</text>
           <text class="dropdown-arrow">▾</text>
         </view>
-      </picker>
+      </view>
+    </view>
+
+    <!-- 切换档案弹窗：「选择档案」为固定标题（不可选），档案列表可滚动 -->
+    <view class="picker-mask" v-if="showUserPicker" @click="showUserPicker = false">
+      <view class="picker-sheet" @click.stop>
+        <view class="sheet-head">
+          <text class="sheet-title">选择档案</text>
+          <text class="sheet-close" @click="showUserPicker = false">×</text>
+        </view>
+        <scroll-view class="sheet-list" scroll-y>
+          <view
+            v-for="p in persons"
+            :key="p.id"
+            class="sheet-item"
+            :class="{ active: p.id === currentPerson.id }"
+            @click="switchUser(p)"
+          >
+            <text class="sheet-name">{{ p.name }}</text>
+            <text class="sheet-check" v-if="p.id === currentPerson.id">✓</text>
+          </view>
+          <view class="sheet-item sheet-add" @click="addPerson">
+            <text class="sheet-name">＋ 添加档案</text>
+          </view>
+        </scroll-view>
+      </view>
     </view>
 
     <!-- 顶部搜索：按关键字搜索时间线内容 -->
@@ -143,8 +168,7 @@ export default {
     return {
       currentPerson: {},
       persons: [],
-      userOptions: [],
-      userIndex: 0,
+      showUserPicker: false,
       mainTimeline: {},
       otherTimelines: [],
       eventCounts: {},
@@ -198,12 +222,7 @@ export default {
       // 主用户永远置顶：is_default=1 排最前，其余保持原有 created_at 倒序
       const def = persons.find((p) => p.is_default === 1)
       this.persons = def ? [def, ...persons.filter((p) => p.id !== def.id)] : persons
-      // 下拉框选项：主用户在最顶部 + 末尾追加「＋ 添加档案」
-      // 选择列表首项「选择档案」作为标题提示，不参与切换
-      this.userOptions = ['选择档案', ...this.persons.map((p) => p.name), '＋ 添加档案']
       this.currentPerson = (await db.getDefaultPerson()) || this.persons[0] || {}
-      const idx = this.persons.findIndex((p) => p.id === this.currentPerson.id)
-      this.userIndex = idx < 0 ? 0 : idx + 1
       // 构建搜索结果所需的名称映射
       const nameMap = {}
       const tlMap = {}
@@ -243,26 +262,21 @@ export default {
         uni.showToast({ title: '已刷新', icon: 'none', duration: 800 })
       }).catch(() => uni.stopPullDownRefresh())
     },
-    onSwitchUser(e) {
-      const idx = Number(e.detail.value)
-      if (idx === 0) {
-        // 首项「选择档案」仅为标题提示，选择后不做切换
+    // 切换档案：弹窗内点击档案后切换并关闭
+    switchUser(p) {
+      if (p.id === this.currentPerson.id) {
+        this.showUserPicker = false
         return
       }
-      const personIdx = idx - 1
-      if (personIdx < this.persons.length) {
-        const target = this.persons[personIdx]
-        if (target.id !== this.currentPerson.id) {
-          // 切换用户时清空搜索状态，避免残留上一个用户的结果
-          this.searching = false
-          this.keyword = ''
-          this.results = []
-          db.setDefaultPerson(target.id).then(() => this.load())
-        }
-      } else {
-        // 最后一个选项：添加档案
-        uni.navigateTo({ url: '/pages/edit-form/index?entityType=person' })
-      }
+      // 切换用户时清空搜索状态，避免残留上一个用户的结果
+      this.searching = false
+      this.keyword = ''
+      this.results = []
+      this.showUserPicker = false
+      db.setDefaultPerson(p.id).then(() => this.load())
+    },
+    addPerson() {
+      uni.navigateTo({ url: '/pages/edit-form/index?entityType=person' })
     },
     async doSearch() {
       const k = (this.keyword || '').trim()
@@ -315,6 +329,20 @@ export default {
 .avatar-dot { width: 44rpx; height: 44rpx; border-radius: 50%; background: var(--primary); color: var(--primary-contrast); display: flex; align-items: center; justify-content: center; font-size: 26rpx; font-weight: 700; }
 .dropdown-name { margin-left: 12rpx; }
 .dropdown-arrow { margin-left: 8rpx; font-size: 22rpx; }
+
+/* 切换档案弹窗：底部弹层，「选择档案」为固定标题（不可选），档案列表可滚动 */
+.picker-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.45); z-index: 200; display: flex; align-items: flex-end; }
+.picker-sheet { width: 100%; background: var(--bg-card); border-radius: 24rpx 24rpx 0 0; padding: 32rpx 24rpx calc(32rpx + env(safe-area-inset-bottom)); box-sizing: border-box; }
+.sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
+.sheet-title { font-size: 32rpx; font-weight: 700; color: var(--text-main); }
+.sheet-close { font-size: 40rpx; color: var(--text-light); padding: 0 8rpx; line-height: 1; }
+.sheet-list { max-height: 50vh; }
+.sheet-item { display: flex; justify-content: space-between; align-items: center; padding: 28rpx 8rpx; border-bottom: 2rpx solid var(--border); }
+.sheet-item:last-child { border-bottom: none; }
+.sheet-name { font-size: 30rpx; color: var(--text-main); }
+.sheet-item.active .sheet-name { color: var(--primary); font-weight: 600; }
+.sheet-check { color: var(--primary); font-weight: 700; font-size: 30rpx; }
+.sheet-add .sheet-name { color: var(--primary); }
 
 /* 搜索：带图标圆角，参考主流搜索条 */
 .search-bar { display: flex; align-items: center; background: var(--bg-card); border-radius: 40rpx; padding: 0 24rpx; box-shadow: var(--shadow-card); }
