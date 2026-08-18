@@ -2,8 +2,30 @@
 import { db } from './utils/db'
 import { getThemePrimary, applyTheme } from './utils/theme'
 
+// 全局 JS 错误捕获：写入 _doc/jserr.log，便于真机/模拟器定位运行时异常
+// （生产包 console 不进入 logcat，页面空白/崩溃时靠它拿到真实报错）
+function logJsError(tag, detail) {
+  try {
+    plus.io.resolveLocalFileSystemURL('_doc', (root) => {
+      root.getFile('jserr.log', { create: true }, (fe) => {
+        fe.createWriter((w) => {
+          w.seek(w.length)
+          w.write(`[${new Date().toISOString()}] ${tag}: ${String(detail)}\n`)
+        }, () => {})
+      }, () => {})
+    })
+  } catch (e) {}
+}
+
 export default {
   onLaunch() {
+    if (typeof uni !== 'undefined' && uni.onError) {
+      uni.onError((err) => logJsError('uni.onError', JSON.stringify(err)))
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('error', (e) => logJsError('window.onerror', `${e.message} @line ${e.lineno || ''}`))
+      window.addEventListener('unhandledrejection', (e) => logJsError('unhandledrejection', String((e.reason && (e.reason.message || e.reason)) || e.reason)))
+    }
     db.init().catch((e) => console.error('db init fail', e))
     applyTheme(getThemePrimary())
   }

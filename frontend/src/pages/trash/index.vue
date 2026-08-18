@@ -112,6 +112,11 @@ export default {
     await this.load()
   },
   methods: {
+    // 模板中直接调用的格式化函数：Vue 3 选项式模板只能访问实例方法，
+    // 模块导入的 formatEventDate 需在此暴露，否则渲染行时 TypeError 白屏
+    formatEventDate(ev) {
+      return formatEventDate(ev)
+    },
     // 每次进入先清理过期项，再刷新列表，并剔除已失效的勾选
     async load() {
       await db.purgeExpiredTrash()
